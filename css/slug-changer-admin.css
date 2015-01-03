@@ -1,0 +1,7 @@
+/**
+ * WP_List_Table CSS
+ */
+#slugs-table { margin: 20px 0 0 0; }
+#ID, .column-ID { width: 10%; }
+.post_name input { max-width: 100%; }
+.hide { display: none; }
