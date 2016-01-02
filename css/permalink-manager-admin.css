@@ -1,0 +1,9 @@
+/**
+ * Permalink Manager Table CSS
+ */
+#permalinks-table-wrap { }
+    #permalinks-table-wrap .tablenav { margin: 6px 0 15px; }
+    #permalinks-table-wrap .column-post_type { width: 10%; }
+    #permalinks-table-wrap .column-post_permalink { width: 50%; }
+    #permalinks-table-wrap .post_name input { max-width: 100%; }
+    #permalinks-table-wrap .hide { display: none; }
