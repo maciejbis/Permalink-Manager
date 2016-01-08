@@ -2,8 +2,22 @@
  * Permalink Manager Table CSS
  */
 #permalinks-table-wrap { }
+
+	#permalinks-table-wrap #plugin-name-heading a { color: #959595; font-size: 60%; text-decoration: none; }
+
     #permalinks-table-wrap .tablenav { margin: 6px 0 15px; }
     #permalinks-table-wrap .column-post_type { width: 10%; }
     #permalinks-table-wrap .column-post_permalink { width: 50%; }
     #permalinks-table-wrap .post_name input { max-width: 100%; }
-    #permalinks-table-wrap .hide { display: none; }
+	#permalinks-table-wrap .post_permalink a, #permalinks-table-wrap .post_permalink .dashicons { font-size: 13px; color: #aaa; line-height: 1.5em; }
+	
+	#permalinks-table-wrap .alert { line-height: 19px; padding: 11px 15px; margin: 15px 0; }
+	#permalinks-table-wrap .alert p { margin-top: 0; }
+	#permalinks-table-wrap .alert p:last-of-type { margin-bottom: 0; }
+	#permalinks-table-wrap .warning { background: #dc3232; color: #fff; }
+	#permalinks-table-wrap .info { background: #f9f9f9; }
+	
+	#permalinks-table-wrap #permalink-manager-tabs > div { display: none; }
+	#permalinks-table-wrap #permalink-manager-tabs > div.show { display: block; }
+
+	#permalinks-table-wrap #permalink-manager-tabs td label { display: block; }

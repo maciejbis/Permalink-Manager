@@ -1,0 +1,216 @@
+# Loco Gettext template
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Permalink Manager\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: Fri Jan 08 2016 20:08:17 GMT+0100 (CET)\n"
+"POT-Revision-Date: Fri Jan 08 2016 20:08:23 GMT+0100 (CET)\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-Basepath: .\n"
+"X-Poedit-SearchPath-0: ..\n"
+"X-Poedit-KeywordsList: _:1;gettext:1;dgettext:2;ngettext:1,2;dngettext:2,3;"
+"__:1;_e:1;_c:1;_n:1,2;_n_noop:1,2;_nc:1,2;__ngettext:1,2;__ngettext_noop:1,2;"
+"_x:1,2c;_ex:1,2c;_nx:1,2,4c;_nx_noop:1,2,3c;_n_js:1,2;_nx_js:1,2,3c;"
+"esc_attr__:1;esc_html__:1;esc_attr_e:1;esc_html_e:1;esc_attr_x:1,2c;"
+"esc_html_x:1,2c;comments_number_link:2,3;t:1;st:1;trans:1;transChoice:1,2\n"
+"X-Generator: Loco - https://localise.biz/"
+
+#. Name of the plugin
+msgid "Permalink Manager"
+msgstr ""
+
+#. URI of the plugin
+msgid "http://maciejbis.net"
+msgstr ""
+
+#. Description of the plugin
+msgid ""
+"A simple tool that allows to mass update of slugs that are used to build "
+"permalinks for Posts, Pages and Custom Post Types."
+msgstr ""
+
+#. Author of the plugin
+msgid "Maciej Bis"
+msgstr ""
+
+#: ../permalink-manager.php:89
+msgid "Find & Replace"
+msgstr ""
+
+#: ../permalink-manager.php:108
+msgid "Regenerate"
+msgstr ""
+
+#: ../permalink-manager.php:135
+msgid "Permalinks"
+msgstr ""
+
+#: ../permalink-manager.php:137
+msgid ""
+"You can disable/enable selected post types from the table below using "
+"<strong>\"Screen Options\"</strong> (click on the upper-right button to show "
+"it) section above."
+msgstr ""
+
+#: ../permalink-manager.php:140
+msgid "Find and replace"
+msgstr ""
+
+#: ../permalink-manager.php:142 ../permalink-manager.php:147
+msgid "<strong>You are doing it at your own risk!</strong>"
+msgstr ""
+
+#: ../permalink-manager.php:142
+msgid ""
+"A backup of MySQL database before using this tool is highly recommended. The "
+"search & replace operation might be not revertible!"
+msgstr ""
+
+#: ../permalink-manager.php:145
+msgid "Regenerate slugs"
+msgstr ""
+
+#: ../permalink-manager.php:147
+msgid ""
+"A backup of MySQL database before using this tool is highly recommended. The "
+"regenerate process of slugs might be not revertible!"
+msgstr ""
+
+#: ../permalink-manager.php:160
+msgid "by Maciej Bis"
+msgstr ""
+
+#: ../permalink-manager.php:210
+msgid "Go To Permalink Manager"
+msgstr ""
+
+#: ../permalink-manager.php:226
+msgid "Post Types"
+msgstr ""
+
+#: ../permalink-manager.php:228 ../permalink-manager.php:257 ../permalink-manager.
+#: php:273
+msgid "All Post Types"
+msgstr ""
+
+#: ../permalink-manager.php:232
+msgid "Post Statuses"
+msgstr ""
+
+#: ../permalink-manager.php:234 ../permalink-manager.php:263 ../permalink-manager.
+#: php:279
+msgid "All Post Statuses"
+msgstr ""
+
+#: ../permalink-manager.php:238
+msgid "Per page"
+msgstr ""
+
+#: ../permalink-manager.php:247
+msgid "Find ..."
+msgstr ""
+
+#: ../permalink-manager.php:251
+msgid "Replace with ..."
+msgstr ""
+
+#: ../permalink-manager.php:255 ../permalink-manager.php:271
+msgid "Post Types that should be affected"
+msgstr ""
+
+#: ../permalink-manager.php:261 ../permalink-manager.php:277
+msgid "Post Statuses that should be affected"
+msgstr ""
+
+#: ../permalink-manager.php:347
+#, php-format
+msgid "<strong>\"%1s\"</strong> field is empty!"
+msgstr ""
+
+#: ../permalink-manager.php:418
+#, php-format
+msgid "<strong>%d</strong> slug were updated!"
+msgid_plural "<strong>%d</strong> slugs were updated!"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../permalink-manager.php:419
+#, php-format
+msgid "<a href=\"%s\">Click here</a> to go to the list of updated slugs"
+msgstr ""
+
+#: ../permalink-manager.php:422
+msgid "<strong>No slugs</strong> were updated!"
+msgstr ""
+
+#: ../permalink-manager.php:435 ../permalink-manager.php:447 ../inc/permalink-
+#: manager-wp-table.php:30
+msgid "Title"
+msgstr ""
+
+#: ../permalink-manager.php:436 ../permalink-manager.php:448
+msgid "Old slug"
+msgstr ""
+
+#: ../permalink-manager.php:437 ../permalink-manager.php:449
+msgid "New slug"
+msgstr ""
+
+#: ../permalink-manager.php:447
+msgid "Show more details"
+msgstr ""
+
+#: ../permalink-manager.php:454
+msgid "List of updated posts"
+msgstr ""
+
+#: ../inc/permalink-manager-screen-options.php:21
+msgid "Apply"
+msgstr ""
+
+#: ../inc/permalink-manager-wp-table.php:31
+msgid "Slug"
+msgstr ""
+
+#: ../inc/permalink-manager-wp-table.php:32
+msgid "Date"
+msgstr ""
+
+#: ../inc/permalink-manager-wp-table.php:33
+msgid "Permalink"
+msgstr ""
+
+#: ../inc/permalink-manager-wp-table.php:34
+msgid "Post Status"
+msgstr ""
+
+#: ../inc/permalink-manager-wp-table.php:35
+msgid "Post Type"
+msgstr ""
+
+#: ../inc/permalink-manager-wp-table.php:81 ../inc/permalink-manager-wp-table.php:
+#: 81
+msgid "Edit"
+msgstr ""
+
+#: ../inc/permalink-manager-wp-table.php:82 ../inc/permalink-manager-wp-table.php:
+#: 82
+msgid "View"
+msgstr ""
+
+#: ../inc/permalink-manager-wp-table.php:124
+msgid "Update all slugs below"
+msgstr ""
+
+#: ../inc/permalink-manager-wp-table.php:125
+msgid "Update all slugs above"
+msgstr ""

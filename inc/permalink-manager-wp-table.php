@@ -10,28 +10,28 @@ class Permalink_Manager_Table extends WP_List_Table {
     
     public $screen_options_fields;
 	
-    function __construct() {
-        global $status, $page;
+ 	function __construct() {
+ 	    global $status, $page;
 
-        parent::__construct(array(
-            'singular'	=> 'slug',
-            'plural'	=> 'slugs',
+ 	    parent::__construct(array(
+			'singular'	=> 'slug',
+			'plural'	=> 'slugs',
 			'ajax'		=> true
-        ));
-        
-    }
+		));
+ 	    
+ 	}
     
-    /**
-     * Override the parent columns method. Defines the columns to use in your listing table
-     */
+	/**
+	* Override the parent columns method. Defines the columns to use in your listing table
+	*/
 	public function get_columns() {
 		$columns = array(
 			//'cb'				=> '<input type="checkbox" />', //Render a checkbox instead of text
-            'post_title'		=> __('Title', 'permalink-manager'),
-            'post_name'			=> __('Slug', 'permalink-manager'),
+			'post_title'		=> __('Title', 'permalink-manager'),
+			'post_name'			=> __('Slug', 'permalink-manager'),
 			'post_date_gmt'		=> __('Date', 'permalink-manager'),
 			'post_permalink'	=> __('Permalink', 'permalink-manager'),
-			//'post_status'		=> __('Post Status', 'permalink-manager'),
+			'post_status'		=> __('Post Status', 'permalink-manager'),
 			'post_type'			=> __('Post Type', 'permalink-manager')
 		);
 		
@@ -66,20 +66,24 @@ class Permalink_Manager_Table extends WP_List_Table {
 				$post_type_obj = get_post_type_object( $item[ 'post_type' ] );
 				return "{$post_type_obj->labels->singular_name}<br /><small>({$item[ $column_name ]})</small>";
 				
+			case 'post_status':
+				$post_statuses_array = get_post_statuses();
+				return "{$post_statuses_array[$item[ $column_name ]]}<br /><small>({$item[ $column_name ]})</small>";
+				
 			case 'post_permalink':
-                return get_permalink($item[ 'ID' ]);
+				return Permalink_Manager_Helper_Functions::get_correct_permalink($item[ 'ID' ], $item[ 'post_name' ], true) . ' <a href="' . Permalink_Manager_Helper_Functions::get_correct_permalink($item[ 'ID' ], $item[ 'post_name' ]) . '" target="_blank"><span class="dashicons dashicons-admin-links"></span></a>';
                 
 			case 'post_name':
-                return '<input type="text" name="slug[' . $item[ 'ID' ] . ']" id="slug[' . $item[ 'ID' ] . ']" value="' . $item[ 'post_name' ] . '">';
+				return '<input type="text" name="slug[' . $item[ 'ID' ] . ']" id="slug[' . $item[ 'ID' ] . ']" value="' . $item[ 'post_name' ] . '">';
 			
 			case 'post_title':
 				$edit_post = $item[ 'post_title' ] . '<div class="row-actions">';
 				$edit_post .= '<span class="edit"><a target="_blank" href="http://maciejbis.net/wp-admin/post.php?post=' . $item[ 'ID' ] . '&amp;action=edit" title="' . __('Edit', 'permalink-manager') . '">' . __('Edit', 'permalink-manager') . '</a> | </span>';
-				$edit_post .= '<span class="view"><a target="_blank" href="' . get_permalink($item[ 'ID' ]) . '" title="' . __('View', 'permalink-manager') . ' “' . $item[ 'post_title' ] . '”" rel="permalink">' . __('View', 'permalink-manager') . '</a> | </span>';
+				$edit_post .= '<span class="view"><a target="_blank" href="' . Permalink_Manager_Helper_Functions::get_correct_permalink($item[ 'ID' ], $item[ 'post_name' ]) . '" title="' . __('View', 'permalink-manager') . ' ' . $item[ 'post_title' ] . '" rel="permalink">' . __('View', 'permalink-manager') . '</a> | </span>';
 				$edit_post .= '<span class="id">#' . $item[ 'ID' ] . '</span>';
 				$edit_post .= '</div>';
-                return $edit_post;
-	
+				return $edit_post;
+
 			default:
 				return $item[ $column_name ];
 		}
@@ -112,14 +116,18 @@ class Permalink_Manager_Table extends WP_List_Table {
 		return -$result;
 	}
     
-    /**
-     * The button that allows to save updated slugs
-     */
-    function extra_tablenav( $which ) {
-        echo '<div class="alignleft actions">';
-        submit_button( __( 'Update all slugs below', 'permalink-manager' ), 'primary', "update_all_slugs[{$which}]", false, array( 'id' => 'doaction', 'value' => 'update_all_slugs' ) );
-        echo '</div>';
-    }
+	/**
+	* The button that allows to save updated slugs
+	*/
+	function extra_tablenav( $which ) {
+		
+		$button_top = __( 'Update all slugs below', 'permalink-manager' );
+		$button_bottom = __( 'Update all slugs above', 'permalink-manager' );
+		
+		echo '<div class="alignleft actions">';
+		submit_button( ${"button_$which"}, 'primary', "update_all_slugs[{$which}]", false, array( 'id' => 'doaction', 'value' => 'update_all_slugs' ) );
+		echo '</div>';
+	}
 	
 	/**
 	 * Prepare the items for the table to process
@@ -131,16 +139,18 @@ class Permalink_Manager_Table extends WP_List_Table {
 		$currentPage = $this->get_pagenum();
 		
 		global $wpdb;
-        
-        // Load options and fields
-        $saved_options = get_option('permalink-manager');
-        $screen_options_fields = $this->screen_options_fields;
-        $per_page = $saved_options['per_page'] ? $saved_options['per_page'] : $screen_options_fields['per_page']['default'];
-        $post_types_array = $saved_options['post_types'] ? $saved_options['post_types'] : $screen_options_fields['post_types']['default'];
-        $post_types = "'" . implode("', '", $post_types_array) . "'";
+		
+		// Load options and fields
+		$saved_options = get_option('permalink-manager');
+		$screen_options_fields = $this->screen_options_fields;
+		$per_page = $saved_options['per_page'] ? $saved_options['per_page'] : $screen_options_fields['per_page']['default'];
+		$post_types_array = $saved_options['post_types'] ? $saved_options['post_types'] : $screen_options_fields['post_types']['default'];
+		$post_types = "'" . implode("', '", $post_types_array) . "'";
+		$post_statuses_array = $saved_options['post_statuses'] ? $saved_options['post_statuses'] : $screen_options_fields['post_statuses']['default'];
+		$post_statuses = "'" . implode("', '", $post_statuses_array) . "'";
 		
 		// Will be used in pagination settings
-        $total_items = $wpdb->get_var("SELECT COUNT(id) FROM $posts_table WHERE post_status = 'publish' AND post_type IN ($post_types)");
+		$total_items = $wpdb->get_var("SELECT COUNT(id) FROM $posts_table WHERE post_status IN ($post_statuses) AND post_type IN ($post_types)");
 		
 		// SQL query parameters
 		$order = (isset($_REQUEST['order']) && in_array($_REQUEST['order'], array('asc', 'desc'))) ? $_REQUEST['order'] : 'desc';
@@ -148,9 +158,9 @@ class Permalink_Manager_Table extends WP_List_Table {
 		$offset = ($currentPage - 1) * $per_page;
 		
 		// Grab posts from database
-        $sql_query = "SELECT * FROM $posts_table WHERE post_status = 'publish' AND post_type IN ($post_types) ORDER BY $orderby $order LIMIT $per_page OFFSET $offset";
-        $data = $wpdb->get_results($sql_query, ARRAY_A);
-        
+		$sql_query = "SELECT * FROM $posts_table WHERE post_status IN ($post_statuses) AND post_type IN ($post_types) ORDER BY $orderby $order LIMIT $per_page OFFSET $offset";
+		$data = $wpdb->get_results($sql_query, ARRAY_A);
+		
 		// Sort posts and count all posts
 		usort( $data, array( &$this, 'sort_data' ) );
 		
@@ -158,17 +168,17 @@ class Permalink_Manager_Table extends WP_List_Table {
 			'total_items' => $total_items,
 			'per_page'    => $per_page
 		));
-	
+		
 		$this->_column_headers = array($columns, $hidden, $sortable);
 		$this->items = $data;
 	}
     
-    /**
-     * This variable is assigned in permalink-manager.php before prepare_items() function is triggered
-     */
-    public function set_screen_option_fields($fields) {
-        $this->screen_options_fields = $fields;
-    }
+	/**
+	* This variable is assigned in permalink-manager.php before prepare_items() function is triggered, see permalinks_table_html() function
+	*/
+	public function set_screen_option_fields($fields) {
+		$this->screen_options_fields = $fields;
+	}
 	
 }
 ?>
