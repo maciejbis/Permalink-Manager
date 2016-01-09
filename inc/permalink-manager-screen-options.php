@@ -8,7 +8,8 @@ class Permalink_Manager_Screen_Options extends Permalink_Manager_Class {
     
     public function __construct() {
         
-        add_action( "load-{$this->admin_page}", array($this, "save_screen_options") );
+		$admin_page = PERMALINK_MANAGER_MENU_PAGE;
+        add_action( "load-{$admin_page}", array($this, "save_screen_options") );
         add_filter( "screen_settings", array($this, "add_screen_options") );
         
     }
@@ -37,7 +38,7 @@ class Permalink_Manager_Screen_Options extends Permalink_Manager_Class {
      * Save fields
      */
     public function save_screen_options() {
-        
+   
         if(isset($_POST['screen-options-apply'])) update_option('permalink-manager', $_POST['permalink-manager']['screen-options']);
         
     }

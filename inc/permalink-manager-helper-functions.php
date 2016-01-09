@@ -13,14 +13,14 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 	/**
 	 * Display error/info message
 	 */
-	function display_alert($content, $type) {
+	static function display_alert($content, $type) {
 		return sprintf( "<div class='{$type} is-dismissible notice'><p> %s </p></div>", $content );
 	}
 	
 	/**
 	 * Display the permalink in a better way
 	 */
-	function get_correct_permalink($id, $correct_slug, $highlight = false) {
+	static function get_correct_permalink($id, $correct_slug, $highlight = false) {
 		$output = get_permalink($id);
 		
 		// Get last part of URI
@@ -34,7 +34,7 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 	/**
 	 * Get post_types array
 	 */
-	function get_post_types_array() {
+	static function get_post_types_array() {
         $post_types = get_post_types( array('public' => true), 'objects' ); 
 
         $post_types_array = array();
@@ -48,7 +48,7 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 	/**
 	 * Replace last occurence
 	 */
-	function str_lreplace($search, $replace, $subject) {
+	static function str_lreplace($search, $replace, $subject) {
     	$pos = strrpos($subject, $search);
     	return ($pos !== false) ? substr_replace($subject, $replace, $pos, strlen($search)) : $subject;
 	}
@@ -56,7 +56,7 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 	/** 
      * Generate the fields
      */
-    public function generate_option_field($name, $args, $group) {
+	static public function generate_option_field($name, $args, $group) {
         
 		// Load values from options if needed
 		//$saved_values = (in_array($group, array('screen-options', 'find-replace'))) ? get_option('permalink-manager') : '';    
@@ -64,6 +64,9 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 		
 		// Reset $fields variable
 		$fields = '';
+		
+		// Load default value
+		$default_value = (isset($args['default'])) ? $args['default'] : '';
             
         switch($args['type']) {
 			case 'checkbox' :
@@ -76,16 +79,16 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 				$fields .= '</div>';
 				break;
 			case 'number' :
-            	$value = (isset($saved_values[$name])) ? $saved_values[$name] : $args['default'];
+            	$value = (isset($saved_values[$name])) ? $saved_values[$name] : $default_value;
             	$fields .= "<input type='number' value='{$value}' name='permalink-manager[{$group}][{$name}]' />";
 				break;
         	default :
-            	$value = (isset($saved_values[$name])) ? $saved_values[$name] : $args['default'];
+            	$value = (isset($saved_values[$name])) ? $saved_values[$name] : $default_value;
             	$fields .= "<input type='text' value='{$value}' name='permalink-manager[{$group}][{$name}]' />";
 		}
         
 		// Get all variables into one final variable
-		if($screenoptions) {
+		if(isset($group) && !($group === 'screen-options')) {
 			$output = "<legend>{$args['label']}</legend>";
 			$output .= "<div class='metabox-prefs'><div class='{$name}-container'>{$fields}</div></div>";
 		} else {

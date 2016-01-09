@@ -143,10 +143,10 @@ class Permalink_Manager_Table extends WP_List_Table {
 		// Load options and fields
 		$saved_options = get_option('permalink-manager');
 		$screen_options_fields = $this->screen_options_fields;
-		$per_page = $saved_options['per_page'] ? $saved_options['per_page'] : $screen_options_fields['per_page']['default'];
-		$post_types_array = $saved_options['post_types'] ? $saved_options['post_types'] : $screen_options_fields['post_types']['default'];
+		$per_page = isset($saved_options['per_page']) ? $saved_options['per_page'] : $screen_options_fields['per_page']['default'];
+		$post_types_array = isset($saved_options['post_types']) ? $saved_options['post_types'] : $screen_options_fields['post_types']['default'];
 		$post_types = "'" . implode("', '", $post_types_array) . "'";
-		$post_statuses_array = $saved_options['post_statuses'] ? $saved_options['post_statuses'] : $screen_options_fields['post_statuses']['default'];
+		$post_statuses_array = isset($saved_options['post_statuses']) ? $saved_options['post_statuses'] : $screen_options_fields['post_statuses']['default'];
 		$post_statuses = "'" . implode("', '", $post_statuses_array) . "'";
 		
 		// Will be used in pagination settings
