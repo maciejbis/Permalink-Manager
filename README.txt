@@ -1,9 +1,9 @@
 === Permalink Manager ===
-Contributors: bis
+Contributors: mbis
 Tags: urls, permalinks, slugs
 Requires at least: 4.0
 Tested up to: 4.4
-Stable tag: 4.4
+Stable tag: 0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,9 +44,10 @@ http://example.com/poland/cities/poznan`
 = Upcoming features =
 
 In the next version of plugin more functionalities will be added:
+
 * Support for taxonomies
 * REGEX for `Find and replace` section
-* Two-step updater, so you can double-check which permalinks will be changed before the change is applied.
+* Two-step updater, so you can double-check which permalinks will be changed before the change is applied
 * AJAX support.
 
 == Installation ==
@@ -54,18 +55,18 @@ In the next version of plugin more functionalities will be added:
 Go to `Plugins -> Add New` section from your admin account and search for `Permalink Manager`. 
 
 You can also install this plugin manually:
+
 1. Download the plugin's ZIP archive and unzip it. 
 2. Copy the unzipped `permalink-manager` folder to the `/wp-content/plugins/` directory.
 3. Activate the plugin through the 'Plugins' menu in WordPress
 
-After the plugin is installed you can access its dashboard from this page:
-`Tools -> Permalink Manager`.
+After the plugin is installed you can access its dashboard from this page: `Tools -> Permalink Manager`.
 
 == Screenshots ==
 
-1. Main dashboard.
-2. Find and replace section.
-3. Regenerate section.
+1.	Main dashboard.
+2.	Find and replace section.
+3.	Regenerate section.
 
 == Changelog ==
 
