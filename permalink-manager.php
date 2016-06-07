@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager
  * Plugin URI:        http://maciejbis.net/
  * Description:       A simple tool that allows to mass update of slugs that are used to build permalinks for Posts, Pages and Custom Post Types.
- * Version:           0.3.0
+ * Version:           0.3.3
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define the directories used to load plugin files.
 define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'permalink-manager' );
-define( 'PERMALINK_MANAGER_VERSION', '0.3.0' );
+define( 'PERMALINK_MANAGER_VERSION', '0.3.3' );
 define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 define( 'PERMALINK_MANAGER_URL', untrailingslashit( plugins_url( '', __FILE__ ) ) );
 define( 'PERMALINK_MANAGER_WEBSITE', 'http://maciejbis.net' );
@@ -35,14 +35,21 @@ class Permalink_Manager_Class {
 
     $this->permalink_manager_options = get_option('permalink-manager');
 
-		add_action( 'plugins_loaded', array($this, 'localize_me') );
-		add_action( 'init', array($this, 'flush_rewrite_rules') );
-		add_action( 'admin_init', array($this, 'bulk_actions') );
-		add_action( 'admin_menu', array($this, 'add_menu_page') );
-		add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugins_page_links') );
+		if( is_admin() ) {
+			add_action( 'plugins_loaded', array($this, 'localize_me') );
+			add_action( 'init', array($this, 'flush_rewrite_rules') );
+			add_action( 'admin_init', array($this, 'bulk_actions') );
+			add_action( 'admin_menu', array($this, 'add_menu_page') );
+			add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugins_page_links') );
 
-		add_filter( 'rewrite_rules_array', array($this, 'custom_permalinks_rewrite_rules'), 999, 1);
+			add_filter( 'page_rewrite_rules', array($this, 'custom_page_rewrite_rules'), 999, 1);
+			add_filter( 'post_rewrite_rules', array($this, 'custom_post_rewrite_rules'), 999, 1);
+			add_filter( 'rewrite_rules_array', array($this, 'custom_cpt_rewrite_rules'), 999, 1);
+		}
+
+		// Public functions
 		add_filter( '_get_page_link', array($this, 'custom_permalinks'), 999, 2);
+		add_filter( 'page_link', array($this, 'custom_permalinks'), 999, 2);
 		add_filter( 'post_link', array($this, 'custom_permalinks'), 999, 2);
 		add_filter( 'post_type_link', array($this, 'custom_permalinks'), 999, 2);
 
@@ -235,7 +242,8 @@ class Permalink_Manager_Class {
 						echo '<div data-tab="' . $tab_id . '" id="' . $tab_id . '" class="' . $active_show . '">';
 							echo ($warning) ? "<div class=\"warning alert\">" . wpautop($warning) . "</div>" : "";
 							echo (isset($tab_properties['description'])) ? "<div class=\"info alert\">" . wpautop($description) . "</div>" : "";
-							$this->$tab_properties['function']();
+							$function_name = $tab_properties['function'];
+							$this->$function_name();
 						echo '</div>';
 					} ?>
 				</div>
@@ -582,21 +590,15 @@ class Permalink_Manager_Class {
 	/**
 	 * Add rewrite rules
 	 */
-	function custom_permalinks_rewrite_rules($rules) {
+	function custom_cpt_rewrite_rules($rules) {
 
 		global $wp_rewrite;
 
 		$new_rules = array();
 		$permastructures = $this->permalink_manager_options['base-editor'];
 
-		// Move post & page permastructures to the end of array
-		$page_p = $permastructures['page'];
-		$post_p = $permastructures['post'];
+		// Rewrite rules for Posts & Pages are defined in different filters
 		unset($permastructures['post'], $permastructures['page']);
-
-		$permastructures['page'] = $page_p;
-		$permastructures['post'] = $post_p;
-		$permastructures = array_reverse($permastructures);
 
 		foreach($permastructures as $post_type => $permastruct) {
 			// Ignore empty permastructures (do not add them)
@@ -604,6 +606,28 @@ class Permalink_Manager_Class {
 
 			$new_rule = $wp_rewrite->generate_rewrite_rules($wp_rewrite->root . $permastruct, EP_PERMALINK);
 			$rules = array_merge($new_rule, $rules);
+		}
+		return $rules;
+	}
+
+	/**
+	 * Post Rewrite Rules
+	 */
+	function custom_post_rewrite_rules($rules) {
+		global $wp_rewrite;
+		if(isset($this->permalink_manager_options['base-editor']['post'])) {
+			$rules = $wp_rewrite->generate_rewrite_rules($wp_rewrite->root . $this->permalink_manager_options['base-editor']['post'], EP_PERMALINK);
+		}
+		return $rules;
+	}
+
+	/**
+	 * Page Rewrite Rules
+	 */
+	function custom_page_rewrite_rules($rules) {
+		global $wp_rewrite;
+		if(isset($this->permalink_manager_options['base-editor']['page'])) {
+			$rules = $wp_rewrite->generate_rewrite_rules($wp_rewrite->root . $this->permalink_manager_options['base-editor']['page'], EP_PERMALINK);
 		}
 		return $rules;
 	}
@@ -629,15 +653,13 @@ class Permalink_Manager_Class {
 function run_permalink_manager() {
 
 	// Load plugin files.
-	if( is_admin() ) {
-		require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-slug-editor.php';
-		require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-base-editor.php';
-		require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-screen-options.php';
-		require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-helper-functions.php';
+	require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-slug-editor.php';
+	require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-base-editor.php';
+	require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-screen-options.php';
+	require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-helper-functions.php';
 
-		$Permalink_Manager_Class = new Permalink_Manager_Class();
-		$Permalink_Manager_Screen_Options = new Permalink_Manager_Screen_Options();
-	}
+	$Permalink_Manager_Class = new Permalink_Manager_Class();
+	$Permalink_Manager_Screen_Options = new Permalink_Manager_Screen_Options();
 
 }
 

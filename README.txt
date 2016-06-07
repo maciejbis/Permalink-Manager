@@ -2,8 +2,8 @@
 Contributors: mbis
 Tags: urls, permalinks, slugs
 Requires at least: 4.0
-Tested up to: 4.5
-Stable tag: 0.3
+Tested up to: 4.5.2
+Stable tag: 0.3.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -70,9 +70,18 @@ After the plugin is installed you can access its dashboard from this page: `Tool
 1.	Main dashboard.
 2.	Find and replace section.
 3.	Regenerate section.
-4.
+4.  Custom permastructures.
 
 == Changelog ==
+
+= 0.3.3 =
+* Hotfix for bug with dynamic function names in PHP7.
+
+= 0.3.2 =
+* Hotfix for front-end permalinks. The custom permastructures worked only in wp-admin.
+
+= 0.3.1 =
+* Hotfix for Posts & Pages permastructures
 
 = 0.3 =
 * Now all permalink parts can be edited - new "Permalink Base Editor" section added.
@@ -84,11 +93,3 @@ After the plugin is installed you can access its dashboard from this page: `Tool
 
 = 0.1 =
 * A first initial version.
-
-== Upgrade Notice ==
-
-= 0.1 =
-Few bugs & strict standard errors are fixed.
-
-= 0.1 =
-A first initial version.

@@ -105,7 +105,7 @@ class Permalink_Manager_Base_Editor extends WP_List_Table {
 	/**
 	 * Prepare the items for the table to process
 	 */
-	public function prepare_items($posts_table) {
+	public function prepare_items() {
 		$columns = $this->get_columns();
 		$hidden = $this->get_hidden_columns();
 		$sortable = $this->get_sortable_columns();

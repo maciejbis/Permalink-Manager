@@ -116,7 +116,7 @@ class Permalink_Manager_Slug_Editor extends WP_List_Table {
 	/**
 	 * Prepare the items for the table to process
 	 */
-	public function prepare_items($posts_table) {
+	public function prepare_items() {
 		$columns = $this->get_columns();
 		$hidden = $this->get_hidden_columns();
 		$sortable = $this->get_sortable_columns();
@@ -135,7 +135,7 @@ class Permalink_Manager_Slug_Editor extends WP_List_Table {
 		$post_statuses = "'" . implode("', '", $post_statuses_array) . "'";
 
 		// Will be used in pagination settings
-		$total_items = $wpdb->get_var("SELECT COUNT(id) FROM $posts_table WHERE post_status IN ($post_statuses) AND post_type IN ($post_types)");
+		$total_items = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->posts} WHERE post_status IN ($post_statuses) AND post_type IN ($post_types)");
 
 		// SQL query parameters
 		$order = (isset($_REQUEST['order']) && in_array($_REQUEST['order'], array('asc', 'desc'))) ? $_REQUEST['order'] : 'desc';
@@ -143,7 +143,7 @@ class Permalink_Manager_Slug_Editor extends WP_List_Table {
 		$offset = ($currentPage - 1) * $per_page;
 
 		// Grab posts from database
-		$sql_query = "SELECT * FROM $posts_table WHERE post_status IN ($post_statuses) AND post_type IN ($post_types) ORDER BY $orderby $order LIMIT $per_page OFFSET $offset";
+		$sql_query = "SELECT * FROM {$wpdb->posts} WHERE post_status IN ($post_statuses) AND post_type IN ($post_types) ORDER BY $orderby $order LIMIT $per_page OFFSET $offset";
 		$data = $wpdb->get_results($sql_query, ARRAY_A);
 
 		// Sort posts and count all posts

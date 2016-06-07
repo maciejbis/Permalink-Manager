@@ -30,7 +30,8 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 		$output = get_permalink($id);
 
 		// Get last part of URI
-		$old_slug = end((explode('/', get_page_uri($id))));
+    $page_uri = explode('/', get_page_uri($id));
+		$old_slug = end($page_uri);
 		$correct_slug = ($highlight) ? "<code>{$correct_slug}</code>" : $correct_slug;
 		$output = Permalink_Manager_Helper_Functions::str_lreplace($old_slug, $correct_slug, $output);
 
@@ -182,7 +183,7 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 
     // Load permastruct from options
     $options = get_option('permalink-manager', array());
-    $permastructs = $options['base-editor'];
+    $permastructs = isset($options['base-editor']) ? $options['base-editor'] : array();
 
     // Get default permastruct
     if($post_type == 'page') {
