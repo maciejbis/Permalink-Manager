@@ -1,9 +1,9 @@
-=== Permalink Manager ===
+4=== Permalink Manager ===
 Contributors: mbis
 Tags: urls, permalinks, slugs
 Requires at least: 4.0
 Tested up to: 4.5.2
-Stable tag: 0.3.3
+Stable tag: 0.3.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -72,7 +72,16 @@ After the plugin is installed you can access its dashboard from this page: `Tool
 3.	Regenerate section.
 4.  Custom permastructures.
 
+== Frequently Asked Questions ==
+
+= Q. The permalinks did not work any longer after the plugin was removed. =
+A. You need to flush the original rewrite rules. Go to "Settings -> Permalinks" `/wp-admin/options-permalink.php` and click on "Save Changes".
+
 == Changelog ==
+
+= 0.3.4 =
+* Hotfix for not working custom taxonomies tags.
+* Now the rewrite rules for custom post types are stored in different way.
 
 = 0.3.3 =
 * Hotfix for bug with dynamic function names in PHP7.

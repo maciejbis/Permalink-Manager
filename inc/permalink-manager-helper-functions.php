@@ -143,8 +143,6 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
       // The snippet belows prevent duplicates in permastructures
       if($field == 'base-editor') {
 
-        //print_r($value);
-
         // Algorithm below works like array_count_values(), but we also need to make the permastructs unique
         $unique_permastructures = array();
         foreach($value as $key => $permastruct) {

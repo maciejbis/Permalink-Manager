@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager
  * Plugin URI:        http://maciejbis.net/
  * Description:       A simple tool that allows to mass update of slugs that are used to build permalinks for Posts, Pages and Custom Post Types.
- * Version:           0.3.3
+ * Version:           0.3.4
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define the directories used to load plugin files.
 define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'permalink-manager' );
-define( 'PERMALINK_MANAGER_VERSION', '0.3.3' );
+define( 'PERMALINK_MANAGER_VERSION', '0.3.4' );
 define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 define( 'PERMALINK_MANAGER_URL', untrailingslashit( plugins_url( '', __FILE__ ) ) );
 define( 'PERMALINK_MANAGER_WEBSITE', 'http://maciejbis.net' );
@@ -141,11 +141,6 @@ class Permalink_Manager_Class {
 		$Permalink_Manager_Base_Editor = new Permalink_Manager_Base_Editor();
     $Permalink_Manager_Base_Editor->set_screen_option_fields($this->fields_arrays('screen_options'));
 		$Permalink_Manager_Base_Editor->prepare_items($wpdb->posts);
-
-		//echo '<pre>';
-		//print_r($wp_rewrite);
-		//echo '</pre>';
-
 		?>
 
 		<form id="permalinks-base-table" method="post">
@@ -531,6 +526,8 @@ class Permalink_Manager_Class {
 	 * Change permalinks for posts, pages & custom post types
 	 */
 	function custom_permalinks($permalink, $post) {
+		global $wp_rewrite;
+
 		$post = (is_integer($post)) ? get_post($post) : $post;
 		$post_type = $post->post_type;
 		$permastruct = isset($this->permalink_manager_options['base-editor'][$post_type]) ? $this->permalink_manager_options['base-editor'][$post_type] : '';
@@ -583,8 +580,22 @@ class Permalink_Manager_Class {
 		// Do the replacement (post tag is removed now to enable support for hierarchical CPT)
 		$tags = array('%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%category%', '%author%', $post_type_tag);
 		$replacements = array($date[0], $date[1], $date[2], $date[3], $date[4], $date[5], $post->ID, $category, $author, '');
+		$permalink = str_replace($tags, $replacements, "{$permalink}{$full_slug}");
 
-		return str_replace($tags, $replacements, "{$permalink}{$full_slug}");
+		// Replace custom taxonomies
+		$taxonomies = get_taxonomies( array('public' => true, '_builtin' => false), 'names', 'and' );
+		if ( $taxonomies ) {
+			foreach($taxonomies as $taxonomy) {
+				$tag = "%{$taxonomy}%";
+				$terms = wp_get_object_terms($post->ID, $taxonomy);
+        if (!is_wp_error($terms) && !empty($terms) && is_object($terms[0])) {
+					$replacement = $terms[0]->slug;
+					$permalink = str_replace($tag, $replacement, $permalink);
+				}
+			}
+		}
+
+		return $permalink;
 	}
 
 	/**
@@ -604,8 +615,34 @@ class Permalink_Manager_Class {
 			// Ignore empty permastructures (do not add them)
 			if(empty($permastruct)) continue;
 
-			$new_rule = $wp_rewrite->generate_rewrite_rules($wp_rewrite->root . $permastruct, EP_PERMALINK);
-			$rules = array_merge($new_rule, $rules);
+			$new_rules = $wp_rewrite->generate_rewrite_rules($wp_rewrite->root . $permastruct, EP_PERMALINK);
+
+			// Replace old rewrite rules with new ones
+			$cpt = get_post_type_object( $post_type );
+			if(isset($cpt->rewrite['slug'])) {
+				$rules_to_be_replaced = $wp_rewrite->generate_rewrite_rules($wp_rewrite->root . $cpt->rewrite['slug'] . "/%{$post_type}%", EP_NONE);
+				$rules_to_be_replaced_keys = array_keys($rules_to_be_replaced);
+
+				$split_before = reset($rules_to_be_replaced_keys);
+				$split_after = end($rules_to_be_replaced_keys);
+
+				$split_before_pos = array_search($split_before, array_keys($rules));
+				$split_after_pos = array_search($split_after, array_keys($rules)) + 1;
+
+				$rules_before = array_slice($rules, 0, $split_before_pos, true);
+				$rules_inside = array_slice($rules, $split_before_pos, ($split_after_pos - $split_before_pos), true);
+				$rules_after = array_slice($rules, $split_after_pos, null, true);
+
+				// $rules = $rules_before + $new_rules + $rules_inside + $rules_after;
+				/**
+				 * Uncomment above if you would like to keep all original rewrite rules
+				 */
+				$rules = $rules_before + $new_rules + $rules_after;
+
+			} else {
+					$rules = array_merge($rules, $new_rules);
+			}
+
 		}
 		return $rules;
 	}
