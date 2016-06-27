@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager
  * Plugin URI:        http://maciejbis.net/
  * Description:       A simple tool that allows to mass update of slugs that are used to build permalinks for Posts, Pages and Custom Post Types.
- * Version:           0.3.4
+ * Version:           0.4
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define the directories used to load plugin files.
 define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'permalink-manager' );
-define( 'PERMALINK_MANAGER_VERSION', '0.3.4' );
+define( 'PERMALINK_MANAGER_VERSION', '0.4' );
 define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 define( 'PERMALINK_MANAGER_URL', untrailingslashit( plugins_url( '', __FILE__ ) ) );
 define( 'PERMALINK_MANAGER_WEBSITE', 'http://maciejbis.net' );
@@ -34,25 +34,30 @@ class Permalink_Manager_Class {
 	public function __construct() {
 
     $this->permalink_manager_options = get_option('permalink-manager');
+    $this->permalink_manager_uris = get_option('permalink-manager-uris');
+    $this->permalink_manager_permastructs = get_option('permalink-manager-permastructs');
 
 		if( is_admin() ) {
 			add_action( 'plugins_loaded', array($this, 'localize_me') );
-			add_action( 'init', array($this, 'flush_rewrite_rules') );
-			add_action( 'admin_init', array($this, 'bulk_actions') );
+			add_action( 'init', array($this, 'upgrade_plugin'), 99999 );
+			add_action( 'wp_loaded', array($this, 'bulk_actions'), 1 );
 			add_action( 'admin_menu', array($this, 'add_menu_page') );
+			add_action( 'save_post', array($this, 'update_single_uri'), 10, 3 );
 			add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugins_page_links') );
-
-			add_filter( 'page_rewrite_rules', array($this, 'custom_page_rewrite_rules'), 999, 1);
-			add_filter( 'post_rewrite_rules', array($this, 'custom_post_rewrite_rules'), 999, 1);
-			add_filter( 'rewrite_rules_array', array($this, 'custom_cpt_rewrite_rules'), 999, 1);
+			add_filter( 'get_sample_permalink_html', array($this, 'edit_uri_box'), 10, 4 );
 		}
 
+		add_action( 'wp_loaded', array($this, 'permalink_filters'), 9);
+
+	}
+
+	function permalink_filters() {
 		// Public functions
+		add_filter( 'request', array($this, 'detect_post') );
 		add_filter( '_get_page_link', array($this, 'custom_permalinks'), 999, 2);
 		add_filter( 'page_link', array($this, 'custom_permalinks'), 999, 2);
 		add_filter( 'post_link', array($this, 'custom_permalinks'), 999, 2);
 		add_filter( 'post_type_link', array($this, 'custom_permalinks'), 999, 2);
-
 	}
 
 	/**
@@ -79,15 +84,15 @@ class Permalink_Manager_Class {
 	function slug_editor_html() {
 		global $wpdb;
 
-		$Permalink_Manager_Slug_Editor = new Permalink_Manager_Slug_Editor();
-    $Permalink_Manager_Slug_Editor->set_screen_option_fields($this->fields_arrays('screen_options'));
-		$Permalink_Manager_Slug_Editor->prepare_items($wpdb->posts);
+		$Permalink_Manager_Editor = new Permalink_Manager_Editor();
+    $Permalink_Manager_Editor->set_screen_option_fields($this->fields_arrays('screen_options'));
+		$Permalink_Manager_Editor->prepare_items($wpdb->posts);
 
 		?>
 
 		<form id="permalinks-table" method="post">
 			<input type="hidden" name="tab" value="slug_editor" />
-			<?php echo $Permalink_Manager_Slug_Editor->display(); ?>
+			<?php echo $Permalink_Manager_Editor->display(); ?>
 		</form>
 	<?php
 	}
@@ -96,7 +101,7 @@ class Permalink_Manager_Class {
 	 * Mass replace options page.
 	 */
 	function find_and_replace_html() {
-		$button = get_submit_button( __( 'Find & Replace', 'permalink-manager' ), 'primary', 'find-replace-button', false );
+		$button = get_submit_button( __( 'Find & Replace Slugs', 'permalink-manager' ), 'primary', 'find-replace-button', false );
 
 		$return = "<form id=\"permalinks-table-find-replace\" method=\"post\">";
 			$return .= "<input type=\"hidden\" name=\"tab\" value=\"find_and_replace\" />";
@@ -168,27 +173,25 @@ class Permalink_Manager_Class {
 		// Tabs array with assigned functions used to display HTML content.
 		$tabs = array(
 			'slug_editor' => array(
-				'name'				=>	__('Slug Editor', 'permalink-manager'),
+				'name'				=>	__('Permalink editor', 'permalink-manager'),
 				'function'		=>	'slug_editor_html',
-				'description'	=>	__('You can disable/enable selected post types from the table below using <strong>"Screen Options"</strong> (click on the upper-right button to show it) section above.', 'permalink-manager')
+				'description'	=>	__('You can disable/enable selected post types from the table below using <strong>"Screen Options"</strong> (click on the upper-right button to show it) section above.', 'permalink-manager'),
 			),
 			'find_and_replace' => array(
 				'name'				=>	__('Find and replace', 'permalink-manager'),
-				'function'		=>	'find_and_replace_html',
-				'warning'			=>	(__('<strong>You are doing it at your own risk!</strong>', 'permalink-manager') . '<br />' . __('A backup of MySQL database before using this tool is highly recommended. The search & replace operation might be not revertible!', 'permalink-manager'))
+				'function'		=>	'find_and_replace_html'
 			),
 			'regenerate_slugs' => array(
-				'name'				=>	__('Regenerate slugs', 'permalink-manager'),
-				'function'		=>	'regenerate_slugs_html',
-				'warning'			=>	(__('<strong>You are doing it at your own risk!</strong>', 'permalink-manager') . '<br />' . __('A backup of MySQL database before using this tool is highly recommended. The regenerate process of slugs might be not revertible!', 'permalink-manager'))
+				'name'				=>	__('Regenerate/Reset', 'permalink-manager'),
+				'function'		=>	'regenerate_slugs_html'
 			),
 			'base_editor' => array(
-				'name'				=>	__('Permalinks Base Editor', 'permalink-manager'),
+				'name'				=>	__('Base editor', 'permalink-manager'),
 				'function'		=>	'base_editor_html',
 				'warning'			=>	array(
 														sprintf(__('<strong>This is an experimental feature!</strong> Please report all the bugs & issues <a href="%s">here</a>.', 'permalink-manager'), 'https://wordpress.org/support/plugin/permalink-manager'),
-														__('Custom Post Types should have their own, unique front, eg. <em>products/%product%!</em>', 'permalink-manager'),
-														__('After you update & save the settings below, you need to flush the rewrite rules!', 'permalink-manager'),
+														__('Each Custom Post Type should have their own, unique front (eg. <em>products</em> for Products)', 'permalink-manager'),
+														__('Please note that the following settings will be applied only to new posts.<br />If you want to apply them to exisiting posts, you will need to regenerate the URIs in <strong>"Regnerate/Reset"</strong> section (with <strong>"Slugs & bases"</strong> option selected).', 'permalink-manager'),
 													),
 				'description'	=>	(sprintf( __('All the <a href="%s" target="_blank">Structure Tags</a> allowed are listed below. Please note that some of them can be used only for particular Post Types.', 'permalink-manager'), "https://codex.wordpress.org/Using_Permalinks#Structure_Tags") . "<br />" . Permalink_Manager_Helper_Functions::get_all_structure_tags())
 			),
@@ -306,13 +309,28 @@ class Permalink_Manager_Class {
 
 		// Fields for "Find and replace"
 		$find_and_replace = array(
+			'clearfix1' => array(
+				'type' => 'clearfix'
+			),
 			'old_string' => array(
         'label' => __( 'Find ...', 'permalink-manager' ),
         'type' => 'text',
+				'container_class' => 'half'
       ),
 			'new_string' => array(
         'label' => __( 'Replace with ...', 'permalink-manager' ),
         'type' => 'text',
+				'container_class' => 'half half2'
+      ),
+			'clearfix2' => array(
+				'type' => 'clearfix'
+			),
+			'variant' => array(
+				'label' => __( 'Select which elements should be affected', 'permalink-manager' ),
+				'type' => 'radio',
+				'choices' => array('both' => '<strong>' . __('Plugin Slugs & Bases (Full URIs)', 'permalink-manager') . '</strong>', 'slugs' => '<strong>' . __('Only Plugin Slugs', 'permalink-manager') . '</strong>', 'post_names' => '<strong>' . __('Plugin Slugs & Wordpress Native Slugs (Post Names)', 'permalink-manager') . '</strong>'),
+				'default' => array('slugs'),
+				'desc' => __('First two options will affect settings used only by this plugin.<br />A MySQL backup is recommended before using third option - it overwrites the value of <strong>post_name</strong> field (part of <strong>$post</strong> object used by Wordpress core).', 'permalink-manager')
       ),
 			'post_types' => array(
 				'label' => __( 'Post Types that should be affected', 'permalink-manager' ),
@@ -330,6 +348,13 @@ class Permalink_Manager_Class {
 
 		// Fields for "Regenerate slugs"
 		$regenerate_slugs = array(
+			'variant' => array(
+				'label' => __( 'Select which elements should be affected', 'permalink-manager' ),
+				'type' => 'radio',
+				'choices' => array('both' => '<strong>' . __('Plugin Slugs & Bases (Full URIs)', 'permalink-manager') . '</strong>', 'slugs' => '<strong>' . __('Only Plugin Slugs', 'permalink-manager') . '</strong>', 'post_names' => '<strong>' . __('Plugin Slugs & Wordpress Native Slugs (Post Names)', 'permalink-manager') . '</strong>'),
+				'default' => array('slugs'),
+				'desc' => __('First two options will affect settings used only by this plugin.<br />A MySQL backup is recommended before using third option - it overwrites the value of <strong>post_name</strong> field (part of <strong>$post</strong> object used by Wordpress core).', 'permalink-manager')
+      ),
 			'post_types' => array(
 				'label' => __( 'Post Types that should be affected', 'permalink-manager' ),
 				'type' => 'checkbox',
@@ -354,118 +379,23 @@ class Permalink_Manager_Class {
 	function bulk_actions() {
 		global $wpdb;
 
-		$updated_slugs_count = 0;
-		$updated_array = array();
-		$alert_type = $alert_content = $errors = $main_content = '';
-
+		// Trigger a selected function
 		if (isset($_POST['update_all_slugs'])) {
-
-			$slugs = isset($_POST['slug']) ? $_POST['slug'] : array();
-
-			// Double check if the slugs and ids are stored in arrays
-			if (!is_array($slugs)) $slugs = explode(',', $slugs);
-
-			if (!empty($slugs)) {
-				foreach($slugs as $id => $new_slug) {
-					$this_post = get_post($id);
-
-					// Check if slug was changed
-					if($this_post->post_name != $new_slug) {
-						// Update slugs
-						Permalink_Manager_Helper_Functions::update_slug_by_id($new_slug, $id);
-
-						$updated_array[] = array('post_title' => get_the_title($id), 'old_slug' => $this_post->post_name, 'new_slug' => $new_slug);
-						$updated_slugs_count++;
-					}
-
-					// Reset slug
-					$slug = '';
-				}
-			}
-
+			$output = Permalink_Manager_Actions::update_all_permalinks();
 		} else if (isset($_POST['find-replace-button'])) {
-
-			$var['old_string'] = esc_sql($_POST['permalink-manager']['find-replace']['old_string']);
-			$var['new_string'] = esc_sql($_POST['permalink-manager']['find-replace']['new_string']);
-			$post_types_array = ($_POST['permalink-manager']['find-replace']['post_types']);
-			$post_statuses_array = ($_POST['permalink-manager']['find-replace']['post_statuses']);
-			$var['post_types'] = implode("', '", $post_types_array);
-			$var['post_statuses'] = implode("', '", $post_statuses_array);
-
-			// Check if any of variables is not empty
-			$find_and_replace_fields = $this->fields_arrays('find_and_replace');
-			foreach($var as $key => $val) {
-				if(empty($val)) $errors .= '<p>' . sprintf( __( '<strong>"%1s"</strong> field is empty!', 'permalink-manager' ), $find_and_replace_fields[$key]['label'] ) . '</p>';
-			}
-
-			// Save the rows before they are updated to an array
-			$posts_to_update = $wpdb->get_results("SELECT post_title, post_name, ID FROM {$wpdb->posts} WHERE post_status IN ('{$var['post_statuses']}') AND post_name LIKE '%{$var['old_string']}%' AND post_type IN ('{$var['post_types']}')", ARRAY_A);
-
-			// Now if the array is not empty use IDs from each subarray as a key
-			if($posts_to_update && empty($errors)) {
-				foreach ($posts_to_update as $row) {
-					// Get new slug
-					$old_slug = $row['post_name'];
-					$new_slug = str_replace($var['old_string'], $var['new_string'], $old_slug);
-
-					// Update slugs
-					Permalink_Manager_Helper_Functions::update_slug_by_id($new_slug, $row['ID']);
-
-					$updated_array[] = array('post_title' => $row['post_title'], 'old_slug' => $old_slug, 'new_slug' => $new_slug);
-					$updated_slugs_count++;
-
-					// Reset slug
-					$slug = '';
-				}
-			} else {
-				$alert_type = 'error';
-				$alert_content = $errors;
-			}
-
+			$output = Permalink_Manager_Actions::find_replace($this->fields_arrays('find_and_replace'));
 		} else if (isset($_POST['regenerate-button'])) {
-
-			// Setup needed variables
-			$post_types_array = ($_POST['permalink-manager']['regenerate_slugs']['post_types']);
-			$post_statuses_array = ($_POST['permalink-manager']['regenerate_slugs']['post_statuses']);
-
-			// Reset query
-			$reset_query = new WP_Query( array( 'post_type' => $post_types_array, 'post_status' => $post_statuses_array, 'posts_per_page' => -1 ) );
-
-			// The Loop
-			if ( $reset_query->have_posts() ) {
-				while ( $reset_query->have_posts() ) {
-					$reset_query->the_post();
-					$this_post = get_post(get_the_ID());
-
-					$correct_slug = sanitize_title(get_the_title());
-					$old_slug = $this_post->post_name;
-					$new_slug = wp_unique_post_slug($correct_slug, get_the_ID(), get_post_status(get_the_ID()), get_post_type(get_the_ID()), null);
-
-					if($old_slug != $new_slug) {
-						$updated_slugs_count++;
-
-						Permalink_Manager_Helper_Functions::update_slug_by_id($new_slug, get_the_ID());
-						$updated_array[] = array('post_title' => get_the_title(), 'old_slug' => $old_slug, 'new_slug' => $new_slug);
-					}
-				}
-			}
-
-			// Restore original Post Data
-			wp_reset_postdata();
-
+			$output = Permalink_Manager_Actions::regenerate_all_permalinks();
 		// Save Permalink Structures/Permalinks Bases
-		} else if (isset($_POST['save_permalink_structures'])) {
-			Permalink_Manager_Helper_Functions::save_option('base-editor', $_POST['permalink-manager']['base-editor']);
-
-			$alert_type = 'updated';
-			$alert_content = sprintf( __( '<a href="%s">Click here</a> to flush the rewrite rules (it is required to make the new permalinks working).', 'permalink-manager' ), admin_url('admin.php?page=' . PERMALINK_MANAGER_PLUGIN_NAME . '.php&flush_rewrite_rules=true&tab=base_editor'));
-			Permalink_Manager_Helper_Functions::display_alert($alert_content, $alert_type, true);
-			return;
-		// Flush rewrite rules
-		} else if (isset($_POST['flush_rewrite_rules'])) {
-			$this->flush_rewrite_rules();
-			return;
+		} else if (isset($_POST['save_permastructs'])) {
+			$output = Permalink_Manager_Actions::update_permastructs();
 		}
+
+		// Load variables
+		$updated_array = isset($output['updated']) ? $output['updated'] : array();
+		$updated_slugs_count = isset($output['updated_count']) ? $output['updated_count'] : 0;
+		$alert_content = isset($output['alert_content']) ? $output['alert_content'] : "";
+		$alert_type = isset($output['alert_type']) ? $output['alert_type'] : "";
 
 		/**
 		 * Display results
@@ -474,7 +404,10 @@ class Permalink_Manager_Class {
 			// Display errors or success message
 
 			// Check how many rows/slugs were affected
-			if($updated_slugs_count > 0) {
+			if (isset($_POST['save_permastructs'])) {
+				$alert_type = 'updated';
+				$alert_content = __( 'Permastructures were updated!', 'permalink-manager' ) . ' ';
+			} else if($updated_slugs_count > 0) {
 				$alert_type = 'updated';
 				$alert_content = sprintf( _n( '<strong>%d</strong> slug were updated!', '<strong>%d</strong> slugs were updated!', $updated_slugs_count, 'permalink-manager' ), $updated_slugs_count ) . ' ';
 				$alert_content .= sprintf( __( '<a href="%s">Click here</a> to go to the list of updated slugs', 'permalink-manager' ), '#updated-list');
@@ -487,25 +420,35 @@ class Permalink_Manager_Class {
 
 			// Display summary after update
 			// Display only if there are any slugs updated
-			if ( $updated_slugs_count > 0 && $updated_array ) {
-				add_filter('permalink-manager-after-tabs', function( $arg ) use ( $alert_content, $alert_type, $errors, $updated_array, $main_content ) {
+			if ( $updated_slugs_count > 0 && is_array($updated_array) ) {
+				add_filter('permalink-manager-after-tabs', function( $arg ) use ( $alert_content, $alert_type, $updated_array ) {
+
+					// Check if slugs should be displayed
+					$first_slug = reset($updated_array);
 
 					$header_footer = '<tr>';
 						$header_footer .= '<th class="column-primary">' . __('Title', 'permalink-manager') . '</th>';
-						$header_footer .= '<th>' . __('Old slug', 'permalink-manager') . '</th>';
-						$header_footer .= '<th>' . __('New slug', 'permalink-manager') . '</th>';
+						$header_footer .= '<th>' . __('Old URI', 'permalink-manager') . '</th>';
+						$header_footer .= '<th>' . __('New URI', 'permalink-manager') . '</th>';
+						$header_footer .= (isset($first_slug['old_slug'])) ? '<th>' . __('Old Slug', 'permalink-manager') . '</th>' : "";
+						$header_footer .= (isset($first_slug['new_slug'])) ? '<th>' . __('New Slug', 'permalink-manager') . '</th>' : "";
 					$header_footer .= '</tr>';
 
 					$updated_slugs_count = 0;
+					$main_content = "";
 					foreach($updated_array as $row) {
 						// Odd/even class
 						$updated_slugs_count++;
 						$alternate_class = ($updated_slugs_count % 2 == 1) ? ' class="alternate"' : '';
+						//$permalink = Permalink_Manager_Helper_Functions::get_correct_permalink($row[ 'ID' ]);
+						$permalink = home_url("{$row['new_uri']}");
 
 						$main_content .= "<tr{$alternate_class}>";
-							$main_content .= '<td class="row-title column-primary" data-colname="' . __('Title', 'permalink-manager') . '">' . $row['post_title'] . '<button type="button" class="toggle-row"><span class="screen-reader-text">' . __('Show more details', 'permalink-manager') . '</span></button></td>';
-							$main_content .= '<td data-colname="' . __('Old slug', 'permalink-manager') . '">' . $row['old_slug'] . '</td>';
-							$main_content .= '<td data-colname="' . __('New slug', 'permalink-manager') . '">' . $row['new_slug'] . '</td>';
+							$main_content .= '<td class="row-title column-primary" data-colname="' . __('Title', 'permalink-manager') . '">' . $row['post_title'] . "<a target=\"_blank\" href=\"{$permalink}\"><small>{$permalink}</small></a>" . '<button type="button" class="toggle-row"><span class="screen-reader-text">' . __('Show more details', 'permalink-manager') . '</span></button></td>';
+							$main_content .= '<td data-colname="' . __('Old URI', 'permalink-manager') . '">' . $row['old_uri'] . '</td>';
+							$main_content .= '<td data-colname="' . __('New URI', 'permalink-manager') . '">' . $row['new_uri'] . '</td>';
+							$main_content .= (isset($row['old_slug'])) ? '<td data-colname="' . __('Old Slug', 'permalink-manager') . '">' . $row['old_slug'] . '</td>' : "";
+							$main_content .= (isset($row['new_slug'])) ? '<td data-colname="' . __('New Slug', 'permalink-manager') . '">' . $row['new_slug'] . '</td>' : "";
 						$main_content .= '</tr>';
 					}
 
@@ -526,162 +469,168 @@ class Permalink_Manager_Class {
 	 * Change permalinks for posts, pages & custom post types
 	 */
 	function custom_permalinks($permalink, $post) {
-		global $wp_rewrite;
+		global $wp_rewrite, $permalink_manager;
 
 		$post = (is_integer($post)) ? get_post($post) : $post;
 		$post_type = $post->post_type;
-		$permastruct = isset($this->permalink_manager_options['base-editor'][$post_type]) ? $this->permalink_manager_options['base-editor'][$post_type] : '';
 
-		// Ignore empty permastructures (do not change them)
-		if(empty($permastruct) || $post->post_status != 'publish') return $permalink;
+		// Do not change permalink of frontpage
+		if(get_option('page_on_front') == $post->ID) { return $permalink; }
 
-		// Get options
-		if($permastruct) {
-			$permalink = home_url() . "/" . trim($permastruct, '/');
-		}
-
-		/**
-		 * Replace Structure Tags
-		 */
-
-		// Get the date
-		$date = explode(" ",date('Y m d H i s', strtotime($post->post_date)));
-
-		// Get the category (if needed)
-		$category = '';
-		if ( strpos($permalink, '%category%') !== false ) {
-			$cats = get_the_category($post->ID);
-			if ( $cats ) {
-				usort($cats, '_usort_terms_by_ID'); // order by ID
-				$category_object = apply_filters( 'post_link_category', $cats[0], $cats, $post );
-				$category_object = get_term( $category_object, 'category' );
-				$category = $category_object->slug;
-				if ( $parent = $category_object->parent )
-					$category = get_category_parents($parent, false, '/', true) . $category;
-			}
-			// show default category in permalinks, without having to assign it explicitly
-			if ( empty($category) ) {
-				$default_category = get_term( get_option( 'default_category' ), 'category' );
-				$category = is_wp_error( $default_category ) ? '' : $default_category->slug;
-			}
-		}
-
-		// Get the author (if needed)
-		$author = '';
-		if ( strpos($permalink, '%author%') !== false ) {
-			$authordata = get_userdata($post->post_author);
-			$author = $authordata->user_nicename;
-		}
-
-		// Fix for hierarchical CPT (start)
-		$full_slug = get_page_uri($post);
-		$post_type_tag = Permalink_Manager_Helper_Functions::get_post_tag($post_type);
-
-		// Do the replacement (post tag is removed now to enable support for hierarchical CPT)
-		$tags = array('%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%category%', '%author%', $post_type_tag);
-		$replacements = array($date[0], $date[1], $date[2], $date[3], $date[4], $date[5], $post->ID, $category, $author, '');
-		$permalink = str_replace($tags, $replacements, "{$permalink}{$full_slug}");
-
-		// Replace custom taxonomies
-		$taxonomies = get_taxonomies( array('public' => true, '_builtin' => false), 'names', 'and' );
-		if ( $taxonomies ) {
-			foreach($taxonomies as $taxonomy) {
-				$tag = "%{$taxonomy}%";
-				$terms = wp_get_object_terms($post->ID, $taxonomy);
-        if (!is_wp_error($terms) && !empty($terms) && is_object($terms[0])) {
-					$replacement = $terms[0]->slug;
-					$permalink = str_replace($tag, $replacement, $permalink);
-				}
-			}
-		}
+		$uris = $this->permalink_manager_uris;
+		if(isset($uris[$post->ID])) $permalink = home_url('/') . $uris[$post->ID];
 
 		return $permalink;
 	}
 
 	/**
-	 * Add rewrite rules
+	 * Used to optimize SQL queries amount instead of rewrite rules
 	 */
-	function custom_cpt_rewrite_rules($rules) {
+	function detect_post($query) {
 
-		global $wp_rewrite;
+		// GET URL
+		// Fix for Wordpress installed in subdirectories (protocol does not matter here)
+		$url = str_replace(home_url(), "http://" . $_SERVER['HTTP_HOST'], "http://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}");
 
-		$new_rules = array();
-		$permastructures = $this->permalink_manager_options['base-editor'];
+		// Check if it is correct URL
+		if (filter_var($url, FILTER_VALIDATE_URL)) {
 
-		// Rewrite rules for Posts & Pages are defined in different filters
-		unset($permastructures['post'], $permastructures['page']);
+			// Separate endpoints (if set) - support for comment pages will be added later
+			preg_match("/(.*)\/(page|feed|embed|attachment|track)\/(.*)/", $url, $url_with_endpoints);
+			if(isset($url_with_endpoints[3]) && !(empty($url_with_endpoints[3]))) {
+				$url = $url_with_endpoints[1];
+				$endpoint = str_replace(array('page', 'trackback'), array('paged', 'tb'), $url_with_endpoints[2]);
+				$endpoint_value = $url_with_endpoints[3];
+			}
 
-		foreach($permastructures as $post_type => $permastruct) {
-			// Ignore empty permastructures (do not add them)
-			if(empty($permastruct)) continue;
+			// Parse URL
+			$url_parts = parse_url($url);
+			$uri = trim($url_parts['path'], "/");
+			if(empty($uri)) return $query;
 
-			$new_rules = $wp_rewrite->generate_rewrite_rules($wp_rewrite->root . $permastruct, EP_PERMALINK);
+			// Check if current URL is assigned to any post
+			$uris = $this->permalink_manager_uris;
+			if(!(is_array($uris))) return $query;
+			$post_id = array_search($uri,  $uris);
 
-			// Replace old rewrite rules with new ones
-			$cpt = get_post_type_object( $post_type );
-			if(isset($cpt->rewrite['slug'])) {
-				$rules_to_be_replaced = $wp_rewrite->generate_rewrite_rules($wp_rewrite->root . $cpt->rewrite['slug'] . "/%{$post_type}%", EP_NONE);
-				$rules_to_be_replaced_keys = array_keys($rules_to_be_replaced);
+			if(isset($post_id) && is_numeric($post_id)) {
+				$post_to_load = get_post($post_id);
+				$original_page_uri = get_page_uri($post_to_load->ID);
+				unset($query['attachment']);
+				unset($query['error']);
 
-				$split_before = reset($rules_to_be_replaced_keys);
-				$split_after = end($rules_to_be_replaced_keys);
+				if($post_to_load->post_type == 'page') {
+					$query['pagename'] = $original_page_uri;
+				} elseif($post_to_load->post_type == 'post') {
+					$query['name'] = $original_page_uri;
+				} else {
+					$query['post_type'] = $post_to_load->post_type;
+					$query['name'] = $original_page_uri;
+					$query[$post_to_load->post_type] = $original_page_uri;
+				}
 
-				$split_before_pos = array_search($split_before, array_keys($rules));
-				$split_after_pos = array_search($split_after, array_keys($rules)) + 1;
-
-				$rules_before = array_slice($rules, 0, $split_before_pos, true);
-				$rules_inside = array_slice($rules, $split_before_pos, ($split_after_pos - $split_before_pos), true);
-				$rules_after = array_slice($rules, $split_after_pos, null, true);
-
-				// $rules = $rules_before + $new_rules + $rules_inside + $rules_after;
-				/**
-				 * Uncomment above if you would like to keep all original rewrite rules
-				 */
-				$rules = $rules_before + $new_rules + $rules_after;
-
-			} else {
-					$rules = array_merge($rules, $new_rules);
+				// Add endpoint
+				if(isset($endpoint_value)) {
+					$query[$endpoint] = $endpoint_value;
+				}
 			}
 
 		}
-		return $rules;
+		return $query;
 	}
 
 	/**
-	 * Post Rewrite Rules
+	 * Allow to edit URIs from "Edit Post" admin pages
 	 */
-	function custom_post_rewrite_rules($rules) {
-		global $wp_rewrite;
-		if(isset($this->permalink_manager_options['base-editor']['post'])) {
-			$rules = $wp_rewrite->generate_rewrite_rules($wp_rewrite->root . $this->permalink_manager_options['base-editor']['post'], EP_PERMALINK);
+	function edit_uri_box($html, $id, $new_title, $new_slug) {
+
+		global $post;
+
+		// Do not change anything if post is not saved yet
+		if(empty($post->post_name)) return $html;
+
+		$uris = $this->permalink_manager_uris;
+		$default_uri = trim(str_replace(home_url("/"), "", get_permalink($id)), "/");
+		$uri = (isset($uri[$id])) ? $uri[$id] : $default_uri;
+
+		$html = preg_replace("/(<strong>(.*)<\/strong>)(.*)/is", "$1 ", $html);
+		$html .= home_url("/") . " <span id=\"editable-post-name\"><input type='text' value='{$uri}' name='custom_uri'/></span>";
+		return $html;
+	}
+
+	/**
+	 * Update URI from "Edit Post" admin page
+	 */
+	function update_single_uri($post_id, $post, $update) {
+
+		// Ignore trashed items
+		if($post->post_status == 'trash') return;
+
+		$uris = $this->permalink_manager_uris;
+		$old_default_uri = trim(str_replace(home_url("/"), "", get_permalink($post_id)), "/");
+		$new_default_uri = Permalink_Manager_Helper_Functions::get_uri($post, true);
+		$new_uri = '';
+
+		// Check if user changed URI (available after post is saved)
+		if(isset($_POST['custom_uri'])) {
+			$new_uri = trim($_POST['custom_uri'], "/");
 		}
-		return $rules;
-	}
 
-	/**
-	 * Page Rewrite Rules
-	 */
-	function custom_page_rewrite_rules($rules) {
-		global $wp_rewrite;
-		if(isset($this->permalink_manager_options['base-editor']['page'])) {
-			$rules = $wp_rewrite->generate_rewrite_rules($wp_rewrite->root . $this->permalink_manager_options['base-editor']['page'], EP_PERMALINK);
+		// A little hack
+		$new_uri = ($new_uri) ? $new_uri : $new_default_uri;
+
+		// Do not store default values
+		if(isset($uris[$post_id]) && ($new_uri == $old_default_uri)) {
+			unset($uris[$post_id]);
+		} else if ($new_uri != $old_default_uri) {
+			$uris[$post_id] = $new_uri;
 		}
-		return $rules;
+		update_option('permalink-manager-uris', $uris);
 	}
 
 	/**
-	 * Flush rewrite rules
+	 * Convert old plugin structure to the new solution (this function will be removed in 1.0 version)
 	 */
-	function flush_rewrite_rules() {
-		if(isset($_REQUEST['flush_rewrite_rules'])) {
+	function upgrade_plugin() {
+
+		global $wpdb;
+
+		/*
+		 * Separate slugs from rest of plugin options
+		 */
+		 $options = $this->permalink_manager_options;
+		//if !empty($this->permalink_manager_options['base-editor'])
+		if (isset($options['base-editor']) && is_array($options['base-editor'])) {
+			$old_permastructs = $options['base-editor'];
+			$new_permastructs = $uris = array();
+
+			// At first save permastructs to new separate option field
+			foreach($old_permastructs as $post_type => $permastruct) {
+				$new_permastructs[$post_type] = trim(str_replace(Permalink_Manager_Helper_Functions::get_post_tag($post_type), '', $permastruct), "/");
+			}
+			unset($options['base-editor']);
+
+			// Grab posts from database
+			$sql_query = "SELECT * FROM {$wpdb->posts} WHERE post_status IN ('publish') LIMIT 99999";
+			$posts = $wpdb->get_results($sql_query);
+
+			foreach($posts as $post) {
+				$uri = Permalink_Manager_Helper_Functions::get_uri($post, true);
+
+				// Do not save default permastructures
+				$default_permastruct = trim( Permalink_Manager_Helper_Functions::get_default_permastruct($post_type), "/" );
+				if ($permastruct != $default_permastruct) $uris[$post->ID] = trim($uri, "/");
+			}
+
+			// Save new option fields
+			update_option('permalink-manager-uris', $uris);
+			update_option('permalink-manager', $options);
+			update_option('permalink-manager-permastructs', $new_permastructs);
+
+			// Reset rewrite rules
 			flush_rewrite_rules();
-
-			$alert_type = 'updated';
-			$alert_content = __( 'The rewrite rules are flushed!', 'permalink-manager' );
-			return Permalink_Manager_Helper_Functions::display_alert($alert_content, $alert_type, true);
 		}
 	}
-
 }
 
 /**
@@ -690,10 +639,11 @@ class Permalink_Manager_Class {
 function run_permalink_manager() {
 
 	// Load plugin files.
-	require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-slug-editor.php';
+	require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-editor.php';
 	require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-base-editor.php';
 	require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-screen-options.php';
 	require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-helper-functions.php';
+	require_once PERMALINK_MANAGER_DIR . '/inc/permalink-manager-actions.php';
 
 	$Permalink_Manager_Class = new Permalink_Manager_Class();
 	$Permalink_Manager_Screen_Options = new Permalink_Manager_Screen_Options();

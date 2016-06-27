@@ -26,10 +26,7 @@ class Permalink_Manager_Base_Editor extends WP_List_Table {
 		$columns = array(
 			//'cb'				=> '<input type="checkbox" />', //Render a checkbox instead of text
 			'post_type'									=> __('Post Type', 'permalink-manager'),
-			'post_permalink_base'				=> __('Permalink Base/Permastructure', 'permalink-manager'),
-			'post_type_structure_tag'		=> __('Permalink Base Should End With', 'permalink-manager'),
-			'post_type_default_base'		=> __('Default Permalink Base/Permastructure', 'permalink-manager'),
-			//'post_sample_permalink'		=> __('Sample Permalink', 'permalink-manager')
+			'post_permalink_base'				=> __('Custom Permalink Base/Permastruct', 'permalink-manager')
 		);
 
 		return $columns;
@@ -55,8 +52,9 @@ class Permalink_Manager_Base_Editor extends WP_List_Table {
 	 * Data inside the columns
 	 */
 	public function column_default( $item, $column_name ) {
-		$permastruct = Permalink_Manager_Helper_Functions::get_permastruct($item['name'], false);
-		$default_permastruct = Permalink_Manager_Helper_Functions::get_permastruct($item['name'], false, 'default_permastruct');
+		$custom_permastructs = get_option('permalink-manager-permastructs');
+		$default_permastruct = Permalink_Manager_Helper_Functions::get_default_permastruct($item['name'], true);
+		$permastruct = isset($custom_permastructs[$item['name']]) ? $custom_permastructs[$item['name']] : '';
 
 		switch( $column_name ) {
 			case 'post_type':
@@ -64,14 +62,8 @@ class Permalink_Manager_Base_Editor extends WP_List_Table {
 
 			case 'post_permalink_base':
 				$placeholder = $default_permastruct;
-				$field_args = array('type' => 'text', 'default' => $permastruct, 'without_label' => true, 'input_class' => 'widefat', 'placeholder' => $placeholder);
-				return Permalink_Manager_Helper_Functions::generate_option_field($item['name'], $field_args, 'base-editor');
-
-			case 'post_type_default_base':
-				return "<code>{$default_permastruct}</code>";
-
-			case 'post_type_structure_tag':
-				return "<code>" . Permalink_Manager_Helper_Functions::get_post_tag($item['name']) . "</code>";
+				$field_args = array('type' => 'text', 'placeholder' => $default_permastruct, 'default' => $permastruct, 'without_label' => true, 'input_class' => 'widefat', 'placeholder' => $placeholder);
+				return Permalink_Manager_Helper_Functions::generate_option_field($item['name'], $field_args, 'custom-permastructs');
 
 			default:
 				return '';
@@ -94,11 +86,9 @@ class Permalink_Manager_Base_Editor extends WP_List_Table {
 	*/
 	function extra_tablenav( $which ) {
 		$save_button = __( 'Save settings', 'permalink-manager' );
-		$flush_button = __( 'Flush rewrite rules', 'permalink-manager' );
 
 		echo '<div class="alignleft actions">';
-		submit_button( $save_button, 'primary', "save_permalink_structures[{$which}]", false, array( 'id' => 'doaction', 'value' => 'save_permalink_structures' ) );
-		submit_button( $flush_button, 'primary', "flush_rewrite_rules[{$which}]", false, array( 'id' => 'doaction', 'value' => 'flush_rewrite_rules' ) );
+		submit_button( $save_button, 'primary', "save_permastructs[{$which}]", false, array( 'id' => 'doaction', 'value' => 'save_permastructs' ) );
 		echo '</div>';
 	}
 

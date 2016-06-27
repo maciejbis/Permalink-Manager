@@ -2,8 +2,8 @@
 Contributors: mbis
 Tags: urls, permalinks, slugs
 Requires at least: 4.0
-Tested up to: 4.5.2
-Stable tag: 0.3.4
+Tested up to: 4.5.3
+Stable tag: 0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -74,10 +74,14 @@ After the plugin is installed you can access its dashboard from this page: `Tool
 
 == Frequently Asked Questions ==
 
-= Q. The permalinks did not work any longer after the plugin was removed. =
-A. You need to flush the original rewrite rules. Go to "Settings -> Permalinks" `/wp-admin/options-permalink.php` and click on "Save Changes".
+= Q. Does the plugin support WPML/qTranslate
+= A. Unfortunately not, the WPML/qTranslate support will be added in next versions.
 
 == Changelog ==
+
+= 0.4 =
+* Rewrite rules are no longer used (SQL queries are optimized). The plugin uses now 'request' filter to detect the page/post that should be loaded instead.
+* Now full URI (including slug) is editable.
 
 = 0.3.4 =
 * Hotfix for not working custom taxonomies tags.

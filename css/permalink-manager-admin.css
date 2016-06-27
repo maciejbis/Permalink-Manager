@@ -23,3 +23,14 @@
 	#permalinks-table-wrap #permalink-manager-tabs > div.show { display: block; }
 
 	#permalinks-table-wrap #permalink-manager-tabs td label { display: block; }
+
+	#permalinks-table-wrap small{ display: block; font-weight: normal; color: #888; }
+
+#permalink-manager-tabs {}
+	#permalink-manager-tabs h4 { margin-bottom: 5px; font-size: 16px; }
+	#permalink-manager-tabs .field-container { margin-bottom: 30px; }
+	#permalink-manager-tabs .field-container .field-desc { font-style: italic; }
+	#permalink-manager-tabs .half { width: 48%; float: left; }
+	#permalink-manager-tabs .half2 { margin-left: 4%; }
+	#permalink-manager-tabs .half input { width: 100%; }
+	#permalink-manager-tabs .clearfix { float: none; overflow: hidden; clear: both; }

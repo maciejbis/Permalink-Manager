@@ -24,21 +24,6 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
-	 * Display the permalink in a better way
-	 */
-	static function get_correct_permalink($id, $correct_slug, $highlight = false) {
-		$output = get_permalink($id);
-
-		// Get last part of URI
-    $page_uri = explode('/', get_page_uri($id));
-		$old_slug = end($page_uri);
-		$correct_slug = ($highlight) ? "<code>{$correct_slug}</code>" : $correct_slug;
-		$output = Permalink_Manager_Helper_Functions::str_lreplace($old_slug, $correct_slug, $output);
-
-		return $output;
-	}
-
-	/**
 	 * Get post_types array
 	 */
 	static function get_post_types_array($format = null, $cpt = null) {
@@ -59,14 +44,6 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
   }
 
 	/**
-	 * Replace last occurence
-	 */
-	static function str_lreplace($search, $replace, $subject) {
-  	$pos = strrpos($subject, $search);
-    return ($pos !== false) ? substr_replace($subject, $replace, $pos, strlen($search)) : $subject;
-	}
-
-	/**
    * Generate the fields
    */
 	static public function generate_option_field($name, $args, $group = null) {
@@ -81,15 +58,27 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 		$label = (isset($args['label'])) ? $args['label'] : '';
 		$placeholder = (isset($args['placeholder'])) ? "placeholder=\"{$args['placeholder']}\"" : '';
 		$input_class = (isset($args['input_class'])) ? "class=\"{$args['input_class']}\"" : '';
+		$container_class = (isset($args['container_class'])) ? " class=\"{$args['container_class']} field-container\"" : " class=\"field-container\"";
     $input_name = ($group) ? "permalink-manager[{$group}][{$name}]" : $name;
+    $desc = (isset($args['desc'])) ? "<p class=\"field-desc\">{$args['desc']}</p>" : "";
 
     switch($args['type']) {
 			case 'checkbox' :
 				$fields .= '<div class="checkboxes">';
-				foreach($args['choices'] as $value => $label) {
+				foreach($args['choices'] as $value => $checkbox_label) {
 					$all_checked = (isset($saved_values[$group][$name])) ? $saved_values[$group][$name] : $args['default'];
 					$checked = in_array($value, $all_checked) ? "checked='checked'" : "";
-					$fields .= "<label for='{$input_name}[]'><input type='checkbox' {$input_class} value='{$value}' name='{$input_name}[]' {$checked} /> {$label}</label>";
+					$fields .= "<label for='{$input_name}[]'><input type='checkbox' {$input_class} value='{$value}' name='{$input_name}[]' {$checked} /> {$checkbox_label}</label>";
+				}
+				$fields .= '</div>';
+				break;
+
+      case 'radio' :
+				$fields .= '<div class="radios">';
+				foreach($args['choices'] as $value => $checkbox_label) {
+					$all_checked = (isset($saved_values[$group][$name])) ? $saved_values[$group][$name] : $args['default'];
+					$checked = in_array($value, $all_checked) ? "checked='checked'" : "";
+					$fields .= "<label for='{$input_name}[]'><input type='radio' {$input_class} value='{$value}' name='{$input_name}[]' {$checked} /> {$checkbox_label}</label>";
 				}
 				$fields .= '</div>';
 				break;
@@ -99,15 +88,21 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
       	$fields .= "<input type='number' {$input_class} value='{$value}' name='{$input_name}' />";
 				break;
 
+			case 'clearfix' :
+      	return "<div class=\"clearfix\"></div>";
+
       default :
         $value = (isset($saved_values[$group][$name])) ? $saved_values[$group][$name] : $default_value;
         $fields .= "<input type='text' {$input_class} value='{$value}' name='{$input_name}' {$placeholder}/>";
 		}
 
 		// Get all variables into one final variable
-		if(isset($group) && !($group === 'screen-options')) {
-			$output = "<legend>{$label}</legend>";
+		if(isset($group) && (in_array($group, array('regenerate_slugs', 'find-replace')))) {
+			$output = "<div{$container_class}>";
+			$output .= "<h4>{$label}</h4>";
 			$output .= "<div class='metabox-prefs'><div class='{$name}-container'>{$fields}</div></div>";
+			$output .= $desc;
+			$output .= "</div>";
 		} else if (isset($args['without_label']) && $args['without_label'] == true) {
       $output = $fields;
     } else {
@@ -116,6 +111,16 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 		}
 
     return $output;
+  }
+
+  /**
+   * Display the permalink in a better way
+   */
+  static function get_correct_permalink($id) {
+    $old_uris = get_option('permalink-manager-uris');
+    $permalink = isset($old_uris[$id]) ? home_url('/') . $old_uris[$id] : get_permalink($id);
+
+  	return $permalink;
   }
 
   /**
@@ -133,84 +138,137 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
   }
 
   /**
-   * Save option
-   */
-  static function save_option($field = null, $value = null) {
-    $options = get_option('permalink-manager', array());
-    if($field) {
-      $options[$field] = $value;
-
-      // The snippet belows prevent duplicates in permastructures
-      if($field == 'base-editor') {
-
-        // Algorithm below works like array_count_values(), but we also need to make the permastructs unique
-        $unique_permastructures = array();
-        foreach($value as $key => $permastruct) {
-          // Trim whitespaces & slashes at first
-          $permastruct = trim(trim($permastruct, "/"));
-
-          // The permastruct is not unique!
-          if(empty($permastruct)) {
-            $permastruct = Permalink_Manager_Helper_Functions::get_permastruct($key, false, 'default_permastruct');
-          } else if(isset($unique_permastructures[$permastruct])) {
-            $unique_permastructures[$permastruct]++;
-            // Alter the permastruct
-            $permastruct = "{$key}/{$permastruct}";
-          } else {
-            $unique_permastructures[$permastruct] = 1;
-          }
-
-          // Trim one more time
-          $permastruct = trim(trim($permastruct, "/"));
-
-          // Alter the permastruct
-          $options[$field][$key] = $permastruct;
-        }
-
-      }
-
-      update_option('permalink-manager', $options);
-    }
-  }
-
-  /**
    * Get permastruct
    */
-  static function get_permastruct($post_type = 'page', $title_replace = false, $return = 'permastruct') {
-    global $wp_rewrite;
+   static function get_default_permastruct($post_type = 'page', $remove_post_tag = false) {
+     global $wp_rewrite;
 
-    // Load permastruct from options
-    $options = get_option('permalink-manager', array());
-    $permastructs = isset($options['base-editor']) ? $options['base-editor'] : array();
+     // Get default permastruct
+     if($post_type == 'page') {
+       $permastruct = $wp_rewrite->get_page_permastruct();
+     } else if($post_type == 'post') {
+       $permastruct = get_option('permalink_structure');
+     } else {
+       $permastruct = $wp_rewrite->get_extra_permastruct($post_type);
+     }
 
-    // Get default permastruct
-    if($post_type == 'page') {
-      $default_permastruct = $wp_rewrite->get_page_permastruct();
-    } else if($post_type == 'post') {
-      $default_permastruct = get_option('permalink_structure');
+     return ($remove_post_tag) ? trim(str_replace(array("%postname%", "%pagename%", "%{$post_type}%"), "", $permastruct), "/") : $permastruct;
+  }
+
+  static function get_uri($post_id, $get_default = false, $remove_slug = true) {
+    // Load all bases & post
+		$all_uris = get_option('permalink-manager-uris');
+    $all_permastructures = get_option('permalink-manager-permastructs');
+    $options = get_option('permalink-manager');
+
+    $post = isset($post_id->post_type) ? $post_id : get_post($post_id);
+    $post_id = $post->ID;
+    $post_type = $post->post_type;
+    $post_name = $post->post_name;
+
+    if($get_default) {
+
+      if($all_permastructures) {
+        $permastruct = isset($all_permastructures[$post_type]) ? $all_permastructures[$post_type] : Permalink_Manager_Helper_Functions::get_default_permastruct($post_type);
+      } else {
+        $permastruct = isset($options['base-editor'][$post_type]) ? $options['base-editor'][$post_type] : Permalink_Manager_Helper_Functions::get_default_permastruct($post_type);
+      }
+
+      // Get options
+      if($permastruct) {
+        $default_base = trim($permastruct, '/');
+      }
+
+      // Get the date
+      $date = explode(" ",date('Y m d H i s', strtotime($post->post_date)));
+
+      // Get the category (if needed)
+      $category = '';
+      if ( strpos($default_base, '%category%') !== false ) {
+        $cats = get_the_category($post->ID);
+        if ( $cats ) {
+          usort($cats, '_usort_terms_by_ID'); // order by ID
+          $category_object = apply_filters( 'post_link_category', $cats[0], $cats, $post );
+          $category_object = get_term( $category_object, 'category' );
+          $category = $category_object->slug;
+          if ( $parent = $category_object->parent )
+            $category = get_category_parents($parent, false, '/', true) . $category;
+        }
+        // show default category in permalinks, without having to assign it explicitly
+        if ( empty($category) ) {
+          $default_category = get_term( get_option( 'default_category' ), 'category' );
+          $category = is_wp_error( $default_category ) ? '' : $default_category->slug;
+        }
+      }
+
+      // Get the author (if needed)
+      $author = '';
+      if ( strpos($default_base, '%author%') !== false ) {
+        $authordata = get_userdata($post->post_author);
+        $author = $authordata->user_nicename;
+      }
+
+      // Fix for hierarchical CPT (start)
+      $full_slug = get_page_uri($post);
+      $post_type_tag = Permalink_Manager_Helper_Functions::get_post_tag($post_type);
+
+      // Do the replacement (post tag is removed now to enable support for hierarchical CPT)
+      $tags = array('%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%category%', '%author%', $post_type_tag);
+      $replacements = array($date[0], $date[1], $date[2], $date[3], $date[4], $date[5], $post->ID, $category, $author, '');
+      $default_uri = str_replace($tags, $replacements, "{$default_base}/{$full_slug}");
+
+      // Replace custom taxonomies
+      $terms = get_taxonomies( array('public' => true, '_builtin' => false), 'names', 'and' );
+      $taxonomies = $terms;
+      if ( $taxonomies ) {
+        foreach($taxonomies as $taxonomy) {
+          $tag = "%{$taxonomy}%";
+          $terms = wp_get_object_terms($post->ID, $taxonomy);
+          if (!is_wp_error($terms) && !empty($terms) && is_object($terms[0])) {
+            $replacement = $terms[0]->slug;
+            $default_uri = str_replace($tag, $replacement, $default_uri);
+          }
+        }
+      }
     } else {
-      $default_permastruct = $wp_rewrite->get_extra_permastruct($post_type);
+      $default_uri = str_replace(home_url("/"), "", get_permalink($post_id));
     }
 
-    // If the permastruct is not saved for post type or empty return default permastruct
-    $permastruct = (isset($permastructs[$post_type]) && $permastructs[$post_type]) ? $permastructs[$post_type] : $default_permastruct;
+    $uri = isset($all_uris[$post_id]) ? $all_uris[$post_id] : $default_uri;
+    // Remove post_name from base (last part of string)
+    $uri = ($remove_slug) ? str_replace($post_name, '', $uri) : $uri;
 
-    // Remove post name to enable support for hierarchical post types
-    $permastruct = ($title_replace) ? str_replace(array("%pagename%", "%postname%", "%{$post_type}%"), '', $permastruct) : "";
+    $final_uri = ($get_default) ? $default_uri : $uri;
 
-    return trim($$return, '/');
+    // Clean URI
+    $final_uri = preg_replace('/\s+/', '', $final_uri);
+    $final_uri = str_replace('//', '/', $final_uri);
+    $final_uri = trim($final_uri, "/");
+
+    return $final_uri;
   }
 
   /**
    * Structure Tags & Rewrite functions
    */
-  static function get_all_structure_tags($code = true, $seperator = ', ') {
+  static function get_all_structure_tags($code = true, $seperator = ', ', $hide_slug_tags = true) {
     global $wp_rewrite;
 
     $tags = $wp_rewrite->rewritecode;
     $output = "";
     $last_tag_index = count($tags);
     $i = 1;
+
+    // Hide slug tags
+    if($hide_slug_tags) {
+      $post_types = Permalink_Manager_Helper_Functions::get_post_types_array();
+      foreach($post_types as $post_type => $post_type_name) {
+        $post_type_tag = Permalink_Manager_Helper_Functions::get_post_tag($post_type);
+        // Find key with post type tag from rewritecode
+        $key = array_search($post_type_tag, $tags);
+        if($key) { unset($tags[$key]); }
+      }
+    }
 
     foreach($tags as $tag) {
       $sep = ($last_tag_index == $i) ? "" : $seperator;
