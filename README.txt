@@ -1,56 +1,53 @@
-4=== Permalink Manager ===
+=== Permalink Manager ===
 Contributors: mbis
-Tags: urls, permalinks, slugs
-Requires at least: 4.0
-Tested up to: 4.5.3
-Stable tag: 0.4
-License: GPLv2 or later
+License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Tags: urls, permalinks, slugs, custom url, custom permalinks, uris, url, slug, permalink
+Requires at least: 4.0
+Tested up to: 4.6.1
+Stable tag: 0.5.0
 
-Permalink Manager allows you to control and reset the permalinks (slugs) in all your post types.
+Permalink Manager helps to maintain & list your permalinks, slugs and URIs. It also allows to bulk regenerate or find and replace any word in your permalinks or native slugs.
 
 == Description ==
 
-It is a really simple plugin that helps managing the permalinks that are used for all your Posts, Pages and other Custom Post Types. To improve the experience of the manager, you can filter the table and display only selected `post type`s or posts/pages/custom post type items with particular `post status`es.
+A really intuitive and easy-to-use plugin that helps to manage the permalinks for all your posts, pages and other custom post types items.
 
-There are three main functionalities of this plugin:
+Currently, the plugin allows to perform four main actions:
 
-1. You can manually adjust the slugs of selected posts/pages/custom post type items.
-2. You can replace particular (sub)string that is a part of slug with another (sub)string.
-3. You can regenerate/reset the slugs for your posts/pages/custom post types. This might be especially useful if your post titles are updated and slugs needs to be recreated.
-4. You can change the default permalink bases (permastructures) for all custom post types & posts and pages (experimental functionality).
+1. It allows to manually adjust selected permalinks (URIs or native slugs) for all posts/pages/custom post type items.
+2. It allows to bulk replace particular words used in permalinks (or native slugs) with another words (works also with substring).
+3. It allows to bulk regenerate/reset permalinks (or native slugs). This might be especially useful if your post titles are updated and native slugs need to be recreated.
+4. It allows to change the default permalink bases (permastructures) for all custom post types & posts and pages.
 
-= Example =
+To improve the user experience, each tool allows also to filter the permalinks by post types or post statuses.
 
-If you want to quickly replace a part of slug (eg. `krakow` with another word `gdansk`):
+= "Find and replace" usage example =
 
-`http://example.com/hotels-in-krakow
-http://example.com/restaurants-in-krakow
-http://example.com/transport-in-krakow
-http://example.com/blog/krakow-the-best-city-for-tourists
-http://example.com/poland/cities/krakow
-http://example.com/poland/cities/stalowa-wola
-http://example.com/poland/cities/warszawa
-http://example.com/poland/cities/poznan`
+Word "krakow" should be replaced with "gdansk" in all your permalinks.
 
-If you use the form from `Find and replace` section your URLs will be changed to:
+`http://example.com/krakow/hotels-in-krakow === [changed] ===> http://example.com/gdansk/hotels-in-gdansk
+http://example.com/krakow/restaurants-in-krakow === [changed] ===> http://example.com/gdansk/restaurants-in-gdansk
+http://example.com/krakow/transport-in-krakow === [changed] ===> http://example.com/gdansk/transport-in-gdansk
+http://example.com/blog/krakow-the-best-city-for-tourists === [changed] ===> http://example.com/blog/gdansk-the-best-city-for-tourists
+http://example.com/poland/cities/krakow === [changed] ===> http://example.com/poland/cities/gdansk
+http://example.com/poland/cities/stalowa-wola === [not changed] ===> http://example.com/cities/stalowa-wola
+http://example.com/poland/cities/warszawa === [not changed] ===> http://example.com/poland/cities/warszawa
+http://example.com/poland/cities/poznan === [not changed] ===> http://example.com/poland/cities/poznan`
 
-`http://example.com/hotels-in-gdansk
-http://example.com/restaurants-in-gdansk
-http://example.com/transport-in-gdansk
-http://example.com/blog/gdansk-the-best-city-for-tourists
-http://example.com/poland/cities/gdansk
-http://example.com/poland/cities/stalowa-wola
-http://example.com/poland/cities/warszawa
-http://example.com/poland/cities/poznan`
+= All features =
 
-= Upcoming features =
+* "Permalink Editor" - list of your permalinks (groupped by post types).
+* "Regenerate/Reset" permalinks, custom and native URIs (slugs).
+* "Find and replace" strings in permalinks, custom and native URIs (slugs).
+* Support for "Primary Term" functionality implemented in "Yoast SEO" plugin.
+* Optional redirect (301 or 302) from old (native) permalinks to new (custom) permalinks.
+* Possibility to disable native canonical redirects.
 
-In the next version of plugin more functionalities will be added:
+= Planned functionalities =
 
-* Support for taxonomies
 * REGEX for `Find and replace` section
-* Two-step updater, so you can double-check which permalinks will be changed before the change is applied
+* Support for WPML and another language plugins
 * AJAX support.
 
 == Installation ==
@@ -67,10 +64,14 @@ After the plugin is installed you can access its dashboard from this page: `Tool
 
 == Screenshots ==
 
-1.	Main dashboard.
-2.	Find and replace section.
-3.	Regenerate section.
-4.  Custom permastructures.
+1.	"Permalink editor".
+2.	"Find and replace" section.
+3.	"Regenerate/Reset" section.
+4.  "Permastructures" section.
+5.  A list of updated posts.
+6.  Editable URI box in Post/Page/CPT edit pagees.
+7.  Settings section.
+8.  Developer section.
 
 == Frequently Asked Questions ==
 
@@ -79,9 +80,46 @@ After the plugin is installed you can access its dashboard from this page: `Tool
 
 == Changelog ==
 
+= 0.5.0 =
+* Code refactoring completed
+* Interface changes
+* Hooks enabled
+
+= 0.4.9 =
+* Hook for removed posts (their URI is now automatically removed)
+
+= 0.4.8 =
+* Pagination bug - SQL formula fix (offset variable)
+
+= 0.4.7 =
+* Strict standards - fix for arrays with default values
+
+= 0.4.6 =
+* 302 redirect fix.
+* Code optimization.
+
+= 0.4.5 =
+* Bug with infinite loop fixed.
+* Bug with revisions ID fixed.
+
+= 0.4.4 =
+* Redirect for old URIs added.
+* Debug tools added.
+
+= 0.4.3 =
+* Hotfix for "Screen Options" save process.
+
+= 0.4.2 =
+* Hotfix for bulk actions' functions - additional conditional check for arrays added.
+
+= 0.4.1 =
+* Hotfix for "Edit Post" URI input (the URIs were reseted after "Update" button was pressed).
+
 = 0.4 =
 * Rewrite rules are no longer used (SQL queries are optimized). The plugin uses now 'request' filter to detect the page/post that should be loaded instead.
 * Now full URI (including slug) is editable.
+* A few major improvements applied.
+* Partial code optimization.
 
 = 0.3.4 =
 * Hotfix for not working custom taxonomies tags.

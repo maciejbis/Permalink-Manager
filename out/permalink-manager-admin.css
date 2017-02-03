@@ -1,0 +1,61 @@
+/**
+ * Permalink Manager CSS
+ */
+ #permalink-manager #plugin-name-heading a{color:#959595;font-size:60%;text-decoration:none}
+ #permalink-manager #permalink-manager-tab-nav > a:first-child{margin-left:0}
+ #permalink-manager h4{font-size:18px;margin-bottom:10px}
+ #permalink-manager .small{display:block;font-weight:400;color:#888;font-size:80%}
+ #permalink-manager .settings-select{min-width:200px}
+ #permalink-manager .fixed-table{max-width:100%;table-layout:fixed}
+ #permalink-manager .margin-top{margin-top:15px}
+
+ #permalink-manager .subsubsub{display:block;width:100%;overflow:hidden;margin-bottom:8px}
+ #permalink-manager .subsubsub li:before{content:" | "}
+ #permalink-manager .subsubsub li:first-child:before{content:"";color:#aaa}
+ #permalink-manager .tablenav{margin:15px 0;height:auto}
+ #permalink-manager .tablenav.top{margin-top:0}
+ #permalink-manager .tablenav .actions{padding:0;overflow:visible}
+ #permalink-manager .column-post_type,#permalink-manager .column-post_status{width:13%}
+ #permalink-manager .post_name input{max-width:100%}
+ #permalink-manager .post_permalink a,#permalink-manager .post_permalink .dashicons{font-size:13px;color:#aaa;line-height:1.5em;height:auto;width:auto}
+ #permalink-manager .post_permalink{margin-top:5px;display:block}
+
+ #permalink-manager .alert{line-height:19px;padding:11px 15px;margin:15px 0}
+ #permalink-manager .alert p{margin-top:0;line-height:200%}
+ #permalink-manager .alert ul,#permalink-manager .alert ol{margin-top:0;margin-bottom:0}
+ #permalink-manager .alert p:last-of-type,#permalink-manager .alert li:last-of-type{margin-bottom:0}
+ #permalink-manager .warning{background:#dc3232}
+ #permalink-manager .warning,#permalink-manager .warning a{color:#fff}
+ #permalink-manager .info{background:#f9f9f9}
+ #permalink-manager .section-notes,#permalink-manager .short-pre,#permalink-manager .short-textarea{padding:15px;font-size:13px;margin-top:15px;line-height:20px;background:#e5e5e5;border:1px solid #ccc;color:#555}
+ #permalink-manager .section-notes a,#permalink-manager .section-notes h3{color:#111}
+ #permalink-manager .section-notes h3,#permalink-manager .section-notes h4{margin-top:0}
+ #permalink-manager .section-notes h4{font-size:14px}
+ #permalink-manager .section-notes code{font-size:11px;background:#444;color:#fff}
+ #permalink-manager .section-notes ol{margin-top:0;margin-bottom:0}
+ #permalink-manager .section-notes ol li:last-of-type{margin-bottom:0}
+ #permalink-manager .short-pre,#permalink-manager .short-textarea{height:150px;overflow:auto;max-width:100%;display:block}
+
+ #permalink-manager .checkbox_actions{padding-top:10px;border-top:1px solid #ddd}
+ #permalink-manager .extra-links{margin-top:5px;font-size:12px}
+ #permalink-manager .extra-links a{background:#e5e5e5;border:1px solid #ccc;padding:3px 5px;color:#555;display:inline-block;text-decoration:none}
+ #permalink-manager .checkboxes{margin-left:-15px;margin-right:15px;overflow:hidden;display:block}
+ #permalink-manager .checkboxes > label{display:inline-block;width:33%;float:left;padding:0 15px;box-sizing:border-box;padding-bottom:5px}
+ #permalink-manager .field-description{font-size:12px}
+ #permalink-manager .appended-row td{padding-left:0;padding-right:0}
+
+/**
+ * Columns
+ */
+#permalink-manager .columns-container{overflow:hidden;margin-left:-15px;margin-right:-15px;clear:both}
+#permalink-manager .columns-container .column{float:left;padding-left:15px;padding-right:15px;box-sizing:border-box;-webkit-box-sizing:border-box;overflow:hidden}
+#permalink-manager .columns-container .column-1_2{width:50%}
+#permalink-manager .columns-container .column-1_3{width:33.33%}
+#permalink-manager .columns-container .column-2_3{width:66.67%}
+
+/**
+ * Breakpoints
+ */
+@media only screen and (max-width : 782px) {
+  #permalink-manager .columns-container .column-1_2,#permalink-manager .columns-container .column-1_3,#permalink-manager .columns-container .column-2_3{width:100%}
+}
