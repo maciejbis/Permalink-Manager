@@ -1,10 +1,9 @@
-# Loco Gettext template
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Permalink Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: Fri Jan 08 2016 20:08:17 GMT+0100 (CET)\n"
+"POT-Creation-Date: 2017-03-14 15:38+0000\n"
 "POT-Revision-Date: Fri Jan 08 2016 20:08:23 GMT+0100 (CET)\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: \n"
@@ -24,193 +23,335 @@ msgstr ""
 "esc_html_x:1,2c;comments_number_link:2,3;t:1;st:1;trans:1;transChoice:1,2\n"
 "X-Generator: Loco - https://localise.biz/"
 
-#. Name of the plugin
-msgid "Permalink Manager"
-msgstr ""
-
-#. URI of the plugin
-msgid "http://maciejbis.net"
-msgstr ""
-
-#. Description of the plugin
-msgid ""
-"A simple tool that allows to mass update of slugs that are used to build "
-"permalinks for Posts, Pages and Custom Post Types."
-msgstr ""
-
-#. Author of the plugin
-msgid "Maciej Bis"
-msgstr ""
-
-#: ../permalink-manager.php:89
-msgid "Find & Replace"
-msgstr ""
-
-#: ../permalink-manager.php:108
-msgid "Regenerate"
-msgstr ""
-
-#: ../permalink-manager.php:135
-msgid "Permalinks"
-msgstr ""
-
-#: ../permalink-manager.php:137
-msgid ""
-"You can disable/enable selected post types from the table below using "
-"<strong>\"Screen Options\"</strong> (click on the upper-right button to show "
-"it) section above."
-msgstr ""
-
-#: ../permalink-manager.php:140
-msgid "Find and replace"
-msgstr ""
-
-#: ../permalink-manager.php:142 ../permalink-manager.php:147
-msgid "<strong>You are doing it at your own risk!</strong>"
-msgstr ""
-
-#: ../permalink-manager.php:142
-msgid ""
-"A backup of MySQL database before using this tool is highly recommended. The "
-"search & replace operation might be not revertible!"
-msgstr ""
-
-#: ../permalink-manager.php:145
-msgid "Regenerate slugs"
-msgstr ""
-
-#: ../permalink-manager.php:147
-msgid ""
-"A backup of MySQL database before using this tool is highly recommended. The "
-"regenerate process of slugs might be not revertible!"
-msgstr ""
-
-#: ../permalink-manager.php:160
-msgid "by Maciej Bis"
-msgstr ""
-
-#: ../permalink-manager.php:210
-msgid "Go To Permalink Manager"
-msgstr ""
-
-#: ../permalink-manager.php:226
-msgid "Post Types"
-msgstr ""
-
-#: ../permalink-manager.php:228 ../permalink-manager.php:257 ../permalink-manager.
-#: php:273
-msgid "All Post Types"
-msgstr ""
-
-#: ../permalink-manager.php:232
-msgid "Post Statuses"
-msgstr ""
-
-#: ../permalink-manager.php:234 ../permalink-manager.php:263 ../permalink-manager.
-#: php:279
-msgid "All Post Statuses"
-msgstr ""
-
-#: ../permalink-manager.php:238
-msgid "Per page"
-msgstr ""
-
-#: ../permalink-manager.php:247
-msgid "Find ..."
-msgstr ""
-
-#: ../permalink-manager.php:251
-msgid "Replace with ..."
-msgstr ""
-
-#: ../permalink-manager.php:255 ../permalink-manager.php:271
-msgid "Post Types that should be affected"
-msgstr ""
-
-#: ../permalink-manager.php:261 ../permalink-manager.php:277
-msgid "Post Statuses that should be affected"
-msgstr ""
-
-#: ../permalink-manager.php:347
+#: includes/core/permalink-manager-actions.php:50
 #, php-format
-msgid "<strong>\"%1s\"</strong> field is empty!"
-msgstr ""
-
-#: ../permalink-manager.php:418
-#, php-format
-msgid "<strong>%d</strong> slug were updated!"
+msgid "<strong>%d</strong> slug was updated!"
 msgid_plural "<strong>%d</strong> slugs were updated!"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../permalink-manager.php:419
+#: includes/core/permalink-manager-actions.php:51
 #, php-format
-msgid "<a href=\"%s\">Click here</a> to go to the list of updated slugs"
+msgid "<a %s>Click here</a> to go to the list of updated slugs"
 msgstr ""
 
-#: ../permalink-manager.php:422
+#: includes/core/permalink-manager-actions.php:56
 msgid "<strong>No slugs</strong> were updated!"
 msgstr ""
 
-#: ../permalink-manager.php:435 ../permalink-manager.php:447 ../inc/permalink-
-#: manager-wp-table.php:30
+#. Name of the plugin
+#: includes/core/permalink-manager-admin-functions.php:75
+#: includes/core/permalink-manager-admin-functions.php:75
+msgid "Permalink Manager"
+msgstr ""
+
+#: includes/core/permalink-manager-admin-functions.php:107
+msgid "Go To Permalink Manager"
+msgstr ""
+
+#: includes/core/permalink-manager-admin-functions.php:160
+msgid "Select all"
+msgstr ""
+
+#: includes/core/permalink-manager-admin-functions.php:161
+msgid "Unselect all"
+msgstr ""
+
+#: includes/core/permalink-manager-admin-functions.php:337
+msgid "by Maciej Bis"
+msgstr ""
+
+#: includes/core/permalink-manager-admin-functions.php:421
+#: includes/core/permalink-manager-admin-functions.php:437
 msgid "Title"
 msgstr ""
 
-#: ../permalink-manager.php:436 ../permalink-manager.php:448
-msgid "Old slug"
+#: includes/core/permalink-manager-admin-functions.php:422
+#: includes/core/permalink-manager-admin-functions.php:438
+msgid "Old URI"
 msgstr ""
 
-#: ../permalink-manager.php:437 ../permalink-manager.php:449
-msgid "New slug"
+#: includes/core/permalink-manager-admin-functions.php:423
+#: includes/core/permalink-manager-admin-functions.php:439
+msgid "New URI"
 msgstr ""
 
-#: ../permalink-manager.php:447
+#: includes/core/permalink-manager-admin-functions.php:424
+#: includes/core/permalink-manager-admin-functions.php:440
+msgid "Old Slug"
+msgstr ""
+
+#: includes/core/permalink-manager-admin-functions.php:425
+#: includes/core/permalink-manager-admin-functions.php:441
+msgid "New Slug"
+msgstr ""
+
+#: includes/core/permalink-manager-admin-functions.php:437
 msgid "Show more details"
 msgstr ""
 
-#: ../permalink-manager.php:454
-msgid "List of updated posts"
+#: includes/core/permalink-manager-admin-functions.php:446
+msgid "List of updated items"
 msgstr ""
 
-#: ../inc/permalink-manager-screen-options.php:21
-msgid "Apply"
+#: includes/views/permalink-manager-settings.php:15
+msgid "Settings"
 msgstr ""
 
-#: ../inc/permalink-manager-wp-table.php:31
-msgid "Slug"
+#: includes/views/permalink-manager-settings.php:62
+msgid "Display settings"
 msgstr ""
 
-#: ../inc/permalink-manager-wp-table.php:32
-msgid "Date"
+#: includes/views/permalink-manager-settings.php:63
+msgid "Adjust the data displayed in \"Permalink Editor\" section."
 msgstr ""
 
-#: ../inc/permalink-manager-wp-table.php:33
-msgid "Permalink"
+#: includes/views/permalink-manager-settings.php:68
+msgid "Per page"
 msgstr ""
 
-#: ../inc/permalink-manager-wp-table.php:34
-msgid "Post Status"
+#: includes/views/permalink-manager-settings.php:73
+msgid "Post statuses"
 msgstr ""
 
-#: ../inc/permalink-manager-wp-table.php:35
-msgid "Post Type"
+#: includes/views/permalink-manager-settings.php:80
+#: includes/views/permalink-manager-permastructs.php:36
+msgid "Post types"
 msgstr ""
 
-#: ../inc/permalink-manager-wp-table.php:81 ../inc/permalink-manager-wp-table.php:
-#: 81
+#: includes/views/permalink-manager-settings.php:88
+msgid "Miscellaneous & SEO functions"
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:93
+msgid "Primay term/category support"
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:95
+#: includes/views/permalink-manager-settings.php:109
+msgid "Enable"
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:95
+#: includes/views/permalink-manager-settings.php:102
+#: includes/views/permalink-manager-settings.php:109
+msgid "Disable"
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:96
+msgid ""
+"Used to generate default permalinks in pages, posts & custom post types. "
+"Works only when \"Yoast SEO\" plugin is enabled."
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:100
+msgid "Redirect"
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:102
+msgid "Enable \"301 redirect\""
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:102
+msgid "Enable \"302 redirect\""
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:103
+msgid ""
+"If enabled - the visitors will be redirected from native permalinks to your "
+"custom permalinks. Please note that the redirects will work correctly only "
+"if native slug \"post name\" will not be changed."
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:107
+msgid "Canonical redirect"
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:110
+msgid ""
+"This function allows Wordpress to correct the URLs used by the visitors."
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:116
+msgid "Save settings"
+msgstr ""
+
+#: includes/views/permalink-manager-advanced.php:14
+msgid "Advanced"
+msgstr ""
+
+#: includes/views/permalink-manager-advanced.php:31
+msgid "Debug data"
+msgstr ""
+
+#: includes/views/permalink-manager-advanced.php:35
+msgid "List of the URIs generated by this plugin."
+msgstr ""
+
+#: includes/views/permalink-manager-advanced.php:36
+msgid "Array with URIs"
+msgstr ""
+
+#: includes/views/permalink-manager-advanced.php:42
+msgid "List of the permastructures."
+msgstr ""
+
+#: includes/views/permalink-manager-advanced.php:43
+msgid "Array with permastructures"
+msgstr ""
+
+#: includes/views/permalink-manager-advanced.php:49
+msgid "Currently used plugin settings."
+msgstr ""
+
+#: includes/views/permalink-manager-advanced.php:50
+msgid "Array with settings used in this plugin."
+msgstr ""
+
+#: includes/views/permalink-manager-advanced.php:56
+msgid "Permalink hooks."
+msgstr ""
+
+#: includes/views/permalink-manager-advanced.php:57
+msgid "Array with list of permalink hooks used on this website."
+msgstr ""
+
+#: includes/views/permalink-manager-uri-editor.php:19
+msgid "Permalink editor"
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:15
+msgid "Tools"
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:18
+#: includes/views/permalink-manager-tools.php:85
+msgid "Find and replace"
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:22
+msgid "Regenerate/Reset"
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:32
+msgid ""
+"<strong>A MySQL backup is highly recommended before using \"<em>Custom & "
+"native slugs (post names)</em>\" mode!</strong>."
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:42
+msgid "Find ..."
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:49
+msgid "Replace with ..."
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:56
+#: includes/views/permalink-manager-tools.php:97
+msgid "Select mode"
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:59
+#: includes/views/permalink-manager-tools.php:100
+msgid "Full URIs"
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:59
+#: includes/views/permalink-manager-tools.php:100
+msgid "Custom & native slugs (post names)"
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:63
+#: includes/views/permalink-manager-tools.php:103
+msgid "Filter by post types"
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:72
+#: includes/views/permalink-manager-tools.php:112
+msgid "Filter by post statuses"
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:82
+#: includes/views/permalink-manager-tools.php:122
+msgid "Important notices"
+msgstr ""
+
+#: includes/views/permalink-manager-tools.php:124
+msgid "Regenerate"
+msgstr ""
+
+#: includes/views/permalink-manager-permastructs.php:15
+msgid "Permastructures"
+msgstr ""
+
+#: includes/views/permalink-manager-permastructs.php:29
+#, php-format
+msgid ""
+"All available <a href=\"%s\" target=\"_blank\">structure tags</a> for "
+"<strong>post types</strong> allowed are listed below."
+msgstr ""
+
+#: includes/views/permalink-manager-permastructs.php:31
+msgid ""
+"Please note that some of them can be used only for particular post types' "
+"settings."
+msgstr ""
+
+#: includes/views/permalink-manager-permastructs.php:52
+msgid "WooCommerce"
+msgstr ""
+
+#: includes/views/permalink-manager-permastructs.php:87
+msgid "Save permastructures"
+msgstr ""
+
+#: includes/views/permalink-manager-uri-editor-post.php:46
+msgid "Post title"
+msgstr ""
+
+#: includes/views/permalink-manager-uri-editor-post.php:47
+msgid "Post name (native slug)"
+msgstr ""
+
+#: includes/views/permalink-manager-uri-editor-post.php:49
+msgid "Full URI & Permalink"
+msgstr ""
+
+#: includes/views/permalink-manager-uri-editor-post.php:50
+msgid "Post status"
+msgstr ""
+
+#: includes/views/permalink-manager-uri-editor-post.php:104
+#: includes/views/permalink-manager-uri-editor-post.php:104
 msgid "Edit"
 msgstr ""
 
-#: ../inc/permalink-manager-wp-table.php:82 ../inc/permalink-manager-wp-table.php:
-#: 82
+#: includes/views/permalink-manager-uri-editor-post.php:105
+#: includes/views/permalink-manager-uri-editor-post.php:105
 msgid "View"
 msgstr ""
 
-#: ../inc/permalink-manager-wp-table.php:124
-msgid "Update all slugs below"
+#: includes/views/permalink-manager-uri-editor-post.php:135
+msgid "Update all the URIs below"
 msgstr ""
 
-#: ../inc/permalink-manager-wp-table.php:125
-msgid "Update all slugs above"
+#: includes/views/permalink-manager-uri-editor-post.php:136
+msgid "Update all the URIs above"
+msgstr ""
+
+#. Description of the plugin
+msgid ""
+"Most advanced Permalink  utility for Wordpress. It allows to bulk edit the "
+"permalinks & permastructures and regenerate/reset all the URIs in your "
+"Wordpress instance."
+msgstr ""
+
+#. URI of the plugin
+#. Author URI of the plugin
+msgid "http://maciejbis.net/"
+msgstr ""
+
+#. Author of the plugin
+msgid "Maciej Bis"
 msgstr ""

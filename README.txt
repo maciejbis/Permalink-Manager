@@ -4,10 +4,10 @@ License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Tags: urls, permalinks, slugs, custom url, custom permalinks, uris, url, slug, permalink
 Requires at least: 4.0
-Tested up to: 4.6.1
-Stable tag: 0.5.0
+Tested up to: 4.7.3
+Stable tag: 1.0.2
 
-Permalink Manager helps to maintain & list your permalinks, slugs and URIs. It also allows to bulk regenerate or find and replace any word in your permalinks or native slugs.
+Most advanced yet easy-to-use permalink plugin that helps to maintain & bulk change your URLs & slugs.
 
 == Description ==
 
@@ -44,12 +44,6 @@ http://example.com/poland/cities/poznan === [not changed] ===> http://example.co
 * Optional redirect (301 or 302) from old (native) permalinks to new (custom) permalinks.
 * Possibility to disable native canonical redirects.
 
-= Planned functionalities =
-
-* REGEX for `Find and replace` section
-* Support for WPML and another language plugins
-* AJAX support.
-
 == Installation ==
 
 Go to `Plugins -> Add New` section from your admin account and search for `Permalink Manager`.
@@ -73,12 +67,28 @@ After the plugin is installed you can access its dashboard from this page: `Tool
 7.  Settings section.
 8.  Developer section.
 
-== Frequently Asked Questions ==
-
-= Q. Does the plugin support WPML/qTranslate
-= A. Unfortunately not, the WPML/qTranslate support will be added in next versions.
 
 == Changelog ==
+
+= 1.0.2 =
+* Post pagination fix
+* Basic REGEX support
+* 'permalink_manager_filter_final_post_permalink' filter added
+
+= 1.0.1 =
+* WPML support fixes
+
+= 1.0.0 =
+* Further refactoring
+* WPML support added
+* Some minor issues fixed
+* "Sample permalink" support added
+
+= 0.5.2/0.5.3 =
+* Another hotfix
+
+= 0.5.1 =
+* Hotfix for "Settings" section
 
 = 0.5.0 =
 * Code refactoring completed
