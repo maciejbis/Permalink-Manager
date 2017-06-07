@@ -179,4 +179,23 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 		return $def_lang;
 	}
 
+	/**
+	 * Sanitize multidimensional array
+	 */
+	static function sanitize_array($data = array()) {
+		if (!is_array($data) || !count($data)) {
+			return array();
+		}
+
+		foreach ($data as $k => $v) {
+			if (!is_array($v) && !is_object($v)) {
+				$data[$k] = htmlspecialchars(trim($v));
+			}
+			if (is_array($v)) {
+				$data[$k] = self::sanitize_array($v);
+			}
+		}
+		return $data;
+	}
+
 }

@@ -1,11 +1,12 @@
 === Permalink Manager ===
 Contributors: mbis
+Donate link: https://www.paypal.me/Bismit
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Tags: urls, permalinks, slugs, custom url, custom permalinks, uris, url, slug, permalink
 Requires at least: 4.0
-Tested up to: 4.7.3
-Stable tag: 1.0.2
+Tested up to: 4.7.5
+Stable tag: 1.1.0
 
 Most advanced yet easy-to-use permalink plugin that helps to maintain & bulk change your URLs & slugs.
 
@@ -15,10 +16,14 @@ A really intuitive and easy-to-use plugin that helps to manage the permalinks fo
 
 Currently, the plugin allows to perform four main actions:
 
-1. It allows to manually adjust selected permalinks (URIs or native slugs) for all posts/pages/custom post type items.
+1. It allows to manually adjust permalinks (URIs) for all posts/pages/custom post type items.
 2. It allows to bulk replace particular words used in permalinks (or native slugs) with another words (works also with substring).
 3. It allows to bulk regenerate/reset permalinks (or native slugs). This might be especially useful if your post titles are updated and native slugs need to be recreated.
 4. It allows to change the default permalink bases (permastructures) for all custom post types & posts and pages.
+5. It allows to auto-update URIs to match the current permastructure settings after eg. post title or assigned primary category is changed.
+6. (<a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro</a> only) It allows to manually adjust permalinks (URIs) for all categories/tags/custom terms.
+7. (<a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro</a> only) It allows to remove /product-category and /product from WooCommerce permalinks.
+8. (<a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro</a> only) It allows to define custom "stop-words" list and/or use custom one (19 languages available).
 
 To improve the user experience, each tool allows also to filter the permalinks by post types or post statuses.
 
@@ -38,11 +43,21 @@ http://example.com/poland/cities/poznan === [not changed] ===> http://example.co
 = All features =
 
 * "Permalink Editor" - list of your permalinks (groupped by post types).
+* "Auto-update" URI
 * "Regenerate/Reset" permalinks, custom and native URIs (slugs).
 * "Find and replace" strings in permalinks, custom and native URIs (slugs).
 * Support for "Primary Term" functionality implemented in "Yoast SEO" plugin.
 * Optional redirect (301 or 302) from old (native) permalinks to new (custom) permalinks.
 * Possibility to disable native canonical redirects.
+
+= Additional features available in Permalink Manager Pro =
+
+* Priority support
+* Full support for taxonomies
+* Full support for WooCommerce
+* "Stop-words" to keep your permalinks short & clean (pre-defined "stop-words" lists are available in 19 languages)
+
+Buy <a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro here</a>.
 
 == Installation ==
 
@@ -54,7 +69,24 @@ You can also install this plugin manually:
 2. Copy the unzipped `permalink-manager` folder to the `/wp-content/plugins/` directory.
 3. Activate the plugin through the 'Plugins' menu in WordPress
 
+= Bulk URI editor =
 After the plugin is installed you can access its dashboard from this page: `Tools -> Permalink Manager`.
+
+= Single URI editor =
+To display the URI editor metabox click on gray "Permalink Editor" displayed below the post/page title.
+
+== Frequently Asked Questions ==
+
+= Q. Can I delete/disable Permalink Manager after the permalinks are updated? =
+A. Yes, if you used Permalink Manager only to regenerate the slugs (native post names). Please note that if you use custom permalinks (that differ from the native ones), they will no longer be used after the plugin is disabled.
+
+It is because Permalink Manager overwrites one of the core Wordpress functionalities to bypass the rewrite rules ("regular expressions" to detect the posts/pages/taxonomies/etc. and another parameters from the URL) by using the array of custom permalinks (you can check them in "Debug" tab) that are used only by my plugin.
+
+= Q. Can I use Permalink Manager to alter the permalinks for taxonomies?
+A. This feature will be available in Permalink Manager Pro.
+
+= Q. Does this plugin support Buddypress?
+A. Currently there is no 100% guarantee that Permalink Manager will work correctly with Buddypress.
 
 == Screenshots ==
 
@@ -65,10 +97,18 @@ After the plugin is installed you can access its dashboard from this page: `Tool
 5.  A list of updated posts.
 6.  Editable URI box in Post/Page/CPT edit pagees.
 7.  Settings section.
-8.  Developer section.
 
 
 == Changelog ==
+
+= 1.1.0 =
+* Partial code refactoring
+* "Auto-update" feature
+* UI/UX improvements
+* Support for AMP plugin by Automattic
+
+= 1.0.3 =
+* Another pagination issue - hotfix
 
 = 1.0.2 =
 * Post pagination fix

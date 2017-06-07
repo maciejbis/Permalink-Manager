@@ -3,16 +3,16 @@
 /**
 * Display the page where the slugs could be regenerated or replaced
 */
-class Permalink_Manager_Advanced extends Permalink_Manager_Class {
+class Permalink_Manager_Debug extends Permalink_Manager_Class {
 
 	public function __construct() {
-		add_filter( 'permalink-manager-sections', array($this, 'add_advanced_section'), 1 );
+		add_filter( 'permalink-manager-sections', array($this, 'add_debug_section'), 1 );
 	}
 
-	public function add_advanced_section($admin_sections) {
-		$admin_sections['advanced'] = array(
-			'name'				=>	__('Advanced', 'permalink-manager'),
-			'function'    => array('class' => 'Permalink_Manager_Advanced', 'method' => 'output')
+	public function add_debug_section($admin_sections) {
+		$admin_sections['debug'] = array(
+			'name'				=>	__('Debug', 'permalink-manager'),
+			'function'    => array('class' => 'Permalink_Manager_Debug', 'method' => 'output')
 		);
 
 		return $admin_sections;
@@ -26,7 +26,7 @@ class Permalink_Manager_Advanced extends Permalink_Manager_Class {
 			$permalink_hooks[$hook] = json_encode($wp_filter[$hook]);
 		}
 
-		$sections_and_fields = apply_filters('permalink-manager-advanced-fields', array(
+		$sections_and_fields = apply_filters('permalink-manager-debug-fields', array(
 			'debug-data' => array(
 				'section_name' => __('Debug data', 'permalink-manager'),
 				'fields' => array(
@@ -84,5 +84,5 @@ class Permalink_Manager_Advanced extends Permalink_Manager_Class {
 
 		return $output;
 	}
-	
+
 }

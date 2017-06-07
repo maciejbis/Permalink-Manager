@@ -2,9 +2,9 @@
 
 /**
 * Plugin Name:       Permalink Manager
-* Plugin URI:        http://maciejbis.net/
-* Description:       Most advanced Permalink  utility for Wordpress. It allows to bulk edit the permalinks & permastructures and regenerate/reset all the URIs in your Wordpress instance.
-* Version:           1.0.2
+* Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
+* Description:       Most advanced Permalink utility for Wordpress. It allows to bulk edit the permalinks & permastructures and regenerate/reset all the URIs in your Wordpress instance.
+* Version:           1.1.0
 * Author:            Maciej Bis
 * Author URI:        http://maciejbis.net/
 * License:           GPL-2.0+
@@ -12,19 +12,21 @@
 * Text Domain:       permalink-manager
 * Domain Path:       /languages
 */
-// If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
+
+// If this file is called directly or plugin is already defined, abort.
+if (!defined('WPINC')) {
 	die;
 }
 
 // Define the directories used to load plugin files.
 define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-define( 'PERMALINK_MANAGER_VERSION', '1.0.2' );
+define( 'PERMALINK_MANAGER_VERSION', '1.1.0' );
 define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 define( 'PERMALINK_MANAGER_BASENAME', plugin_basename(__FILE__) );
 define( 'PERMALINK_MANAGER_URL', untrailingslashit( plugins_url( '', __FILE__ ) ) );
-define( 'PERMALINK_MANAGER_WEBSITE', 'http://permalinkmanager.pro' );
+define( 'PERMALINK_MANAGER_WEBSITE', 'http://permalinkmanager.pro?utm_source=plugin' );
+define( 'PERMALINK_MANAGER_DONATE', 'https://www.paypal.me/Bismit' );
 
 class Permalink_Manager_Class {
 
@@ -55,14 +57,16 @@ class Permalink_Manager_Class {
 				'uri-functions-tax' => 'Permalink_Manager_URI_Functions_Tax',
 				'admin-functions' => 'Permalink_Manager_Admin_Functions',
 				'actions' => 'Permalink_Manager_Actions',
-				'pro-hooks' => 'Permalink_Manager_Pro_Hooks'
+				'third-parties' => 'Permalink_Manager_Third_Parties',
+				'pro-functions' => 'Permalink_Manager_Pro_Functions'
 			),
 			'views' => array(
 				'uri-editor' => 'Permalink_Manager_Uri_Editor',
 				'tools' => 'Permalink_Manager_Tools',
 				'permastructs' => 'Permalink_Manager_Permastructs',
 				'settings' => 'Permalink_Manager_Settings',
-				'advanced' => 'Permalink_Manager_Advanced',
+				'debug' => 'Permalink_Manager_Debug',
+				'pro-addons' => 'Permalink_Manager_Pro_Addons',
 				'uri-editor-tax' => false,
 				'uri-editor-post' => false
 			)
@@ -98,6 +102,13 @@ class Permalink_Manager_Class {
 
 		// Legacy support
 		add_action( 'init', array($this, 'legacy_support'), 2 );
+
+		// Check for updates
+		// add_action( 'init', array($this, 'check_for_updates'), 999 );
+
+		// Default settings & alerts
+		add_filter( 'permalink-manager-options', array($this, 'default_settings'), 1 );
+		add_filter( 'permalink-manager-alerts', array($this, 'default_alerts'), 1 );
 	}
 
 	/**
@@ -119,17 +130,57 @@ class Permalink_Manager_Class {
 		$this->permalink_manager_permastructs = $permalink_manager_permastructs = apply_filters('permalink-manager-permastructs', get_option('permalink-manager-permastructs', array()));
 
 		// 2. Globals used to display additional content (eg. alerts)
-		global $permalink_manager_before_sections_html, $permalink_manager_after_sections_html;
+		global $permalink_manager_alerts, $permalink_manager_before_sections_html, $permalink_manager_after_sections_html;
 
+		$this->permalink_manager_alerts = $permalink_manager_alerts = apply_filters('permalink-manager-alerts', get_option('permalink-manager-alerts', array()));
 		$this->permalink_manager_before_sections_html = $permalink_manager_before_sections_html = apply_filters('permalink-manager-before-sections', '');
 		$this->permalink_manager_after_sections_html = $permalink_manager_after_sections_html = apply_filters('permalink-manager-after-sections', '');
+	}
+
+	/**
+	* Set the initial/default settings (including "Screen Options")
+	*/
+	public function default_settings($settings) {
+		$all_taxonomies = Permalink_Manager_Helper_Functions::get_taxonomies_array();
+		$all_post_types = Permalink_Manager_Helper_Functions::get_post_types_array();
+
+		$default_settings = apply_filters('permalink-manager-default-options', array(
+			'screen-options' => array(
+				'per_page' => 20,
+				'post_statuses' => array('publish')
+			),
+			'general' => array(
+				'force_custom_slugs' => 0,
+				'auto_update_uris' => 0,
+			),
+			'miscellaneous' => array(
+				'yoast_primary_term' => 1,
+				'redirect' => "302",
+				'canonical_redirect' => 1,
+			)
+		));
+
+		// Apply the default settings (if empty values) in all settings sections
+		return $settings + $default_settings;
+	}
+
+	/**
+	* Set the initial/default admin notices
+	*/
+	public function default_alerts($alerts) {
+		$default_alerts = apply_filters('permalink-manager-default-alerts', array(
+			'pro' => array('txt' => sprintf(__("Need to change the permalinks for categories, tags, custom taxonomies or WooCommerce?<br /><strong>Buy Permalink Manager Pro <a href=\"%s\" target=\"_blank\">here</a> and enjoy the additional features!</strong>", "permalink-manager"), PERMALINK_MANAGER_WEBSITE), 'type' => 'notice-info', 'show' => 1)
+		));
+
+		// Apply the default settings (if empty values) in all settings sections
+		return $alerts + $default_alerts;
 	}
 
 	/**
 	* Used to optimize SQL queries amount instead of rewrite rules - the essential part of this plugin
 	*/
 	function detect_post($query) {
-		global $wpdb, $permalink_manager_uris, $sitepress_settings;
+		global $wpdb, $permalink_manager_uris, $wp_filter;
 
 		// Check if any custom URI is used
 		if(!(is_array($permalink_manager_uris))) return $query;
@@ -143,12 +194,11 @@ class Permalink_Manager_Class {
 		$protocol = stripos($_SERVER['SERVER_PROTOCOL'], 'https') === true ? 'https://' : 'http://';
 		$request_url = "{$protocol}{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
 		$home_url = trim(rtrim(get_option('home'), '/'));
-		// Adjust prefix (it should be the same in both request & home_url)
-		$home_url = ($protocol == 'https://') ? str_replace("http://", "https://", $home_url) : str_replace("https://", "http://", $home_url);
+		$home_url = ($protocol == 'https://') ? str_replace("http://", "https://", $home_url) : str_replace("https://", "http://", $home_url); // Adjust prefix (it should be the same in both request & home_url)
 
 		if (filter_var($request_url, FILTER_VALIDATE_URL)) {
 			/**
-			* 2. Process URL
+			* 1. Process URL & find the URI
 			*/
 			// Remove .html suffix and domain name from URL and query (URLs ended with .html will work as aliases)
 			$request_url = trim(str_replace($home_url, "", $request_url), "/");
@@ -156,20 +206,24 @@ class Permalink_Manager_Class {
 			// Remove querystrings from URI
 			$request_url = strtok($request_url, '?');
 
-			// Split the current URL into subparts (check if WPML is active)
-			if(isset($sitepress_settings['language_negotiation_type']) && $sitepress_settings['language_negotiation_type'] == 1) {
-				preg_match("/^(?:(\w{2})\/)?(.+?)\/?(page|feed|embed|attachment|track)?(\/[\d+])?\/?$/i", $request_url, $url_parts);
-				$lang = (!empty($url_parts[1])) ? $url_parts[1] : "";
-				$uri = (!empty($url_parts[2])) ? $url_parts[2] : "";
-				$endpoint = (!empty($url_parts[3])) ? $url_parts[3] : "";
-				$endpoint_value = (!empty($url_parts[4])) ? $url_parts[4] : "";
-			} else {
-				preg_match("/^(.+?)\/?(page|feed|embed|attachment|track)?(\/[\d+])?\/?$/i", $request_url, $url_parts);
-				$lang = false;
-				$uri = (!empty($url_parts[1])) ? $url_parts[1] : "";
-				$endpoint = (!empty($url_parts[2])) ? $url_parts[2] : "";
-				$endpoint_value = (!empty($url_parts[3])) ? $url_parts[3] : "";
-			}
+			// Use default REGEX to detect post
+			preg_match("/^(.+?)\/?(page|feed|embed|attachment|track)?(?:\/([\d+]))?\/?$/i", $request_url, $regex_parts);
+			$uri_parts['lang'] = false;
+			$uri_parts['uri'] = (!empty($regex_parts[1])) ? $regex_parts[1] : "";
+			$uri_parts['endpoint'] = (!empty($regex_parts[2])) ? $regex_parts[2] : "";
+			$uri_parts['endpoint_value'] = (!empty($regex_parts[3])) ? $regex_parts[3] : "";
+
+			// Allow to filter the results by third-parties
+			$uri_parts = apply_filters('permalink-manager-detect-uri', $uri_parts, $request_url);
+
+			// Stop the function if $uri_parts is empty
+			if(empty($uri_parts)) return $query;
+
+			// Get the URI parts from REGEX parts
+			$lang = $uri_parts['lang'];
+			$uri = $uri_parts['uri'];
+			$endpoint = $uri_parts['endpoint'];
+			$endpoint_value = $uri_parts['endpoint_value'];
 
 			// Trim slashes
 			$uri = trim($uri, "/");
@@ -178,22 +232,32 @@ class Permalink_Manager_Class {
 			if(empty($uri)) return $query;
 
 			/**
-			* 2A. Check if found URI matches any element from custom uris array
+			* 2. Check if found URI matches any element from custom uris array
 			*/
 			$item_id = array_search($uri, $permalink_manager_uris);
 
 			// Check again in case someone added .html suffix to particular post (with .html suffix)
 			$item_id = (empty($item_id)) ? array_search("{$uri}.html",  $permalink_manager_uris) : $item_id;
 
+			// Check again in case someone used post/tax IDs instead of slugs
+			$deep_detect_enabled = apply_filters('permalink-manager-deep-uri-detect', false);
+			if($deep_detect_enabled && (empty($item_id)) && isset($old_query['page'])) {
+				$item_id = array_search("{$uri}/{$endpoint_value}",  $permalink_manager_uris);
+				$endpoint_value = $endpoint = "";
+			}
+
 			// Clear the original query before it is filtered
 			$query = ($item_id) ? array() : $query;
 
 			/**
-			* 2B. Custom URI assigned to taxonomy
+			* 3A. Custom URI assigned to taxonomy
 			*/
 			if(strpos($item_id, 'tax-') !== false) {
 				// Remove the "tax-" prefix
 				$item_id = preg_replace("/[^0-9]/", "", $item_id);
+
+				// Filter detected post ID
+				$item_id = apply_filters('permalink-manager-detected-term-id', $item_id, $uri_parts);
 
 				// Get the variables to filter wp_query and double-check if tax exists
 				$term = get_term($item_id);
@@ -218,19 +282,15 @@ class Permalink_Manager_Class {
 				$query[$query_parameter] = $final_uri;
 			}
 			/**
-			* 2C. Custom URI assigned to post/page/cpt item
+			* 3B. Custom URI assigned to post/page/cpt item
 			*/
 			else if(isset($item_id) && is_numeric($item_id)) {
 				// Fix for revisions
 				$is_revision = wp_is_post_revision($item_id);
 				$item_id = ($is_revision) ? $is_revision : $item_id;
 
-				// Fix for WPML languages mismatch
-				$post_lang_details = apply_filters('wpml_post_language_details', NULL, $item_id);
-				$language_code = (!empty($post_lang_details['language_code'])) ? $post_lang_details['language_code'] : '';
-				if($lang && $lang != $language_code) {
-					$item_id = apply_filters('wpml_object_id', $item_id);
-				}
+				// Filter detected post ID
+				$item_id = apply_filters('permalink-manager-detected-post-id', $item_id, $uri_parts);
 
 				$post_to_load = get_post($item_id);
 				$final_uri = $post_to_load->post_name;
@@ -264,7 +324,7 @@ class Permalink_Manager_Class {
 			/**
 			* 2C. Endpoints
 			*/
-			if(!(empty($endpoint_value))) {
+			if($item_id && !(empty($endpoint_value))) {
 				$endpoint = ($endpoint) ? str_replace(array('page', 'trackback'), array('paged', 'tb'), $endpoint) : "page";
 				$query[$endpoint] = $endpoint_value;
 			}
@@ -295,18 +355,15 @@ class Permalink_Manager_Class {
 			}
 
 			// Get the real URL
-			$current_url = home_url(add_query_arg(array(),$wp->request));
-			$native_uri = Permalink_Manager_URI_Functions_Post::get_default_post_uri($permalink_manager_uris[$wp_query->queried_object_id], true);
-
-			$active_permalink = str_replace($native_uri, $permalink_manager_uris[$wp_query->queried_object_id], $current_url);
+			$correct_permalink = get_permalink($wp_query->queried_object_id);
 		}
 
 		// Get the redirection mode
 		$redirect_mode = $permalink_manager_options['miscellaneous']['redirect'];
 
 		// Ignore default URIs (or do nothing if redirects are disabled)
-		if(!empty($active_permalink) && !empty($redirect_mode)) {
-			wp_redirect($active_permalink, $redirect_mode);
+		if(!empty($correct_permalink) && !empty($redirect_mode)) {
+			wp_redirect($correct_permalink, $redirect_mode);
 			exit();
 		}
 	}
@@ -334,6 +391,27 @@ class Permalink_Manager_Class {
 		}
 	}
 
+	/**
+	 * Update check
+	 */
+	public function check_for_updates() {
+		global $permalink_manager_options;
+
+		// Load Plugin Update Checker by YahnisElsts
+		require_once PERMALINK_MANAGER_DIR . '/includes/ext/plugin-update-checker/plugin-update-checker.php';
+
+		// Get the licence key
+		$license_key = (!empty($permalink_manager_options['miscellaneous']['license_key'])) ? $permalink_manager_options['miscellaneous']['license_key'] : "";
+
+		$UpdateChecker = Puc_v4_Factory::buildUpdateChecker(
+			"https://updates.permalinkmanager.pro/?action=get_metadata&slug=permalink-manager-pro&license_key={$license_key}",
+			__FILE__,
+			"permalink-manager-pro"
+		);
+
+		$file = PERMALINK_MANAGER_BASENAME;
+	}
+
 }
 
 /**
@@ -342,5 +420,4 @@ class Permalink_Manager_Class {
 function run_permalink_manager() {
 	$Permalink_Manager_Class = new Permalink_Manager_Class();
 }
-
 run_permalink_manager();

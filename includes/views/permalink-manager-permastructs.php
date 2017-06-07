@@ -38,12 +38,12 @@ class Permalink_Manager_Permastructs extends Permalink_Manager_Class {
 				'append_content' => $post_types_notes,
 				'fields' => array()
 			),
-			/*'taxonomies' => array(
+			'taxonomies' => array(
 				'section_name' => __('Taxonomies', 'permalink-manager'),
 				'container' => 'row',
 				'append_content' => Permalink_Manager_Admin_Functions::pro_text(),
 				'fields' => array()
-			)*/
+			)
 		);
 
 		// 2. Woocommerce support

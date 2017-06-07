@@ -5,13 +5,18 @@
 */
 class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 
+	public $displayed_post_types, $displayed_post_statuses;
+
 	public function __construct() {
-		global $status, $page;
+		global $status, $page, $permalink_manager_options, $active_subsection;
 
 		parent::__construct(array(
 			'singular'	=> 'slug',
 			'plural'	=> 'slugs'
 		));
+
+		$this->displayed_post_statuses = (isset($permalink_manager_options['screen-options']['post_statuses'])) ? "'" . implode("', '", $permalink_manager_options['screen-options']['post_statuses']) . "'" : "'no-post-status'";
+		$this->displayed_post_types = ($active_subsection && $active_subsection == 'all') ? "'" . implode("', '", $permalink_manager_options['screen-options']['post_types']) . "'" : "'{$active_subsection}'";
 	}
 
 	/**
@@ -41,21 +46,14 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	* Override the parent columns method. Defines the columns to use in your listing table
 	*/
 	public function get_columns() {
-		$columns = array(
+		return apply_filters('permalink-manager-uri-editor-columns', array(
 			//'cb'				=> '<input type="checkbox" />', //Render a checkbox instead of text
 			'post_title'		=> __('Post title', 'permalink-manager'),
 			'post_name'	=> __('Post name (native slug)', 'permalink-manager'),
 			//'post_date_gmt'		=> __('Date', 'permalink-manager'),
 			'uri'	=> __('Full URI & Permalink', 'permalink-manager'),
 			'post_status'		=> __('Post status', 'permalink-manager'),
-		);
-
-		// Additional function when WPML is enabled
-		if(class_exists('SitePress')) {
-			$columns['post_lang'] = __('Language', 'permalink_manager');
-		}
-
-		return $columns;
+		));
 	}
 
 	/**
@@ -84,6 +82,9 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		$field_args_base = array('type' => 'text', 'value' => $uri, 'without_label' => true, 'input_class' => '');
 		$permalink = get_permalink($item['ID']);
 
+		$output = apply_filters('permalink-manager-uri-editor-column-content', '', $column_name, get_post($item['ID']));
+		if(!empty($output)) { return $output; }
+
 		switch( $column_name ) {
 			case 'post_status':
 				$post_statuses_array = get_post_statuses();
@@ -107,12 +108,8 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 				$output .= '</div>';
 				return $output;
 
-			case 'post_lang':
-				$post_lang_details = apply_filters('wpml_post_language_details', NULL, $item['ID']);
-				return (!empty($post_lang_details['native_name'])) ? $post_lang_details['native_name'] : "-";
-
 			default:
-			return $item[$column_name];
+				return $item[$column_name];
 		}
 	}
 
@@ -132,19 +129,51 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	* The button that allows to save updated slugs
 	*/
 	function extra_tablenav( $which ) {
+		global $wpdb, $active_section, $active_subsection;
+
 		$button_top = __( 'Update all the URIs below', 'permalink-manager' );
 		$button_bottom = __( 'Update all the URIs above', 'permalink-manager' );
 
-		echo '<div class="alignleft actions">';
-		submit_button( ${"button_$which"}, 'primary', "update_all_slugs[{$which}]", false, array( 'id' => 'doaction', 'value' => 'update_all_slugs' ) );
-		echo '</div>';
+		$html = "<div class=\"alignleft actions\">";
+		$html .= get_submit_button( ${"button_$which"}, 'primary alignleft', "update_all_slugs[{$which}]", false, array( 'id' => 'doaction', 'value' => 'update_all_slugs' ) );
+
+    if ($which == "top") {
+			$months = $wpdb->get_results("SELECT DISTINCT month(post_date) AS m, year(post_date) AS y FROM {$wpdb->posts} WHERE post_status IN ($this->displayed_post_statuses) AND post_type IN ($this->displayed_post_types) ORDER BY post_date DESC", ARRAY_A);
+			if($months) {
+
+				$month_key = 'month';
+				$screen = get_current_screen();
+				$current_url = add_query_arg( array(
+			    'page' => PERMALINK_MANAGER_PLUGIN_SLUG,
+			    'section' => $active_section,
+			    'subsection' => $active_subsection
+				), admin_url($screen->parent_file));
+
+				$html .= "<div id=\"months-filter\" class=\"alignright hide-if-no-js\" data-filter-url=\"{$current_url}\">";
+				$html .= "<select id=\"months-filter-select\" name=\"{$month_key}\">";
+				$html .= sprintf("<option value=\"\">%s</option>", __("All dates", "permalink-manager"));
+				foreach($months as $month) {
+					$month_raw = "{$month['y']}-{$month['m']}";
+					$month_human_name = date_i18n("F Y", strtotime($month_raw));
+
+					$selected = (!empty($_REQUEST[$month_key])) ? selected($_REQUEST[$month_key], $month_raw, false) : "";
+					$html .= "<option value=\"{$month_raw}\" {$selected}>{$month_human_name}</option>";
+				}
+				$html .= "</select>";
+				$html .= sprintf("<input id=\"months-filter-button\" class=\"button\" value=\"%s\" type=\"submit\">", __("Filter", "permalink-manager"));
+				$html .= "</div>";
+			}
+    }
+		$html .= "</div>";
+
+		echo $html;
 	}
 
 	/**
 	* Prepare the items for the table to process
 	*/
 	public function prepare_items() {
-		global $wpdb, $permalink_manager_options, $active_subsection;
+		global $wpdb, $permalink_manager_options;
 
 		$columns = $this->get_columns();
 		$hidden = $this->get_hidden_columns();
@@ -153,19 +182,24 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 
 		// Get query variables
 		$per_page = $permalink_manager_options['screen-options']['per_page'];
-		$post_types_array = $permalink_manager_options['screen-options']['post_types'];
-		$post_types = ($active_subsection && $active_subsection == 'all') ? "'" . implode("', '", $post_types_array) . "'" : "'{$active_subsection}'" ;
-		$post_statuses_array = $permalink_manager_options['screen-options']['post_statuses'];
-		$post_statuses = "'" . implode("', '", $post_statuses_array) . "'";
 
 		// SQL query parameters
 		$order = (isset($_REQUEST['order']) && in_array($_REQUEST['order'], array('asc', 'desc'))) ? $_REQUEST['order'] : 'desc';
 		$orderby = (isset($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'ID';
 		$offset = ($current_page - 1) * $per_page;
 
+		// Extra filters
+		$extra_filters = '';
+		if(!empty($_GET['month'])) {
+			$month = date("n", strtotime($_GET['month']));
+			$year = date("Y", strtotime($_GET['month']));
+
+			$extra_filters .= "AND month(post_date) = {$month} AND year(post_date) = {$year}";
+		}
+
 		// Grab posts from database
-		//$sql_query = "SELECT * FROM {$wpdb->posts} WHERE post_status IN ($post_statuses) AND post_type IN ($post_types) ORDER BY $orderby $order LIMIT $per_page OFFSET $offset";
-		$sql_query = "SELECT * FROM {$wpdb->posts} WHERE post_status IN ($post_statuses) AND post_type IN ($post_types) ORDER BY $orderby $order";
+		//$sql_query = "SELECT * FROM {$wpdb->posts} WHERE post_status IN ($this->displayed_post_statuses) AND post_type IN ($this->displayed_post_types) ORDER BY $orderby $order LIMIT $per_page OFFSET $offset";
+		$sql_query = "SELECT * FROM {$wpdb->posts} WHERE post_status IN ($this->displayed_post_statuses) AND post_type IN ($this->displayed_post_types) {$extra_filters} ORDER BY $orderby $order";
 		$all_data = $wpdb->get_results($sql_query, ARRAY_A);
 
 		// How many items?
