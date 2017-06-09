@@ -528,7 +528,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	/**
 	 * Display global notices (throughout wp-admin dashboard)
 	 */
-	function display_global_notices($html) {
+	function display_global_notices() {
 		global $permalink_manager_alerts;
 
 		$html = "";
