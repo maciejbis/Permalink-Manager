@@ -654,11 +654,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	 * Display global notices (throughout wp-admin dashboard)
 	 */
 	function display_global_notices() {
-<<<<<<< HEAD
 		global $permalink_manager_alerts, $active_section;
-=======
-		global $permalink_manager_alerts;
->>>>>>> 8a3c54c402d174968cf5942b3bf8da0e84b547c1
 
 		$html = "";
 		if(!empty($permalink_manager_alerts) && is_array($permalink_manager_alerts)) {
