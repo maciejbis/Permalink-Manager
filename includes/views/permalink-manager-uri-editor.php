@@ -95,7 +95,11 @@ class Permalink_Manager_Uri_Editor extends Permalink_Manager_Class {
         'choices' => get_post_statuses(),
         'select_all' => '',
         'unselect_all' => '',
-      )
+      ),
+			/*'group' => array(
+				'type' => 'single_checkbox',
+				'label' => __('Group children pages', 'permalink-manager'),
+			),*/
 		);
 
 		foreach($screen_options as $field_name => $field_args) {

@@ -27,16 +27,17 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 	/**
 	* Get primary term (by Yoast SEO)
 	*/
-	static function get_primary_term($post_id, $taxonomy) {
+	static function get_primary_term($post_id, $taxonomy, $slug_only = true) {
 		global $permalink_manager_options;
 
-		if($permalink_manager_options['miscellaneous']['yoast_primary_term'] == 1 && class_exists('WPSEO_Primary_Term')) {
+		if($permalink_manager_options['general']['yoast_primary_term'] == 1 && class_exists('WPSEO_Primary_Term')) {
 			$primary_term = new WPSEO_Primary_Term($taxonomy, $post_id);
 			$primary_term = get_term($primary_term->get_primary_term());
-			return (!is_wp_error($primary_term)) ? $primary_term->slug : "";
-		} else {
-			return '';
+			if(!is_wp_error($primary_term)) {
+				return ($slug_only) ? $primary_term->slug : $primary_term;
+			}
 		}
+		return '';
 	}
 
 	/**
@@ -62,17 +63,17 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 	/**
 	* Get array with all taxonomies
 	*/
-	static function get_taxonomies_array($format = null, $tax = null) {
+	static function get_taxonomies_array($format = null, $tax = null, $prefix = false) {
 		$taxonomies = apply_filters('permalink-manager-taxonomies', get_taxonomies(array('public' => true, 'rewrite' => true), 'objects'));
 
 		$taxonomies_array = array();
-		if($format == 'full') {
-			foreach ( $taxonomies as $taxonomy ) {
+
+		foreach($taxonomies as $taxonomy) {
+			$key = ($prefix) ? "tax-{$taxonomy->name}" : $taxonomy->name;
+			if($format == 'full') {
 				$taxonomies_array[$taxonomy->name] = array('label' => $taxonomy->labels->name, 'name' => $taxonomy->name);
-			}
-		} else {
-			foreach ( $taxonomies as $taxonomy ) {
-				$taxonomies_array[$taxonomy->name] = $taxonomy->labels->name;
+			} else {
+				$taxonomies_array[$key] = $taxonomy->labels->name;
 			}
 		}
 
@@ -196,6 +197,47 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 			}
 		}
 		return $data;
+	}
+
+	/**
+	 * Encode URI and keep slashes
+	 */
+	static function encode_uri($uri) {
+		return str_replace("%2F", "/", urlencode($uri));
+	}
+
+	/**
+	 * Slugify function
+	 */
+	public static function sanitize_title($str) {
+		// Trim slashes & whitespaces
+		$clean = trim($str, " /");
+
+		// Remove accents
+		$clean = remove_accents($clean);
+
+		// $clean = iconv('UTF-8', 'ASCII//TRANSLIT', $clean);
+		$clean = preg_replace("/[^\p{L}a-zA-Z0-9\/_\.|+ -]/u", '', $clean);
+		$clean = strtolower(trim($clean, '-'));
+		$clean = preg_replace("/[_|+ -]+/", "-", $clean);
+
+		return $clean;
+	}
+
+	/**
+	 * Force custom slugs
+	 */
+	public static function force_custom_slugs($slug, $object) {
+		global $permalink_manager_options;
+
+		if(!empty($permalink_manager_options['general']['force_custom_slugs'])) {
+			$old_slug = basename($slug);
+			$new_slug = (!empty($object->name)) ? sanitize_title($object->name) : sanitize_title($object->post_title);
+
+			$slug = ($old_slug != $new_slug) ? str_replace($old_slug, $new_slug, $slug) : $slug;
+		}
+
+		return $slug;
 	}
 
 }

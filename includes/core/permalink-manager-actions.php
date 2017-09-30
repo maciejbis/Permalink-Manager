@@ -6,10 +6,7 @@ class Permalink_Manager_Actions extends Permalink_Manager_Class {
 
 	public function __construct() {
 		add_action( 'admin_init', array($this, 'trigger_action'), 999 );
-		add_action( 'admin_init', array($this, 'clear_uris') );
-
-		// Screen Options
-		add_action( 'admin_init', array($this, 'save_screen_options'), 999 );
+		add_action( 'admin_init', array($this, 'extra_actions') );
 	}
 
 	/**
@@ -18,13 +15,8 @@ class Permalink_Manager_Actions extends Permalink_Manager_Class {
 	public function trigger_action() {
 		global $permalink_manager_before_sections_html, $permalink_manager_after_sections_html;
 
-		// 1. Check if the form was submitted (make exception for clear sitemap cache function)
-		if(isset($_REQUEST['flush_sitemaps'])) {
-			$this->flush_sitemaps();
-			$permalink_manager_before_sections_html .= Permalink_Manager_Admin_Functions::get_alert_message(__( 'Sitemap was updated!', 'permalink-manager' ), 'updated');
-
-			return;
-		} else if(empty($_POST)) { return; }
+		// 1. Check if the form was submitted
+		if(empty($_POST)) { return; }
 
 		$actions_map = array(
 			'uri_editor' => array('function' => 'update_all_permalinks', 'display_uri_table' => true),
@@ -33,6 +25,7 @@ class Permalink_Manager_Actions extends Permalink_Manager_Class {
 			'permalink_manager_options' => array('function' => 'save_settings'),
 			'permalink_manager_permastructs' => array('function' => 'save_permastructures'),
 			'flush_sitemaps' => array('function' => 'save_permastructures'),
+			'import' => array('function' => 'import_custom_permalinks_uris'),
 		);
 		// Clear URIs & reset settings & permastructs also should be added here.
 
@@ -57,7 +50,7 @@ class Permalink_Manager_Actions extends Permalink_Manager_Class {
 			if($updated_slugs_count > 0) {
 				$updated_title = __('List of updated items', 'bis');
 				$alert_content = sprintf( _n( '<strong>%d</strong> slug was updated!', '<strong>%d</strong> slugs were updated!', $updated_slugs_count, 'permalink-manager' ), $updated_slugs_count ) . ' ';
-				$alert_content .= sprintf( __( '<a %s>Click here</a> to go to the list of updated slugs', 'permalink-manager' ), "href=\"#TB_inline?width=100%&height=600&inlineId=updated-list\" title=\"{$updated_title}\" class=\"thickbox\"");
+				$alert_content .= sprintf( __( '<a %s>Click here</a> to go to the list of updated slugs', 'permalink-manager' ), "href=\"#updated-list\" title=\"{$updated_title}\" class=\"thickbox\"");
 
 				$permalink_manager_before_sections_html .= Permalink_Manager_Admin_Functions::get_alert_message($alert_content, 'updated');
 				$permalink_manager_after_sections_html .= Permalink_Manager_Admin_Functions::display_updated_slugs($updated_slugs_array);
@@ -100,15 +93,29 @@ class Permalink_Manager_Actions extends Permalink_Manager_Class {
 	}
 
 	/**
+	 * Additional actions
+	 */
+	public static function extra_actions() {
+		if(isset($_GET['flush_sitemaps'])) {
+			self::flush_sitemaps();
+		} else if(isset($_GET['clear-permalink-manager-uris'])) {
+			self::clear_uris();
+		} else if(!empty($_REQUEST['remove-uri'])) {
+			$uri_key = sanitize_text_field($_REQUEST['remove-uri']);
+			self::remove_uri($uri_key);
+		} else if(!empty($_POST['screen-options-apply'])) {
+			self::save_screen_options();
+		}
+	}
+
+	/**
 	 * Save "Screen Options"
 	 */
 	public static function save_screen_options() {
-		if(!empty($_POST['screen-options-apply'])) {
-			check_admin_referer( 'screen-options-nonce', 'screenoptionnonce' );
+		check_admin_referer( 'screen-options-nonce', 'screenoptionnonce' );
 
-			// The values will be sanitized inside the function
-			self::save_settings('screen-options', $_POST['screen-options']);
-		}
+		// The values will be sanitized inside the function
+		self::save_settings('screen-options', $_POST['screen-options']);
 	}
 
 	/**
@@ -133,18 +140,19 @@ class Permalink_Manager_Actions extends Permalink_Manager_Class {
 					$permastruct = trim($permastruct, "/");
 
 					// Do not store default permastructures
-					$default_permastruct = ($group_name == 'post_types') ? Permalink_Manager_Helper_Functions::get_default_permastruct($element, true) : "";
-					if($permastruct == $default_permastruct) { unset($group[$element]); }
+					// $default_permastruct = ($group_name == 'post_types') ? Permalink_Manager_Helper_Functions::get_default_permastruct($element, true) : "";
+					// if($permastruct == $default_permastruct) { unset($group[$element]); }
 				}
 				// Do not store empty permastructures
-				$new_options[$group_name] = array_filter($group);
+				// $new_options[$group_name] = array_filter($group);
 			} else {
 				unset($new_options[$group_name]);
 			}
 		}
 
 		// Override the global with settings
-		$permalink_manager_permastructs = $new_options = array_filter($new_options);
+		// $permalink_manager_permastructs = $new_options = $new_options;
+		$permalink_manager_permastructs = $new_options;
 
 		// Save the settings in database
 		update_option('permalink-manager-permastructs', $new_options);
@@ -153,21 +161,50 @@ class Permalink_Manager_Actions extends Permalink_Manager_Class {
 	/**
 	* Remove URI from options array after post is moved to the trash
 	*/
-	function clear_uris($post_id) {
-		global $permalink_manager_uris;
+	public static function clear_uris() {
+		global $permalink_manager_uris, $permalink_manager_before_sections_html, $wpdb;
 
-		if(isset($_GET['clear-permalink-manager-uris']) && !empty($permalink_manager_uris)) {
-			foreach($permalink_manager_uris as $post_id => $uri) {
-				// Loop only through post URIs
-				if(is_numeric($post_id)) {
-					$post_status = get_post_status($post_id);
-					if(in_array($post_status, array('auto-draft', 'trash', ''))) {
-						unset($permalink_manager_uris[$post_id]);
-					}
+		if(empty($permalink_manager_uris)) { return; }
+
+		foreach($permalink_manager_uris as $element_id => $uri) {
+			// Loop only through post URIs
+			if(is_numeric($element_id)) {
+				$post_status = get_post_status($element_id);
+				if(in_array($post_status, array('auto-draft', 'trash', '')) || $post_status == false) {
+					unset($permalink_manager_uris[$element_id]);
+				}
+			} else if(strpos($element_id, 'tax-') !== false) {
+				$term_id = preg_replace("/[^0-9]/", "", $element_id);
+				$term = $wpdb->get_row($wpdb->prepare("SELECT t.* FROM $wpdb->terms AS t WHERE t.term_id = %s LIMIT 1", $term_id));
+
+				if(empty($term)) {
+					// print_r('dupa');
 				}
 			}
+		}
+
+		update_option('permalink-manager-uris', array_filter($permalink_manager_uris));
+		$permalink_manager_before_sections_html .= Permalink_Manager_Admin_Functions::get_alert_message(__( 'URI array is cleared!', 'permalink-manager' ), 'updated');
+	}
+
+	/**
+	* Remove URI from options array after post is moved to the trash
+	*/
+	public static function remove_uri($uri_key) {
+		global $permalink_manager_uris, $permalink_manager_before_sections_html;
+
+		if(empty($permalink_manager_uris)) { return; }
+
+		// Check if key exists
+		if(isset($permalink_manager_uris[$uri_key])) {
+			$uri = $permalink_manager_uris[$uri_key];
+			unset($permalink_manager_uris[$uri_key]);
 
 			update_option('permalink-manager-uris', $permalink_manager_uris);
+
+			$permalink_manager_before_sections_html .= Permalink_Manager_Admin_Functions::get_alert_message(sprintf(__( 'URI "%s" was removed successfully!', 'permalink-manager' ), $uri), 'updated');
+		} else {
+			$permalink_manager_before_sections_html .= Permalink_Manager_Admin_Functions::get_alert_message(__( 'URI does not exist or was already removed!', 'permalink-manager' ), 'error');
 		}
 	}
 
@@ -211,10 +248,20 @@ class Permalink_Manager_Actions extends Permalink_Manager_Class {
 	 * Clear sitemaps cache
 	 */
 	function flush_sitemaps($types = array()) {
-		// Reset sitemap's cache
+		global $permalink_manager_before_sections_html;
+
 		if(class_exists('WPSEO_Sitemaps_Cache')) {
 			$sitemaps = WPSEO_Sitemaps_Cache::clear($types);
+
+			$permalink_manager_before_sections_html .= Permalink_Manager_Admin_Functions::get_alert_message(__( 'Sitemaps were updated!', 'permalink-manager' ), 'updated');
 		}
+	}
+
+	/**
+	 * Import old URIs from "Custom Permalinks" (Pro)
+	 */
+	function import_custom_permalinks_uris() {
+		Permalink_Manager_Third_Parties::import_custom_permalinks_uris();
 	}
 
 }

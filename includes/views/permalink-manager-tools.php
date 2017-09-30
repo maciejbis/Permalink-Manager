@@ -14,8 +14,12 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 		$admin_sections['tools'] = array(
 			'name'				=>	__('Tools', 'permalink-manager'),
 			'subsections' => array(
+				'duplicates' => array(
+					'name'				=>	__('Permalink Duplicates', 'permalink-manager'),
+					'function'		=>	array('class' => 'Permalink_Manager_Tools', 'method' => 'duplicates_output')
+				),
 				'find_and_replace' => array(
-					'name'				=>	__('Find and replace', 'permalink-manager'),
+					'name'				=>	__('Find & Replace', 'permalink-manager'),
 					'function'		=>	array('class' => 'Permalink_Manager_Tools', 'method' => 'find_and_replace_output')
 				),
 				'regenerate_slugs' => array(
@@ -23,7 +27,11 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 					'function'		=>	array('class' => 'Permalink_Manager_Tools', 'method' => 'regenerate_slugs_output')
 				),
 				'stop_words' => array(
-					'name'				=>	__('Stop words', 'permalink-manager'),
+					'name'				=>	__('Stop Words', 'permalink-manager'),
+					'function'		=>	array('class' => 'Permalink_Manager_Admin_Functions', 'method' => 'pro_text')
+				),
+				'import' => array(
+					'name'				=>	__('Custom Permalinks', 'permalink-manager'),
 					'function'		=>	array('class' => 'Permalink_Manager_Admin_Functions', 'method' => 'pro_text')
 				)
 			)
@@ -34,6 +42,68 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 
 	public function display_instructions() {
 		return wpautop(__('<strong>A MySQL backup is highly recommended before using "<em>Native slugs</em>" mode!</strong>', 'permalink-manager'));
+	}
+
+	public function duplicates_output() {
+		global $permalink_manager_uris, $permalink_manager_redirects;
+
+		// Get the duplicates & another variables
+		$all_duplicates = Permalink_Manager_Core_Functions::detect_duplicates();
+		$home_url = trim(get_option('home'), "/");
+
+		$html = sprintf("<h3>%s</h3>", __("List of duplicated permalinks", "permalink-manager"));
+
+		if(!empty($all_duplicates)) {
+			foreach($all_duplicates as $uri => $duplicates) {
+				$html .= "<div class=\"permalink-manager postbox permalink-manager-duplicate-box\">";
+				$html .= "<h4 class=\"heading\"><a href=\"{$home_url}/{$uri}\" target=\"_blank\">{$home_url}/{$uri} <span class=\"dashicons dashicons-external\"></span></a></h4>";
+				$html .= "<table>";
+
+				foreach($duplicates as $item_id) {
+					$html .= "<tr>";
+
+					// Detect duplicate type
+					preg_match("/(redirect-([\d]+)_)?(?:(tax-)?([\d]*))/", $item_id, $parts);
+
+					$redirect_type = (!empty($parts[1])) ? __('Extra Redirect', 'permalink-manager') : __('Custom URI', 'permalink-manager');
+					$detected_id = $parts[4];
+					$detected_index = $parts[2];
+					$detected_term = (!empty($parts[3])) ? true : false;
+
+					// Get term
+					if($detected_term && !empty($detected_id)) {
+						$term = get_term($detected_id);
+						$title = $term->name;
+						$edit_label = __("Edit term", "permalink-manager");
+						$edit_link = get_edit_tag_link($term->term_id, $term->taxonomy);
+					} else if(!empty($detected_id)) {
+						$post = get_post($detected_id);
+						$title = $post->post_title;
+						$edit_label = __("Edit post", "permalink-manager");
+						$edit_link = get_edit_post_link($post->ID);
+					} else {
+						continue;
+					}
+
+					$html .= sprintf(
+						//'<td><a href="%1$s" target="_blank">%2$s</a>%3$s</td><td>%4$s</td><td class="actions"><a href="%1$s" target="_blank"><span class="dashicons dashicons-edit"></span> %5$s</a> | <a class="remove-duplicate-link" href="%6$s"><span class="dashicons dashicons-trash"></span> %7$s</a></td>',
+						'<td><a href="%1$s" target="_blank">%2$s</a>%3$s</td><td>%4$s</td><td class="actions"><a href="%1$s" target="_blank"><span class="dashicons dashicons-edit"></span> %5$s</a></td>',
+						$edit_link,
+						$title,
+						" <small>#{$detected_id}</small>",
+						$redirect_type,
+						$edit_label
+					);
+					$html .= "</tr>";
+				}
+				$html .= "</table>";
+				$html .= "</div>";
+			}
+		} else {
+			$html .= sprintf("<p class=\"alert notice-success notice\">%s</p>", __('Congratulations! No duplicated URIs or Redirects found!', 'permalink-manager'));
+		}
+
+		return $html;
 	}
 
 	public function find_and_replace_output() {
@@ -129,7 +199,7 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 				'label' => __( 'Mode', 'permalink-manager' ),
 				'type' => 'select',
 				'container' => 'row',
-				'choices' => array('custom_uris' => __('Custom URIs', 'permalink-manager'), 'slugs' => __('Native slugs', 'permalink-manager')),
+				'choices' => array('custom_uris' => __('Custom URIs', 'permalink-manager'), 'slugs' => __('Restore native slugs', 'permalink-manager'), 'native' => __('Restore native permalinks', 'permalink-manager')),
 			),
 			'content_type' => array(
 				'label' => __( 'Select content type', 'permalink-manager' ),

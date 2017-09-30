@@ -1,12 +1,12 @@
-=== Permalink Manager ===
+=== Permalink Manager Lite ===
 Contributors: mbis
 Donate link: https://www.paypal.me/Bismit
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Tags: urls, permalinks, slugs, custom url, custom permalinks, uris, url, slug, permalink
 Requires at least: 4.0
-Tested up to: 4.7.5
-Stable tag: 1.1.0
+Tested up to: 4.8
+Stable tag: 2.0.3
 
 Most advanced yet easy-to-use permalink plugin that helps to maintain & bulk change your URLs & slugs.
 
@@ -21,24 +21,17 @@ Currently, the plugin allows to perform four main actions:
 3. It allows to bulk regenerate/reset permalinks (or native slugs). This might be especially useful if your post titles are updated and native slugs need to be recreated.
 4. It allows to change the default permalink bases (permastructures) for all custom post types & posts and pages.
 5. It allows to auto-update URIs to match the current permastructure settings after eg. post title or assigned primary category is changed.
-6. (<a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro</a> only) It allows to manually adjust permalinks (URIs) for all categories/tags/custom terms.
-7. (<a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro</a> only) It allows to remove /product-category and /product from WooCommerce permalinks.
-8. (<a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro</a> only) It allows to define custom "stop-words" list and/or use custom one (19 languages available).
+6. It allows to control trailing slash behavior (remove or append slash to the end of permalink).
+
+Additional features available in <a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro</a> only.
+
+1. Extra redirects that could be defined individually for each post and term.
+2. Possibility to remove /product-category and /product from WooCommerce permalinks.
+3. Custom fields inside the permalinks (works also with Advanced Custom Fields).
+4. Case insensitive permalinks.
+5. "Stop-words" auto removal - custom words and/or words from predefined lists (19 languages available).
 
 To improve the user experience, each tool allows also to filter the permalinks by post types or post statuses.
-
-= "Find and replace" usage example =
-
-Word "krakow" should be replaced with "gdansk" in all your permalinks.
-
-`http://example.com/krakow/hotels-in-krakow === [changed] ===> http://example.com/gdansk/hotels-in-gdansk
-http://example.com/krakow/restaurants-in-krakow === [changed] ===> http://example.com/gdansk/restaurants-in-gdansk
-http://example.com/krakow/transport-in-krakow === [changed] ===> http://example.com/gdansk/transport-in-gdansk
-http://example.com/blog/krakow-the-best-city-for-tourists === [changed] ===> http://example.com/blog/gdansk-the-best-city-for-tourists
-http://example.com/poland/cities/krakow === [changed] ===> http://example.com/poland/cities/gdansk
-http://example.com/poland/cities/stalowa-wola === [not changed] ===> http://example.com/cities/stalowa-wola
-http://example.com/poland/cities/warszawa === [not changed] ===> http://example.com/poland/cities/warszawa
-http://example.com/poland/cities/poznan === [not changed] ===> http://example.com/poland/cities/poznan`
 
 = All features =
 
@@ -53,9 +46,12 @@ http://example.com/poland/cities/poznan === [not changed] ===> http://example.co
 = Additional features available in Permalink Manager Pro =
 
 * Priority support
-* Full support for taxonomies
-* Full support for WooCommerce
-* "Stop-words" to keep your permalinks short & clean (pre-defined "stop-words" lists are available in 19 languages)
+* Full support for taxonomies (categories, tags & custom taxonomies)
+* Extra redirects
+* Full support for WooCommerce (products, product tags, product categories)
+* "Stop-words" to keep your permalinks short & clean (pre-defined "stop-words" lists are available in 21 languages)
+* Add custom fields to the permalinks (Advanced Custom Fields compatible)
+* Import permalinks from "Custom Permalinks" plugin
 
 Buy <a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro here</a>.
 
@@ -100,6 +96,60 @@ A. Currently there is no 100% guarantee that Permalink Manager will work correct
 
 
 == Changelog ==
+
+= 2.0.3 =
+* Custom URI editor in "Quick Edit"
+* "Quick/Bulk Edit" hotfix
+* New permastrutcure tag %category_custom_uri%
+
+= 2.0.2 =
+* WooCommerce search redirect loop - hotfix
+
+= 2.0.1 =
+* WooCommerce endpoints hotfix
+* Redirects save notices - hotfix
+
+= 2.0.0 =
+* Extra Redirects - possibility to define extra redirects for each post/term
+* New "Tools" section - "Permalink Duplicates"
+* UI improvements for taxonomies ("Custom URI" panel)
+* Fixes for reported bugs
+
+= 1.11.6.3 =
+* Slug appendix fix
+* Hotfix for WooCommerce checkkout
+
+= 1.11.6 =
+* Hotfix for taxonomy tags
+* Hotfix for custom field tags
+* Hotfix for Jetpack
+* Suuport for WP All Import
+* Support for Custom Permalinks
+
+= 1.11.5.1 =
+* Hotfix for "Custom URI" form
+* Hotfix for Yoast SEO & Visual Composer
+* Now it is possible to disable slugs appendix
+
+= 1.11.4 =
+* Hotfix for RSS feeds URLs
+
+= 1.11.1 =
+* Trailing slashes & Decode URIs - new settings
+* Fix for "Bulk Edit" URI reset
+* Partial code refactoring
+
+= 1.11.0 =
+* Hierarchical taxonomies fix
+* New hook: "permalink_manager_filter_final_term_permalink"
+
+= 1.10.2 =
+* Taxonomies & permastructures fix
+
+= 1.1.1 =
+* Typo fix
+* UI improvements
+* Fix for canonical redirects in WPML
 
 = 1.1.0 =
 * Partial code refactoring

@@ -19,12 +19,7 @@ class Permalink_Manager_Debug extends Permalink_Manager_Class {
 	}
 
 	public function output() {
-		global $permalink_manager_options, $permalink_manager_uris, $permalink_manager_permastructs, $wp_filter;
-
-		// Get permalink hooks
-		foreach(array('_get_page_link', 'post_link', 'page_link', 'post_type_link') as $hook) {
-			$permalink_hooks[$hook] = json_encode($wp_filter[$hook]);
-		}
+		global $permalink_manager_options, $permalink_manager_uris, $permalink_manager_permastructs, $permalink_manager_redirects, $wp_filter;
 
 		$sections_and_fields = apply_filters('permalink-manager-debug-fields', array(
 			'debug-data' => array(
@@ -36,6 +31,13 @@ class Permalink_Manager_Debug extends Permalink_Manager_Class {
 						'label' => __('Array with URIs', 'permalink-manager'),
 						'input_class' => 'short-textarea widefat',
 						'value' => ($permalink_manager_uris) ? print_r($permalink_manager_uris, true) : ''
+					),
+					'custom-redirects' => array(
+						'type' => 'textarea',
+						'description' => __('List of custom redirects set-up by this plugin.', 'permalink-manager'),
+						'label' => __('Array with redirects', 'permalink-manager'),
+						'input_class' => 'short-textarea widefat',
+						'value' => ($permalink_manager_redirects) ? print_r($permalink_manager_redirects, true) : ''
 					),
 					'permastructs' => array(
 						'type' => 'textarea',
@@ -50,13 +52,6 @@ class Permalink_Manager_Debug extends Permalink_Manager_Class {
 						'label' => __('Array with settings used in this plugin.', 'permalink-manager'),
 						'input_class' => 'short-textarea widefat',
 						'value' => print_r($permalink_manager_options, true)
-					),
-					'hooks' => array(
-						'type' => 'textarea',
-						'description' => __('Permalink hooks.', 'permalink-manager'),
-						'label' => __('Array with list of permalink hooks used on this website.', 'permalink-manager'),
-						'input_class' => 'short-textarea widefat',
-						'value' => print_r($permalink_hooks, true)
 					)
 				)
 			)

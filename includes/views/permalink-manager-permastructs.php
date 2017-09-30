@@ -26,9 +26,11 @@ class Permalink_Manager_Permastructs extends Permalink_Manager_Class {
 		$woocommerce_icon = "<i class=\"woocommerce-icon woocommerce-cart\"></i>";
 
 		// 1. Get notes
-		$post_types_notes = wpautop(sprintf(__('All available <a href="%s" target="_blank">structure tags</a> for <strong>post types</strong> allowed are listed below.', 'permalink-manager'), "https://codex.wordpress.org/Using_Permalinks#Structure_Tags"));
+		$post_types_notes = wpautop(sprintf(__('All allowed <a href="%s" target="_blank">structure tags</a> are listed below.', 'permalink-manager'), "https://codex.wordpress.org/Using_Permalinks#Structure_Tags"));
 		$post_types_notes .= Permalink_Manager_Helper_Functions::get_all_structure_tags();
-		$post_types_notes .= wpautop(sprintf(__('Please note that some of them can be used only for particular post types\' settings.', 'permalink-manager'), "https://codex.wordpress.org/Using_Permalinks#Structure_Tags"));
+		$post_types_notes .= wpautop(sprintf(__('Please note that some of them can be used only for particular post types permastructures.', 'permalink-manager'), "https://codex.wordpress.org/Using_Permalinks#Structure_Tags"));
+		$post_types_notes .= __('<h5>Custom fields inside permastructures <small>(Permalink Manager Pro only)</small></h5>', 'permalink-manager');
+		$post_types_notes .= wpautop(__('To use the custom fields inside the permalink, please use following tag <code>%__custom_field_key%</code> and replace "<em>custom_field_key</em>" with the full name of your custom field key.', 'permalink-manager'));
 
 		// 2. Get fields
 		$fields = array(
@@ -65,7 +67,9 @@ class Permalink_Manager_Permastructs extends Permalink_Manager_Class {
 			$fields["post_types"]["fields"][$post_type['name']] = array(
 				'label' => $post_type['label'],
 				'container' => 'row',
-				'input_class' => '',
+				'input_class' => 'permastruct-field',
+				'after_description' => self::restore_default_row($default_permastruct),
+				'extra_atts' => "data-default=\"{$default_permastruct}\"",
 				'value' => $current_permastruct,
 				'placeholder' => $default_permastruct,
 				'type' => 'permastruct'
@@ -76,17 +80,27 @@ class Permalink_Manager_Permastructs extends Permalink_Manager_Class {
 	}
 
 	/**
+	 * Restore default permastructure row
+	 */
+	public static function restore_default_row($default_permastruct) {
+		return sprintf(
+			"<p class=\"default-permastruct-row columns-container\"><span class=\"column-2_4\"><strong>%s:</strong> %s</span><span class=\"column-2_4\"><a href=\"#\" class=\"restore-default\"><span class=\"dashicons dashicons-image-rotate\"></span> %s</a></span></p>",
+			__("Default permastructure", "permalink-manager"), esc_html($default_permastruct),
+			__("Restore to Default Permastructure", "permalink-manager")
+		);
+	}
+
+	/**
 	* Get the array with settings and render the HTML output
 	*/
 	public function output() {
 		global $permalink_manager_permastructs;
 
-		$output = wpautop(sprintf(__('This tool allows to overwrite the native permalink settings (permastructures) that can be edited <a href="%s" target="_blank">here</a>.', 'bis'), "#"));
-		$output .= wpautop(__('This tool <strong>automatically appends the slug to the end of permastructure</strong>, so there is no need to use them within the fields.', 'bis'));
-		$output .= wpautop(__('Each permastructure should be unique to prevent the problem with overlapping URLs.', 'bis'));
-		$output .= Permalink_Manager_Admin_Functions::get_the_form(self::get_fields(), '', array('text' => __( 'Save permastructures', 'permalink-manager' ), 'class' => 'primary margin-top'), '', array('action' => 'permalink-manager', 'name' => 'permalink_manager_permastructs'));
+		$sidebar = '<h3>' . __('Important notices', 'permalink-manager') . '</h3>';
+		$sidebar .= wpautop(__('This tool <strong>automatically appends the slug to the end of permastructure</strong>, so there is no need to use them within the fields. To prevent the overlapping URLs problem please keep the permastructures unique.'));
+		$sidebar .= sprintf(wpautop(__('The current permastructures settings will be applied <strong>only to the new posts & terms</strong>. To apply the <strong>new permastructures to old posts & terms</strong>, please use "Regenerate/reset" tool available <a href="%s">here</a>.', 'bis')), admin_url('tools.php?page=permalink-manager&section=tools&subsection=regenerate_slugs'));
 
-		return $output;
+		return Permalink_Manager_Admin_Functions::get_the_form(self::get_fields(), '', array('text' => __( 'Save permastructures', 'permalink-manager' ), 'class' => 'primary margin-top'), $sidebar, array('action' => 'permalink-manager', 'name' => 'permalink_manager_permastructs'));
 	}
 
 }

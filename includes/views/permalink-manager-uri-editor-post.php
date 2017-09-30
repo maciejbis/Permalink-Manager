@@ -42,17 +42,17 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		return $output;
 	}
 
+	function get_table_classes() {
+		return array( 'widefat', 'striped', $this->_args['plural'] );
+	}
+
 	/**
 	* Override the parent columns method. Defines the columns to use in your listing table
 	*/
 	public function get_columns() {
 		return apply_filters('permalink-manager-uri-editor-columns', array(
-			//'cb'				=> '<input type="checkbox" />', //Render a checkbox instead of text
-			'post_title'		=> __('Post title', 'permalink-manager'),
-			'post_name'	=> __('Post name (native slug)', 'permalink-manager'),
-			//'post_date_gmt'		=> __('Date', 'permalink-manager'),
-			'uri'	=> __('Full URI & Permalink', 'permalink-manager'),
-			'post_status'		=> __('Post status', 'permalink-manager'),
+			'item_title'		=> __('Post title', 'permalink-manager'),
+			'item_uri'	=> __('Full URI & Permalink', 'permalink-manager')
 		));
 	}
 
@@ -60,7 +60,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	* Hidden columns
 	*/
 	public function get_hidden_columns() {
-		return array('post_date_gmt');
+		return array();
 	}
 
 	/**
@@ -68,9 +68,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	*/
 	public function get_sortable_columns() {
 		return array(
-			'post_title' => array('post_title', false),
-			'post_name' => array('post_name', false),
-			'post_status' => array('post_status', false),
+			'item_title' => array('post_title', false)
 		);
 	}
 
@@ -78,31 +76,34 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	* Data inside the columns
 	*/
 	public function column_default( $item, $column_name ) {
+		global $permalink_manager_options;
+
 		$uri = Permalink_Manager_URI_Functions_Post::get_post_uri($item['ID'], true);
+		$uri = (!empty($permalink_manager_options['general']['decode_uris'])) ? urldecode($uri) : $uri;
+
 		$field_args_base = array('type' => 'text', 'value' => $uri, 'without_label' => true, 'input_class' => '');
 		$permalink = get_permalink($item['ID']);
+		$post_statuses_array = get_post_statuses();
 
 		$output = apply_filters('permalink-manager-uri-editor-column-content', '', $column_name, get_post($item['ID']));
 		if(!empty($output)) { return $output; }
 
 		switch( $column_name ) {
-			case 'post_status':
-				$post_statuses_array = get_post_statuses();
-				return "<span title=\"{$item[$column_name]}\">{$post_statuses_array[$item[$column_name]]}</span>";
-
-			case 'post_name':
-				$output = $item[ 'post_name' ];
-				return $output;
-
-			case 'uri':
+			case 'item_uri':
 				$output = Permalink_Manager_Admin_Functions::generate_option_field("uri[{$item['ID']}]", $field_args_base);
-				$output .= "<a class=\"small post_permalink\" href=\"{$permalink}\" target=\"_blank\"><span class=\"dashicons dashicons-admin-links\"></span> {$permalink}</a>";
+				$output .= sprintf("<a class=\"small post_permalink\" href=\"%s\" target=\"_blank\"><span class=\"dashicons dashicons-admin-links\"></span> %s</a>", $permalink, urldecode($permalink));
 				return $output;
 
-			case 'post_title':
+			case 'item_title':
 				$output = $item[ 'post_title' ];
+				$output .= '<div class="extra-info small">';
+				$output .= sprintf("<span><strong>%s:</strong> %s</span>", __("Slug", "permalink-manager"), urldecode($item['post_name']));
+				$output .= sprintf(" | <span><strong>%s:</strong> {$post_statuses_array[$item["post_status"]]}</span>", __("Post status", "permalink-manager"));
+				$output .= apply_filters('permalink-manager-uri-editor-extra-info', '', $column_name, get_post($item['ID']));
+				$output .= '</div>';
+
 				$output .= '<div class="row-actions">';
-				$output .= '<span class="edit"><a target="_blank" href="' . home_url() . '/wp-admin/post.php?post=' . $item[ 'ID' ] . '&amp;action=edit" title="' . __('Edit', 'permalink-manager') . '">' . __('Edit', 'permalink-manager') . '</a> | </span>';
+				$output .= sprintf("<span class=\"edit\"><a href=\"%s/wp-admin/post.php?post={$item['ID']}&amp;action=edit\" title=\"%s\">%s</a> | </span>", home_url(), __('Edit', 'permalink-manager'), __('Edit', 'permalink-manager'));
 				$output .= '<span class="view"><a target="_blank" href="' . $permalink . '" title="' . __('View', 'permalink-manager') . ' ' . $item[ 'post_title' ] . '" rel="permalink">' . __('View', 'permalink-manager') . '</a> | </span>';
 				$output .= '<span class="id">#' . $item[ 'ID' ] . '</span>';
 				$output .= '</div>';
@@ -198,7 +199,6 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		}
 
 		// Grab posts from database
-		//$sql_query = "SELECT * FROM {$wpdb->posts} WHERE post_status IN ($this->displayed_post_statuses) AND post_type IN ($this->displayed_post_types) ORDER BY $orderby $order LIMIT $per_page OFFSET $offset";
 		$sql_query = "SELECT * FROM {$wpdb->posts} WHERE post_status IN ($this->displayed_post_statuses) AND post_type IN ($this->displayed_post_types) {$extra_filters} ORDER BY $orderby $order";
 		$all_data = $wpdb->get_results($sql_query, ARRAY_A);
 

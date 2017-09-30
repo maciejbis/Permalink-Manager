@@ -57,7 +57,38 @@ jQuery(document).ready(function() {
 		jQuery('.permalink-manager-edit-uri-box').slideToggle();
 
 		return false;
-	}).trigger('keyup');
+	});
+
+	/**
+	 * Toggle "Edit Redirects" box
+	 */
+	jQuery('#toggle-redirect-panel').on('click', function() {
+		jQuery('#redirect-panel-inside').slideToggle();
+
+		return false;
+	});
+
+	jQuery('.permalink-manager.redirects-panel #permalink-manager-new-redirect').on('click', function() {
+		// Find the table
+		var table = jQuery(this).parents('.redirects-panel').find('table');
+
+		// Copy the row from the sample
+		var new_row = jQuery(this).parents('.redirects-panel').find('.sample-row').clone().removeClass('sample-row');
+
+		// Adjust the array key
+		var last_key = jQuery(table).find("tr:last-of-type input[data-index]").data("index") + 1;
+		jQuery("input[data-index]", new_row).attr("data-index", last_key).attr("name", function(){ return jQuery(this).attr("name") + "[" + last_key + "]" });
+
+		// Append the new row
+		jQuery(table).append(new_row);
+
+		return false;
+	});
+
+	jQuery('.permalink-manager.redirects-panel').on('click', '.remove-redirect', function() {
+		var table = jQuery(this).closest('tr').remove();
+		return false;
+	});
 
 	/**
 	 * Synchronize "Edit URI" input field with the sample permalink
@@ -75,19 +106,18 @@ jQuery(document).ready(function() {
 		var auto_update_status = jQuery(selected).data('auto-update');
 
 		if(auto_update_status == 1) {
-			jQuery(custom_uri_input).attr("disabled", true);
+			jQuery(custom_uri_input).attr("readonly", true);
 		} else {
-			jQuery(custom_uri_input).removeAttr("disabled", true);
+			jQuery(custom_uri_input).removeAttr("readonly", true);
 		}
 	}).trigger("change");
 
 	/**
 	 * Restore "Default URI"
 	 */
-	jQuery('#restore-default-uri').on('click', function() {
-		jQuery('input[data-default-uri]').each(function() {
-			jQuery(this).val(jQuery(this).data('default-uri')).trigger('keyup');
-		});
+	jQuery('.restore-default').on('click', function() {
+		var input = jQuery(this).parents('.field-container, .permalink-manager-edit-uri-box').find('input[data-default]');
+		jQuery(input).val(jQuery(input).data('default')).trigger('keyup');
 		return false;
 	});
 
@@ -159,6 +189,57 @@ jQuery(document).ready(function() {
 
 			return false;
 		});
+	}
+
+	/**
+	 * Quick Edit
+	 */
+	if(typeof inlineEditPost !== "undefined") {
+		var inline_post_editor = inlineEditPost.edit;
+		inlineEditPost.edit = function(id) {
+			inline_post_editor.apply(this, arguments);
+
+			// Get the Post ID
+			var post_id = 0;
+			if(typeof(id) == 'object') {
+				post_id = parseInt(this.getId(id));
+			}
+
+			if(post_id != 0) {
+				// Get the row & "Custom URI" field
+				custom_uri_field = jQuery('#edit-' + post_id).find('.custom_uri');
+
+				// Prepare the Custom URI
+				custom_uri = jQuery("#post-" + post_id).find(".column-permalink-manager-col").text();
+
+				// Fill with the Custom URI
+				custom_uri_field.val(custom_uri);
+			}
+		}
+	}
+
+	if(typeof inlineEditTax !== "undefined") {
+		var inline_tax_editor = inlineEditTax.edit;
+		inlineEditTax.edit = function(id) {
+			inline_tax_editor.apply(this, arguments);
+
+			// Get the Post ID
+			var term_id = 0;
+			if(typeof(id) == 'object') {
+				term_id = parseInt(this.getId(id));
+			}
+
+			if(term_id != 0) {
+				// Get the row & "Custom URI" field
+				custom_uri_field = jQuery('#edit-' + term_id).find('.custom_uri');
+
+				// Prepare the Custom URI
+				custom_uri = jQuery("#tag-" + term_id).find(".column-permalink-manager-col").text();
+
+				// Fill with the Custom URI
+				custom_uri_field.val(custom_uri);
+			}
+		}
 	}
 
 });
