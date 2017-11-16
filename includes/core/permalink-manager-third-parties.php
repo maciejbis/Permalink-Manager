@@ -54,7 +54,6 @@ class Permalink_Manager_Third_Parties extends Permalink_Manager_Class {
 
 		// 6. WooCommerce
 		if(class_exists('WooCommerce')) {
-			add_filter('permalink-manager-endpoints', array($this, 'woocommerce_endpoints'), 0, 1);
 			add_filter('request', array($this, 'woocommerce_detect'), 9, 1);
 			add_filter('template_redirect', array($this, 'woocommerce_checkout_fix'), 9);
 		}
@@ -83,13 +82,19 @@ class Permalink_Manager_Third_Parties extends Permalink_Manager_Class {
 	}
 
 	function wpml_detect_post($uri_parts, $request_url, $endpoints) {
-		//preg_match("/^(?:(\w{2})\/)?(.+?)(?:\/({$endpoints}))?(?:\/([\d+]))?\/?$/i", $request_url, $regex_parts);
-		preg_match("/^(?:(\w{2})\/)?(.+?)(?:\/({$endpoints}))?(?:\/([\d]+))?\/?$/i", $request_url, $regex_parts);
+		global $sitepress_settings;
 
-		$uri_parts['lang'] = (!empty($regex_parts[1])) ? $regex_parts[1] : "";
-		$uri_parts['uri'] = (!empty($regex_parts[2])) ? $regex_parts[2] : "";
-		$uri_parts['endpoint'] = (!empty($regex_parts[3])) ? $regex_parts[3] : "";
-		$uri_parts['endpoint_value'] = (!empty($regex_parts[4])) ? $regex_parts[4] : "";
+		if(!empty($sitepress_settings['active_languages'])) {
+			$languages_list = implode("|", $sitepress_settings['active_languages']);
+			//preg_match("/^(?:(\w{2})\/)?(.+?)(?:\/({$endpoints}))?(?:\/([\d+]))?\/?$/i", $request_url, $regex_parts);
+
+			preg_match("/^(?:({$languages_list})\/)?(.+?)(?|\/({$endpoints})\/([^\/]+)|\/()([\d+]))?\/?$/i", $request_url, $regex_parts);
+
+			$uri_parts['lang'] = (!empty($regex_parts[1])) ? $regex_parts[1] : "";
+			$uri_parts['uri'] = (!empty($regex_parts[2])) ? $regex_parts[2] : "";
+			$uri_parts['endpoint'] = (!empty($regex_parts[3])) ? $regex_parts[3] : "";
+			$uri_parts['endpoint_value'] = (!empty($regex_parts[4])) ? $regex_parts[4] : "";
+		}
 
 		return $uri_parts;
 	}
@@ -294,23 +299,6 @@ class Permalink_Manager_Third_Parties extends Permalink_Manager_Class {
 
  	  update_option('permalink-manager-uris', $permalink_manager_uris);
  	}
-
-	/**
-	 * WooCommerce
-	 */
-	function woocommerce_endpoints($endpoints) {
-		global $woocommerce;
-
-		if(!empty($woocommerce->query->query_vars)) {
-			$query_vars = $woocommerce->query->query_vars;
-
-			foreach($query_vars as $key => $val) {
-				$endpoints .= "|{$val}";
-			}
-		}
-
-		return $endpoints;
-	}
 
 	function woocommerce_detect($query) {
 		global $woocommerce, $pm_item_id;

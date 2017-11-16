@@ -16,11 +16,13 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		add_action( 'admin_notices', array($this, 'display_plugin_notices'));
 		add_action( 'admin_notices', array($this, 'display_global_notices'));
 		add_action( 'wp_ajax_dismissed_notice_handler', array($this, 'hide_global_notice') );
+
+		add_filter( "default_hidden_columns" , array($this, 'quick_edit_hide_column'), 10, 2 );
 	}
 
 	/**
-	* Hooks that should be triggered with "admin_init"
-	*/
+	 * Hooks that should be triggered with "admin_init"
+	 */
 	public function init() {
 		// Additional link in "Plugins" page
 		add_filter( "plugin_action_links_{$this->plugin_basename}", array($this, "plugins_page_links") );
@@ -31,8 +33,8 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
-	* Get current section (only in plugin sections)
-	*/
+	 * Get current section (only in plugin sections)
+	 */
 	public function get_current_section() {
 		global $active_section, $active_subsection, $current_admin_tax;
 
@@ -73,8 +75,8 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
-	* Add menu page.
-	*/
+	 * Add menu page.
+	 */
 	public function add_menu_page() {
 		$this->menu_name = add_management_page( __('Permalink Manager', 'permalink-manager'), __('Permalink Manager', 'permalink-manager'), 'manage_options', $this->plugin_slug, array($this, 'display_section') );
 
@@ -83,16 +85,16 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
-	* Register the CSS file for the dashboard.
-	*/
+	 * Register the CSS file for the dashboard.
+	 */
 	public function enqueue_styles() {
 		wp_enqueue_style( 'permalink-manager-plugins', PERMALINK_MANAGER_URL . '/out/permalink-manager-plugins.css', array(), PERMALINK_MANAGER_VERSION, 'all' );
 		wp_enqueue_style( 'permalink-manager', PERMALINK_MANAGER_URL . '/out/permalink-manager-admin.css', array('permalink-manager-plugins'), PERMALINK_MANAGER_VERSION, 'all' );
 	}
 
 	/**
-	* Register the JavaScript file for the dashboard.
-	*/
+	 * Register the JavaScript file for the dashboard.
+	 */
 	public function enqueue_scripts() {
 		wp_enqueue_script( 'permalink-manager-plugins', PERMALINK_MANAGER_URL . '/out/permalink-manager-plugins.js', array( 'jquery', ), PERMALINK_MANAGER_VERSION, false );
 		wp_enqueue_script( 'permalink-manager', PERMALINK_MANAGER_URL . '/out/permalink-manager-admin.js', array( 'jquery', 'permalink-manager-plugins' ), PERMALINK_MANAGER_VERSION, false );
@@ -119,8 +121,8 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
-	* Generate the fields
-	*/
+	 * Generate the fields
+	 */
 	static public function generate_option_field($input_name, $args) {
 		global $permalink_manager_options;
 
@@ -168,11 +170,23 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 			case 'checkbox' :
 				$fields .= '<div class="checkboxes">';
 				foreach($args['choices'] as $choice_value => $choice) {
-					$label = (is_array($choice)) ? $choice['label'] : $choice;
-					$atts = (is_array($value) && in_array($choice_value, $value)) ? "checked='checked'" : "";
-					$atts .= (!empty($choice['atts'])) ? " {$choice['atts']}" : "";
+					$input_template = "<label for='%s[]'><input type='checkbox' %s value='%s' name='%s[]' %s /> %s</label>";
 
-					$fields .= "<label for='{$input_name}[]'><input type='checkbox' {$input_atts} value='{$choice_value}' name='{$input_name}[]' {$atts} /> {$label}</label>";
+					if(empty($choice['label']) && is_array($choice)) {
+						foreach($choice as $sub_choice_value => $sub_choice) {
+							$label = (!empty($sub_choice['label'])) ? $sub_choice['label'] : $sub_choice;
+							$atts = (!empty($value[$choice_value]) && in_array($sub_choice_value, $value[$choice_value])) ? "checked='checked'" : "";
+							$atts .= (!empty($sub_choice['atts'])) ? " {$sub_choice['atts']}" : "";
+
+							$fields .= sprintf($input_template, $input_name, $input_atts, $sub_choice_value, "{$input_name}[{$choice_value}]", $atts, $label);
+						}
+					} else {
+						$label = (!empty($choice['label'])) ? $choice['label'] : $choice;
+						$atts = (is_array($value) && in_array($choice_value, $value)) ? "checked='checked'" : "";
+						$atts .= (!empty($choice['atts'])) ? " {$choice['atts']}" : "";
+
+						$fields .= sprintf($input_template, $input_name, $input_atts, $choice_value, $input_name, $atts, $label);
+					}
 				}
 				$fields .= '</div>';
 
@@ -281,15 +295,15 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
-	* Display hidden field to indicate posts or taxonomies admin sections
-	*/
+	 * Display hidden field to indicate posts or taxonomies admin sections
+	 */
 	static public function section_type_field($type = 'post') {
 		return self::generate_option_field('content_type', array('value' => $type, 'type' => 'hidden'));
 	}
 
 	/**
-	* Display the form
-	*/
+	 * Display the form
+	 */
 	static public function get_the_form($fields = array(), $container = '', $button = array(), $sidebar = '', $nonce = array(), $wrap = false) {
 		// 1. Check if the content will be displayed in columns and button details
 		switch($container) {
@@ -380,8 +394,8 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
-	* Display the plugin sections.
-	*/
+	 * Display the plugin sections.
+	 */
 	public function display_section() {
 		global $wpdb, $permalink_manager_before_sections_html, $permalink_manager_after_sections_html;
 
@@ -450,8 +464,8 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
-	* Display error/info message
-	*/
+	 * Display error/info message
+	 */
 	public static function get_alert_message($alert_content = "", $alert_type = "", $dismissable = true, $id = false) {
 		// Ignore empty messages (just in case)
 		if(empty($alert_content) || empty($alert_type)) {
@@ -473,16 +487,16 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
-	* Help tooltip
-	*/
+	 * Help tooltip
+	 */
 	static function help_tooltip($text = '') {
 		$html = " <a href=\"#\" title=\"{$text}\" class=\"help_tooltip\"><span class=\"dashicons dashicons-editor-help\"></span></a>";
 		return $html;
 	}
 
 	/**
-	* Display the table with updated slugs after one of the actions is triggered
-	*/
+	 * Display the table with updated slugs after one of the actions is triggered
+	 */
 	static function display_updated_slugs($updated_array, $uri_type = 'post') {
 		// Check if slugs should be displayed
 		$first_slug = reset($updated_array);
@@ -529,7 +543,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
-	 * Quick Edit Box
+	 * "Quick Edit" Box
 	 */
 	public static function quick_edit_column_form($is_taxonomy = false) {
 		$html = Permalink_Manager_Admin_Functions::generate_option_field('permalink-manager-quick-edit', array('value' => true, 'type' => 'hidden'));
@@ -544,6 +558,9 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		$html .= "</div>";
 
 		$html .= "</fieldset>";
+
+		// Append nonce field
+		$html .= wp_nonce_field( 'permalink-manager-edit-uri-box', 'permalink-manager-nonce', true, false );
 
 		return $html;
 	}
@@ -589,7 +606,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 			Permalink_Manager_Admin_Functions::generate_option_field("custom_uri", array("extra_atts" => "data-default=\"{$default_uri}\"", "input_class" => "widefat custom_uri", "value" => urldecode($uri)))
 		);
 
-		// 5. Custom URI
+		// 5. Auto-update URI
 		if(!empty($auto_update_choices)) {
 			$html .= sprintf("<div><label for=\"auto_auri\" class=\"strong\">%s %s</label><span>%s</span></div>",
 				__("Auto-update the URI", "permalink-manager"),
@@ -621,6 +638,9 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		$html .= "</div>";
 		$html .= "</div>";
 
+		// 9. Append nonce field
+		$html .= wp_nonce_field('permalink-manager-edit-uri-box', 'permalink-manager-nonce', true, false);
+
 		return $html;
 	}
 
@@ -648,6 +668,14 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		$html .= "</div></div>";
 
 		return $html;
+	}
+
+	/**
+	 * Hide "Custom URI" column
+	 */
+	function quick_edit_hide_column($hidden, $screen) {
+		$hidden[] = 'permalink-manager-col';
+		return $hidden;
 	}
 
 	/**

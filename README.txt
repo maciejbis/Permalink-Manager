@@ -3,12 +3,13 @@ Contributors: mbis
 Donate link: https://www.paypal.me/Bismit
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Tags: urls, permalinks, slugs, custom url, custom permalinks, uris, url, slug, permalink
+Tags: urls, permalinks, slugs, custom url, custom permalinks, uris, url, slug, permalink, woocommerce permalinks, seo
 Requires at least: 4.0
-Tested up to: 4.8
-Stable tag: 2.0.3
+Requires PHP: 5.4
+Tested up to: 4.9
+Stable tag: 2.0.5.1
 
-Most advanced yet easy-to-use permalink plugin that helps to maintain & bulk change your URLs & slugs.
+Advanced plugin that allows to set-up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
 
 == Description ==
 
@@ -96,6 +97,33 @@ A. Currently there is no 100% guarantee that Permalink Manager will work correct
 
 
 == Changelog ==
+
+= 2.0.5.1 =
+* Hotfix for REGEX rule
+
+= 2.0.5 =
+* Now, the duplicates and unused custom permalinks can be automatically removed
+* Better support for endpoints
+* "Disable slug appendix" field is no longer needed
+* %{taxonomy}_flat% tag enhanced for post types permastructures
+* Fix for WPML language prefixes in REGEX rule used to detect URIs
+* Possibility to disable Permalink Manager functions for particular post types or taxonomies
+
+= 2.0.4.3 =
+* Hotfix for problem with custom URIs for new terms & posts
+
+= 2.0.4.2 =
+* Trailing slashes redirect adjustment
+
+= 2.0.4.1 =
+* Hotfix for Elementor and another visual editor plugins
+* Support for endpoints parsed as $_GET parameters
+
+= 2.0.4 =
+* New settings field - "Deep detect"
+
+= 2.0.3.1 =
+* Fix for Custom Fields tag in permastructures
 
 = 2.0.3 =
 * Custom URI editor in "Quick Edit"

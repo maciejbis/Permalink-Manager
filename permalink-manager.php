@@ -3,8 +3,8 @@
 /**
 * Plugin Name:       Permalink Manager Lite
 * Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
-* Description:       Most advanced Permalink utility for Wordpress. It allows to bulk edit the permalinks & permastructures and regenerate/reset all the URIs in your Wordpress instance.
-* Version:           2.0.3
+* Description:       Advanced plugin that allows to set-up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
+* Version:           2.0.5.1
 * Author:            Maciej Bis
 * Author URI:        http://maciejbis.net/
 * License:           GPL-2.0+
@@ -21,7 +21,7 @@ if (!defined('WPINC')) {
 // Define the directories used to load plugin files.
 define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-define( 'PERMALINK_MANAGER_VERSION', '2.0.3' );
+define( 'PERMALINK_MANAGER_VERSION', '2.0.5.1' );
 define( 'PERMALINK_MANAGER_FILE', __FILE__ );
 define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 define( 'PERMALINK_MANAGER_BASENAME', plugin_basename(__FILE__) );
@@ -150,15 +150,15 @@ class Permalink_Manager_Class {
 				'force_custom_slugs' => 0,
 				'auto_update_uris' => 0,
 				'case_insensitive_permalinks' => 0,
-				'decode_uris' => 0,
 				'yoast_primary_term' => 1,
-				'redirect' => '302',
+				'redirect' => '301',
 				'yoast_attachment_redirect' => 1,
 				'canonical_redirect' => 1,
 				'trailing_slashes' => 0,
-				'setup_redirects' => 0,
+				'setup_redirects' => 1,
 				'auto_remove_duplicates' => 0,
-				'disable_slug_appendix' => array()
+				'partial_disable' => array(),
+				'deep_detect' => 1
 			),
 			'licence' => array()
 		));
@@ -180,15 +180,15 @@ class Permalink_Manager_Class {
 	*/
 	public function default_alerts($alerts) {
 		$default_alerts = apply_filters('permalink-manager-default-alerts', array(
-			'september' => array(
+			'november' => array(
 				'txt' => sprintf(
-					__("Get access to extra features: full taxonomy and WooCommerce support, possibility to use custom fields inside the permalinks and more!<br /><strong>Buy Permalink Manager Pro <a href=\"%s\" target=\"_blank\">here</a> and save 20&#37; using \"SUMMER\" coupon code!</strong>", "permalink-manager"),
+					__("Get access to extra features: full taxonomy and WooCommerce support, possibility to use custom fields inside the permalinks and more!<br /><strong>Buy Permalink Manager Pro <a href=\"%s\" target=\"_blank\">here</a> and save 20&#37; using \"NOVEMBER\" coupon code!</strong> Valid until 31.11!", "permalink-manager"),
 					PERMALINK_MANAGER_WEBSITE
 				),
 				'type' => 'notice-info',
 				'show' => 'pro_hide',
 				'plugin_only' => true,
-				'until' => '2017-09-10'
+				'until' => '2017-11-31'
 			)
 		));
 

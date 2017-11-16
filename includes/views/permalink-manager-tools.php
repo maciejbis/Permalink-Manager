@@ -48,10 +48,11 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 		global $permalink_manager_uris, $permalink_manager_redirects;
 
 		// Get the duplicates & another variables
-		$all_duplicates = Permalink_Manager_Core_Functions::detect_duplicates();
+		$all_duplicates = Permalink_Manager_Helper_Functions::get_all_duplicates();
 		$home_url = trim(get_option('home'), "/");
 
 		$html = sprintf("<h3>%s</h3>", __("List of duplicated permalinks", "permalink-manager"));
+		$html .= wpautop(sprintf("<a class=\"button button-primary\" href=\"%s\">%s</a>", admin_url('tools.php?page=permalink-manager&section=tools&subsection=duplicates&clear-permalink-manager-uris=1'), __('Remove all broken URIs', 'permalink-manager')));
 
 		if(!empty($all_duplicates)) {
 			foreach($all_duplicates as $uri => $duplicates) {
@@ -73,21 +74,35 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 					// Get term
 					if($detected_term && !empty($detected_id)) {
 						$term = get_term($detected_id);
-						$title = $term->name;
-						$edit_label = __("Edit term", "permalink-manager");
-						$edit_link = get_edit_tag_link($term->term_id, $term->taxonomy);
-					} else if(!empty($detected_id)) {
+						if(!empty($term->name)) {
+							$title = $post->post_title;
+							$edit_label = "<span class=\"dashicons dashicons-edit\"></span>" . __("Edit term", "permalink-manager");
+							$edit_link = get_edit_tag_link($term->term_id, $term->taxonomy);
+						} else {
+							$title = __("(Removed term)", "permalink-manager");
+							$edit_label = "<span class=\"dashicons dashicons-trash\"></span>" . __("Remove broken URI", "permalink-manager");
+							$edit_link = admin_url("tools.php?page=permalink-manager&section=tools&subsection=duplicates&remove-uri=tax-{$detected_id}");
+						}
+					}
+					// Get post
+					else if(!empty($detected_id)) {
 						$post = get_post($detected_id);
-						$title = $post->post_title;
-						$edit_label = __("Edit post", "permalink-manager");
-						$edit_link = get_edit_post_link($post->ID);
+						if(!empty($post->post_title)) {
+							$title = $post->post_title;
+							$edit_label = "<span class=\"dashicons dashicons-edit\"></span>" . __("Edit post", "permalink-manager");
+							$edit_link = get_edit_post_link($post->ID);
+						} else {
+							$title = __("(Removed post)", "permalink-manager");
+							$edit_label = "<span class=\"dashicons dashicons-trash\"></span>" . __("Remove broken URI", "permalink-manager");
+							$edit_link = admin_url("tools.php?page=permalink-manager&section=tools&subsection=duplicates&remove-uri={$detected_id}");
+						}
 					} else {
 						continue;
 					}
 
 					$html .= sprintf(
 						//'<td><a href="%1$s" target="_blank">%2$s</a>%3$s</td><td>%4$s</td><td class="actions"><a href="%1$s" target="_blank"><span class="dashicons dashicons-edit"></span> %5$s</a> | <a class="remove-duplicate-link" href="%6$s"><span class="dashicons dashicons-trash"></span> %7$s</a></td>',
-						'<td><a href="%1$s" target="_blank">%2$s</a>%3$s</td><td>%4$s</td><td class="actions"><a href="%1$s" target="_blank"><span class="dashicons dashicons-edit"></span> %5$s</a></td>',
+						'<td><a href="%1$s" target="_blank">%2$s</a>%3$s</td><td>%4$s</td><td class="actions"><a href="%1$s" target="_blank">%5$s</a></td>',
 						$edit_link,
 						$title,
 						" <small>#{$detected_id}</small>",

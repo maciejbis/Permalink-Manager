@@ -61,7 +61,7 @@ class Permalink_Manager_Permastructs extends Permalink_Manager_Class {
 		// 3. Append fields for all post types
 		foreach($all_post_types as $post_type) {
 
-			$default_permastruct = Permalink_Manager_Helper_Functions::get_default_permastruct($post_type['name'], true);
+			$default_permastruct = trim(Permalink_Manager_Helper_Functions::get_default_permastruct($post_type['name']), "/");
 			$current_permastruct = isset($permalink_manager_permastructs['post_types'][$post_type['name']]) ? $permalink_manager_permastructs['post_types'][$post_type['name']] : $default_permastruct;
 
 			$fields["post_types"]["fields"][$post_type['name']] = array(

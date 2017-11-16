@@ -33,6 +33,7 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 		if($permalink_manager_options['general']['yoast_primary_term'] == 1 && class_exists('WPSEO_Primary_Term')) {
 			$primary_term = new WPSEO_Primary_Term($taxonomy, $post_id);
 			$primary_term = get_term($primary_term->get_primary_term());
+
 			if(!is_wp_error($primary_term)) {
 				return ($slug_only) ? $primary_term->slug : $primary_term;
 			}
@@ -41,10 +42,42 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 	}
 
 	/**
+	 * Allow to disable post types and taxonomies
+	 */
+	static function get_disabled_post_types() {
+		global $permalink_manager_options;
+
+		$disabled_post_types = (!empty($permalink_manager_options['general']['partial_disable']['post_types'])) ? (array) $permalink_manager_options['general']['partial_disable']['post_types'] : array();
+		return apply_filters('permalink-manager-disabled-post-types', $disabled_post_types);
+	}
+
+	static function get_disabled_taxonomies() {
+		global $permalink_manager_options;
+
+		$disabled_taxonomies = (!empty($permalink_manager_options['general']['partial_disable']['taxonomies'])) ? (array) $permalink_manager_options['general']['partial_disable']['taxonomies'] : array();
+		return apply_filters('permalink-manager-disabled-taxonomies', $disabled_taxonomies);
+	}
+
+	static public function is_disabled($content_name, $content_type = 'post_type') {
+		$out = false;
+
+		if($content_type == 'post_type') {
+			$disabled_post_types = self::get_disabled_post_types();
+			$out = (is_array($disabled_post_types) && in_array($content_name, $disabled_post_types)) ? true : false;
+		} else {
+			$disabled_taxonomies = self::get_disabled_taxonomies();
+			$out = (is_array($disabled_taxonomies) && in_array($content_name, $disabled_taxonomies)) ? true : false;
+		}
+
+		return $out;
+	}
+
+	/**
 	* Get post_types array
 	*/
-	static function get_post_types_array($format = null, $cpt = null) {
-		$post_types = apply_filters('permalink-manager-post-types', get_post_types( array('public' => true), 'objects'));
+	static function get_post_types_array($format = null, $cpt = null, $all = false) {
+		$post_types = get_post_types(array('public' => true), 'objects');
+		$disabled_post_types = self::get_disabled_post_types();
 
 		$post_types_array = array();
 		if($format == 'full') {
@@ -57,14 +90,22 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 			}
 		}
 
+		// Disable post types
+		if(!$all && is_array($disabled_post_types)) {
+			foreach($disabled_post_types as $post_type) {
+				if(!empty($post_types_array[$post_type])) { unset($post_types_array[$post_type]); }
+			}
+		}
+
 		return (empty($cpt)) ? $post_types_array : $post_types_array[$cpt];
 	}
 
 	/**
 	* Get array with all taxonomies
 	*/
-	static function get_taxonomies_array($format = null, $tax = null, $prefix = false) {
-		$taxonomies = apply_filters('permalink-manager-taxonomies', get_taxonomies(array('public' => true, 'rewrite' => true), 'objects'));
+	static function get_taxonomies_array($format = null, $tax = null, $prefix = false, $all = false) {
+		$taxonomies = get_taxonomies(array('public' => true, 'rewrite' => true), 'objects');
+		$disabled_taxonomies = self::get_disabled_taxonomies();
 
 		$taxonomies_array = array();
 
@@ -74,6 +115,13 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 				$taxonomies_array[$taxonomy->name] = array('label' => $taxonomy->labels->name, 'name' => $taxonomy->name);
 			} else {
 				$taxonomies_array[$key] = $taxonomy->labels->name;
+			}
+		}
+
+		// Disable taxonomies
+		if(!$all && is_array($disabled_taxonomies)) {
+			foreach($disabled_taxonomies as $taxonomy) {
+				if(!empty($taxonomies_array[$taxonomy])) { unset($taxonomies_array[$taxonomy]); }
 			}
 		}
 
@@ -96,6 +144,24 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 		}
 
 		return ($remove_post_tag) ? trim(str_replace(array("%postname%", "%pagename%", "%{$post_type}%"), "", $permastruct), "/") : $permastruct;
+	}
+
+	/**
+	 * Get all endpoints
+	 */
+	static function get_endpoints() {
+		global $wp_rewrite;
+
+		// Start with default endpoints
+		$endpoints = "page|feed|embed|attachment|track|filter";
+
+		if(!empty($wp_rewrite->endpoints)) {
+			foreach($wp_rewrite->endpoints as $endpoint) {
+				$endpoints .= "|{$endpoint[1]}";
+			}
+		}
+
+		return apply_filters("permalink-manager-endpoints", str_replace("/", "\/", $endpoints));
 	}
 
 	/**
@@ -227,7 +293,7 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 	/**
 	 * Force custom slugs
 	 */
-	public static function force_custom_slugs($slug, $object) {
+	public static function force_custom_slugs($slug, $object, $flat = false) {
 		global $permalink_manager_options;
 
 		if(!empty($permalink_manager_options['general']['force_custom_slugs'])) {
@@ -237,7 +303,59 @@ class Permalink_Manager_Helper_Functions extends Permalink_Manager_Class {
 			$slug = ($old_slug != $new_slug) ? str_replace($old_slug, $new_slug, $slug) : $slug;
 		}
 
+		if($flat) {
+			$slug = preg_replace("/([^\/]+)(.*)/", "$1", $slug);
+		}
+
 		return $slug;
+	}
+
+	public static function element_exists($element_id) {
+		global $wpdb;
+
+		if(strpos($element_id, 'tax-') !== false) {
+			$term_id = intval(preg_replace("/[^0-9]/", "", $element_id));
+			$element_exists = $wpdb->get_var( "SELECT * FROM {$wpdb->prefix}terms WHERE term_id = {$term_id}" );
+		} else {
+			$element_exists = $wpdb->get_var( "SELECT * FROM {$wpdb->prefix}posts WHERE ID = {$element_id} AND post_status NOT IN ('auto-draft', 'trash') AND post_type != 'nav_menu_item'" );
+		}
+
+		return (!empty($element_exists)) ? $element_exists : false;
+	}
+
+	/**
+	 * Detect duplicates
+	 */
+	public static function get_all_duplicates() {
+		global $permalink_manager_uris, $permalink_manager_redirects, $permalink_manager_options, $wpdb;
+
+		// Make sure that both variables are arrays
+		$all_uris = (is_array($permalink_manager_uris)) ? $permalink_manager_uris : array();
+		$permalink_manager_redirects = (is_array($permalink_manager_redirects)) ? $permalink_manager_redirects : array();
+
+		// Convert redirects list, so it can be merged with $permalink_manager_uris
+		foreach($permalink_manager_redirects as $element_id => $redirects) {
+			if(is_array($redirects)) {
+				foreach($redirects as $index => $uri) {
+					$all_uris["redirect-{$index}_{$element_id}"] = $uri;
+				}
+			}
+		}
+
+		// Count duplicates
+		$duplicates_removed = 0;
+		$duplicates_groups = array();
+		$duplicates_list = array_count_values($all_uris);
+		$duplicates_list = array_filter($duplicates_list, function ($x) { return $x >= 2; });
+
+		// Assign keys to duplicates (group them)
+		if(count($duplicates_list) > 0) {
+			foreach($duplicates_list as $duplicated_uri => $count) {
+				$duplicates_groups[$duplicated_uri] = array_keys($all_uris, $duplicated_uri);
+			}
+		}
+
+		return $duplicates_groups;
 	}
 
 }
