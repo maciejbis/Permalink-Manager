@@ -97,8 +97,8 @@ class Permalink_Manager_Permastructs extends Permalink_Manager_Class {
 		global $permalink_manager_permastructs;
 
 		$sidebar = '<h3>' . __('Important notices', 'permalink-manager') . '</h3>';
-		$sidebar .= wpautop(__('This tool <strong>automatically appends the slug to the end of permastructure</strong>, so there is no need to use them within the fields. To prevent the overlapping URLs problem please keep the permastructures unique.'));
-		$sidebar .= sprintf(wpautop(__('The current permastructures settings will be applied <strong>only to the new posts & terms</strong>. To apply the <strong>new permastructures to old posts & terms</strong>, please use "Regenerate/reset" tool available <a href="%s">here</a>.', 'bis')), admin_url('tools.php?page=permalink-manager&section=tools&subsection=regenerate_slugs'));
+		$sidebar .= wpautop(__('This tool <strong>automatically appends the slug to the end of permastructure</strong>, so there is no need to use them within the fields. To prevent the overlapping URLs problem please keep the permastructures unique.', 'permalink-manager'));
+		$sidebar .= sprintf(wpautop(__('The current permastructures settings will be applied <strong>only to the new posts & terms</strong>. To apply the <strong>new permastructures to old posts & terms</strong>, please use "Regenerate/reset" tool available <a href="%s">here</a>.', 'permalink-manager')), admin_url('tools.php?page=permalink-manager&section=tools&subsection=regenerate_slugs'));
 
 		return Permalink_Manager_Admin_Functions::get_the_form(self::get_fields(), '', array('text' => __( 'Save permastructures', 'permalink-manager' ), 'class' => 'primary margin-top'), $sidebar, array('action' => 'permalink-manager', 'name' => 'permalink_manager_permastructs'));
 	}

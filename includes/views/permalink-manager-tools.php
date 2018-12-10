@@ -52,7 +52,7 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 		$home_url = trim(get_option('home'), "/");
 
 		$html = sprintf("<h3>%s</h3>", __("List of duplicated permalinks", "permalink-manager"));
-		$html .= wpautop(sprintf("<a class=\"button button-primary\" href=\"%s\">%s</a>", admin_url('tools.php?page=permalink-manager&section=tools&subsection=duplicates&clear-permalink-manager-uris=1'), __('Remove all broken URIs', 'permalink-manager')));
+		$html .= wpautop(sprintf("<a class=\"button button-primary\" href=\"%s\">%s</a>", admin_url('tools.php?page=permalink-manager&section=tools&subsection=duplicates&clear-permalink-manager-uris=1'), __('Fix custom permalinks & redirects', 'permalink-manager')));
 
 		if(!empty($all_duplicates)) {
 			foreach($all_duplicates as $uri => $duplicates) {
@@ -66,16 +66,18 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 					// Detect duplicate type
 					preg_match("/(redirect-([\d]+)_)?(?:(tax-)?([\d]*))/", $item_id, $parts);
 
-					$redirect_type = (!empty($parts[1])) ? __('Extra Redirect', 'permalink-manager') : __('Custom URI', 'permalink-manager');
+					$is_extra_redirect = (!empty($parts[1])) ? true : false;
+					$duplicate_type = ($is_extra_redirect) ? __('Extra Redirect', 'permalink-manager') : __('Custom URI', 'permalink-manager');
 					$detected_id = $parts[4];
 					$detected_index = $parts[2];
 					$detected_term = (!empty($parts[3])) ? true : false;
+					$remove_link = ($is_extra_redirect) ? sprintf(" <a href=\"%s\"><span class=\"dashicons dashicons-trash\"></span> %s</a>", admin_url("tools.php?page=permalink-manager&section=tools&subsection=duplicates&remove-redirect={$item_id}"), __("Remove Redirect")) : "";
 
 					// Get term
 					if($detected_term && !empty($detected_id)) {
 						$term = get_term($detected_id);
 						if(!empty($term->name)) {
-							$title = $post->post_title;
+							$title = $term->name;
 							$edit_label = "<span class=\"dashicons dashicons-edit\"></span>" . __("Edit term", "permalink-manager");
 							$edit_link = get_edit_tag_link($term->term_id, $term->taxonomy);
 						} else {
@@ -87,7 +89,7 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 					// Get post
 					else if(!empty($detected_id)) {
 						$post = get_post($detected_id);
-						if(!empty($post->post_title)) {
+						if(!empty($post->post_title) && post_type_exists($post->post_type)) {
 							$title = $post->post_title;
 							$edit_label = "<span class=\"dashicons dashicons-edit\"></span>" . __("Edit post", "permalink-manager");
 							$edit_link = get_edit_post_link($post->ID);
@@ -101,13 +103,13 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 					}
 
 					$html .= sprintf(
-						//'<td><a href="%1$s" target="_blank">%2$s</a>%3$s</td><td>%4$s</td><td class="actions"><a href="%1$s" target="_blank"><span class="dashicons dashicons-edit"></span> %5$s</a> | <a class="remove-duplicate-link" href="%6$s"><span class="dashicons dashicons-trash"></span> %7$s</a></td>',
-						'<td><a href="%1$s" target="_blank">%2$s</a>%3$s</td><td>%4$s</td><td class="actions"><a href="%1$s" target="_blank">%5$s</a></td>',
+						'<td><a href="%1$s">%2$s</a>%3$s</td><td>%4$s</td><td class="actions"><a href="%1$s">%5$s</a>%6$s</td>',
 						$edit_link,
 						$title,
 						" <small>#{$detected_id}</small>",
-						$redirect_type,
-						$edit_label
+						$duplicate_type,
+						$edit_label,
+						$remove_link
 					);
 					$html .= "</tr>";
 				}
@@ -198,7 +200,7 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 		$sidebar = '<h3>' . __('Important notices', 'permalink-manager') . '</h3>';
 		$sidebar .= self::display_instructions();
 
-		$output = Permalink_Manager_Admin_Functions::get_the_form($fields, 'columns-3', array('text' => __('Find and replace', 'permalink-manager'), 'class' => 'primary margin-top'), $sidebar, array('action' => 'permalink-manager', 'name' => 'find_and_replace'), true);
+		$output = Permalink_Manager_Admin_Functions::get_the_form($fields, 'columns-3', array('text' => __('Find and replace', 'permalink-manager'), 'class' => 'primary margin-top'), $sidebar, array('action' => 'permalink-manager', 'name' => 'find_and_replace'), true, 'form-ajax');
 
 		return $output;
 	}
@@ -268,7 +270,7 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 		$sidebar = '<h3>' . __('Important notices', 'permalink-manager') . '</h3>';
 		$sidebar .= self::display_instructions();
 
-		$output = Permalink_Manager_Admin_Functions::get_the_form($fields, 'columns-3', array('text' => __( 'Regenerate', 'permalink-manager' ), 'class' => 'primary margin-top'), $sidebar, array('action' => 'permalink-manager', 'name' => 'regenerate'), true);
+		$output = Permalink_Manager_Admin_Functions::get_the_form($fields, 'columns-3', array('text' => __( 'Regenerate', 'permalink-manager' ), 'class' => 'primary margin-top'), $sidebar, array('action' => 'permalink-manager', 'name' => 'regenerate'), true, 'form-ajax');
 
 		return $output;
 	}

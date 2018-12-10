@@ -3,58 +3,46 @@ Contributors: mbis
 Donate link: https://www.paypal.me/Bismit
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Tags: urls, permalinks, slugs, custom url, custom permalinks, uris, url, slug, permalink, woocommerce permalinks, seo
-Requires at least: 4.0
+Tags: urls, permalinks, custom permalinks, url, permalink, woocommerce permalinks
+Requires at least: 4.4.0
 Requires PHP: 5.4
-Tested up to: 4.9
-Stable tag: 2.0.5.1
+Tested up to: 5.0
+Stable tag: 2.1.2
 
 Advanced plugin that allows to set-up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
 
 == Description ==
 
-A really intuitive and easy-to-use plugin that helps to manage the permalinks for all your posts, pages and other custom post types items.
+Permalink Manager is a most advanced and highly rated Wordpress permalink plugin that helps Wordpress users to control the URL addresses of all posts, pages, custom post type elements (taxonomies are supported in Pro version). To avoid 404 or duplicated content errors after the new custom permalink is defined, the visitors trying to access the old permalink will be automatically redirected to the new custom URL.
 
-Currently, the plugin allows to perform four main actions:
-
-1. It allows to manually adjust permalinks (URIs) for all posts/pages/custom post type items.
-2. It allows to bulk replace particular words used in permalinks (or native slugs) with another words (works also with substring).
-3. It allows to bulk regenerate/reset permalinks (or native slugs). This might be especially useful if your post titles are updated and native slugs need to be recreated.
-4. It allows to change the default permalink bases (permastructures) for all custom post types & posts and pages.
-5. It allows to auto-update URIs to match the current permastructure settings after eg. post title or assigned primary category is changed.
-6. It allows to control trailing slash behavior (remove or append slash to the end of permalink).
-
-Additional features available in <a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro</a> only.
-
-1. Extra redirects that could be defined individually for each post and term.
-2. Possibility to remove /product-category and /product from WooCommerce permalinks.
-3. Custom fields inside the permalinks (works also with Advanced Custom Fields).
-4. Case insensitive permalinks.
-5. "Stop-words" auto removal - custom words and/or words from predefined lists (19 languages available).
-
-To improve the user experience, each tool allows also to filter the permalinks by post types or post statuses.
+The plugin supports all custom post types & custom taxonomies and popular 3rd party plugins including WooCommerce, Yoast SEO, WPML, and Polylang. To improve SEO performance even more, the plugin settings provide a possibility to disable the canonical redirect (used natively by Wordpress) and control the trailing slashes settings.
 
 = All features =
 
-* "Permalink Editor" - list of your permalinks (groupped by post types).
-* "Auto-update" URI
-* "Regenerate/Reset" permalinks, custom and native URIs (slugs).
-* "Find and replace" strings in permalinks, custom and native URIs (slugs).
-* Support for "Primary Term" functionality implemented in "Yoast SEO" plugin.
-* Optional redirect (301 or 302) from old (native) permalinks to new (custom) permalinks.
-* Possibility to disable native canonical redirects.
+* **Edit full permalinks** | A completely custom permalink can be set for each post, page and public custom post type individually *(categories, tags & custom taxonomies terms permalinks can be edited in Permalink Manager Pro)*
+* **Custom post types support** | It is also possible to exclude specific post types & taxonomies to stop Permalink Manager from filtering their permalinks.
+* **Custom permastructures** | The plugin allows to specify how the custom permalinks should be formatted by default (when the new post/term is added or after the permalinks are regenerated)
+* **Bulk editors** | "Regenerate/Reset" + "Find and replace" tools that allow to bulk/mass change the permalinks (or native slugs).
+* **Auto-redirect** | Old (native) permalinks are redirected to new (custom) permalinks (in 301 or 302 mode) to prevent 404 error (SEO friendly).
+* **Canonical redirects** | Possibility to disable native canonical redirects.
+* **Trailing slashes settings** | They can be forced or removed from all permalinks.
 
 = Additional features available in Permalink Manager Pro =
 
-* Priority support
-* Full support for taxonomies (categories, tags & custom taxonomies)
-* Extra redirects
-* Full support for WooCommerce (products, product tags, product categories)
-* "Stop-words" to keep your permalinks short & clean (pre-defined "stop-words" lists are available in 21 languages)
-* Add custom fields to the permalinks (Advanced Custom Fields compatible)
-* Import permalinks from "Custom Permalinks" plugin
+* **Taxonomies** | Full support for taxonomies (categories, tags & custom taxonomies).
+* **WooCommerce** | Full support for WooCommerce (products, product tags, product categories). Permalink Manager allows to remove /product-category and /product from WooCommerce permalinks.
+* **WooCommerce coupon URLs** | Coupon codes may have their public URLs (eg. http://shop.com/BLACKFRIDAY) that will automatically apply the discount to the cart.
+* **Custom fields** | Custom fields can be used inside permalinks (Advanced Custom Fields plugin supported).
+* **Extra internal redirects** | Multiple URLs can lead to a single post/term (they could be defined individually for each element).
+* **External URL redirect** | Posts/terms can redirect the visitors to external websites (the URLs could be defined individually for each element).
+* **"Stop-words"** | User-defined words will be automatically removed from default permalinks.
+* **Custom Permalinks** | Import custom permalinks saved with that plugin.
+* **Priority support** | All the support requests from Permalink Manager Pro users are handled in the first place.
 
 Buy <a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro here</a>.
+
+= Translators =
+* Japaneese - Shinsaku Ikeda
 
 == Installation ==
 
@@ -79,8 +67,8 @@ A. Yes, if you used Permalink Manager only to regenerate the slugs (native post 
 
 It is because Permalink Manager overwrites one of the core Wordpress functionalities to bypass the rewrite rules ("regular expressions" to detect the posts/pages/taxonomies/etc. and another parameters from the URL) by using the array of custom permalinks (you can check them in "Debug" tab) that are used only by my plugin.
 
-= Q. Can I use Permalink Manager to alter the permalinks for taxonomies?
-A. This feature will be available in Permalink Manager Pro.
+= Q. Can I use Permalink Manager to change the terms permalinks (eg. post or product categories)?
+A. This feature is available only in Permalink Manager Pro.
 
 = Q. Does this plugin support Buddypress?
 A. Currently there is no 100% guarantee that Permalink Manager will work correctly with Buddypress.
@@ -90,16 +78,126 @@ A. Currently there is no 100% guarantee that Permalink Manager will work correct
 1.	"Permalink editor".
 2.	"Find and replace" section.
 3.	"Regenerate/Reset" section.
-4.  "Permastructures" section.
-5.  A list of updated posts.
-6.  Editable URI box in Post/Page/CPT edit pagees.
-7.  Settings section.
-
+4.	"Permastructures" section.
+5.	A list of updated posts.
+6.	Editable URI box in Post/Page/CPT edit pagees.
+7.	Settings section.
 
 == Changelog ==
 
-= 2.0.5.1 =
+= 2.1.2 =
+* Hotfix for WP All Import - default permalinks are now assigned correctly to imported posts + possibility to disable WP All Import custom URI functions in Permalink Manager settings
+* Hotfix for Yoast SEO - notice displayed on author pages
+* Adjustments for sanitize slug functions
+* Basic support for Gutenberg added
+
+= 2.1.1 =
+* Support for draft custom permalinks
+* Support for WP All Import plugin, now the custom permalinks can be defined directly in XML, CSV, ZIP, GZIP, GZ, JSON, SQL, TXT, DAT or PSV import files.
+* Hotfix for Permalink_Manager_Pro_Functions::save_redirects() method - now the custom redirects are correctly saved when a custom permalink is updated.
+* Hotfix for "Language name added as a parameter" mode in "WPML Language URL format" settings.
+* Hotfix for canonical redirect triggered by WPML.
+* Better support for non-latin letters in custom URIs & redirects
+* Better support for endpoints
+* Searchbox in URI Editors
+
+= 2.1.0 =
+* Support for "url_to_postid" function
+* Bulk tools use now AJAX & transients to prevent timeout when large number of posts/terms is processed
+* Fix for multi-domain language setup in WPML
+
+= 2.0.6.5 =
+* Support for %__sku% permastructure tag (WooCommerce) added - now SKU number can be added to the custom permalinks (Permalink Manager Pro)
+* Hotfix for license validation system
+
+= 2.0.6.4 =
+* Code optimization
+* New filter: permalink_manager_fix_uri_duplicates
+* Possibility to display the native slug field
+* Hotfix for license validation functions
+
+= 2.0.6.3.2 =
+* Support added for Revisionize plugin
+* Minor tweaks
+
+= 2.0.6.2/2.0.6.3 =
+* Japaneese translation added
+* Some minor improvements
+* New filters: permalink_manager_hide_uri_editor_term_{$term->taxonomy}, permalink_manager_hide_uri_editor_post_{$post->post_type} & permalink_manager_update_term_uri_{$this_term->taxonomy}, permalink_manager_update_post_uri_{$post->post_type}, permalink_manager_new_post_uri_{$post_object->post_type}
+* Hotfix for default permalinks (no-hierarchical post types)
+* Hotfix for attachments default permalinks + URI detect function
+
+= 2.0.6.1 =
+* Hotfix for endpoints in REGEX
+* Minor bug fixed - native slugs are now correctly regenerated
+* Hotfix for URI sanitization functions
+* Hotfix for AMP plugin
+* Full support for WPML multi-domain language setup
+* Hotfix for VisualComposer + Yoast SEO JS functions
+* Hotfix for WPML String Translation
+
+= 2.0.6.0 =
+* Minor bugs fixed
+* New permastrutcure tag - %native_slug%
+* "Force custom slugs" feature enhanced with new options
+* Possibility to redirect the posts & terms to external URL (Permalink Manager Pro)
+
+= 2.0.5.9 =
+* New permastructure tags - %post_type% & %taxonomy%
+* Support for "Taxonomy" custom field in ACF (Advanced Custom Fields)
+* Minor fix for endpoints
+* New hook - "permalink_manager-filter-permalink-base" used instead of "permalink-manager-post-permalink-prefix" & "permalink-manager-term-permalink-prefix"
+
+= 2.0.5.7/2.0.5.8 =
+* Hotfix for MultilingualPress plugin
+* Hotfix & better support for attachment post type (Media Library)
+* Custom redirects for old permalinks are now correctly saved in Permalink Manager Pro
+* Support for WooCommerce Wishlist plugin
+
+= 2.0.5.6 =
+* The URIs for trashed posts are now correctly removed
+* Better support for non-ASCII characters in URIs
+* Minor fix for hierarchical post types
+* Fix for coupon URL redirect
+* New filter - "permalink-manager-force-hyphens"
+
+= 2.0.5.5 =
+* Discount URLs for WooCommerce - now the shop clients can use coupons' custom URIs to easily apply the discount to the cart
+* Extra AJAX check for duplicated URIs in "Edit URI" box
+* Wordpress CronJobs for "Automatically remove duplicates" functionality
+* Extra improvements in "save_post/update_term" hooks
+* Fix for terms permalinks added via "Edit post" page
+* New filter - "permalink-manager-force-lowercase-uris"
+
+= 2.0.5.4 =
+* New filter - "permalink_manager_empty_tag_replacement"
+* Fix for term placeholder tags in taxonomies permastructures
+* Page pagination improvement (404 error page for non-existing pages)
+* New settings field for pagination redirect
+* Trailing slashes are no longer added to custom permalinks ended with extension, eg. .html, or .php
+
+= 2.0.5.3 =
+* Hotfix for redirects - redirect chain no longer occurs (WPML)
+* Now $wp_query->is_404() is set to false when custom URI is detected
+* Hotfix for ACF custom fields in terms
+* Fix for trailing slash (in admin dashboard), also the trailing slashes are removed from permalinks containing GET parameters or hastags (often used by 3rd party plugins)
+
+= 2.0.5.2.2 =
+* Hotfix for admin requests (+ compatibility with WooCommerce TM Extra Product Options)
+* Hotfix for no-ASCII characters in custom URIs
+* Hotfix for attachments
+
+= 2.0.5.2.1 =
+* Hotfix for endpoints redirect
+
+= 2.0.5.1/2.0.5.2 =
 * Hotfix for REGEX rule
+* yoast_attachment_redirect setting removed (it is no longer needed)
+* yoast_primary_term setting replaced with "permalink-manager-primary-term" filter
+* Hotfix for WP All Import
+* Hotfix for WooCommerce endpoints
+* Better support for Polylang
+* Support for Theme My Login plugin
 
 = 2.0.5 =
 * Now, the duplicates and unused custom permalinks can be automatically removed

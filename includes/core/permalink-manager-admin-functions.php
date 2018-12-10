@@ -6,7 +6,6 @@
 class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 
 	public $menu_name, $sections, $active_section, $active_subsection;
-	public $plugin_slug = PERMALINK_MANAGER_PLUGIN_SLUG;
 	public $plugin_basename = PERMALINK_MANAGER_BASENAME;
 
 	public function __construct() {
@@ -17,7 +16,9 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		add_action( 'admin_notices', array($this, 'display_global_notices'));
 		add_action( 'wp_ajax_dismissed_notice_handler', array($this, 'hide_global_notice') );
 
-		add_filter( "default_hidden_columns" , array($this, 'quick_edit_hide_column'), 10, 2 );
+		add_filter( 'default_hidden_columns', array($this, 'quick_edit_hide_column'), 10, 2 );
+
+		add_action( 'wp_ajax_detect_duplicates',  array($this, 'ajax_detect_duplicates') );
 	}
 
 	/**
@@ -39,7 +40,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		global $active_section, $active_subsection, $current_admin_tax;
 
 		// 1. Get current section
-		if(isset($_GET['page']) && $_GET['page'] == $this->plugin_slug) {
+		if(isset($_GET['page']) && $_GET['page'] == PERMALINK_MANAGER_PLUGIN_SLUG) {
 			if(isset($_POST['section'])) {
 				$this->active_section = $_POST['section'];
 			} else if(isset($_GET['section'])) {
@@ -78,7 +79,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	 * Add menu page.
 	 */
 	public function add_menu_page() {
-		$this->menu_name = add_management_page( __('Permalink Manager', 'permalink-manager'), __('Permalink Manager', 'permalink-manager'), 'manage_options', $this->plugin_slug, array($this, 'display_section') );
+		$this->menu_name = add_management_page( __('Permalink Manager', 'permalink-manager'), __('Permalink Manager', 'permalink-manager'), 'manage_options', PERMALINK_MANAGER_PLUGIN_SLUG, array($this, 'display_section') );
 
 		add_action( 'admin_init', array($this, 'enqueue_styles' ) );
 		add_action( 'admin_init', array($this, 'enqueue_scripts' ) );
@@ -99,19 +100,23 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		wp_enqueue_script( 'permalink-manager-plugins', PERMALINK_MANAGER_URL . '/out/permalink-manager-plugins.js', array( 'jquery', ), PERMALINK_MANAGER_VERSION, false );
 		wp_enqueue_script( 'permalink-manager', PERMALINK_MANAGER_URL . '/out/permalink-manager-admin.js', array( 'jquery', 'permalink-manager-plugins' ), PERMALINK_MANAGER_VERSION, false );
 
-		wp_localize_script( 'permalink-manager', 'permalink_manager', array('url' => PERMALINK_MANAGER_URL) );
+		wp_localize_script( 'permalink-manager', 'permalink_manager', array('ajax_url' => admin_url('admin-ajax.php'), 'url' => PERMALINK_MANAGER_URL, 'spinners' => admin_url('images')) );
+
 	}
 
 	/**
-	* Get admin url for the plugin
-	*/
-	function get_admin_url($append = '') {
-		return menu_page_url( "{$this->plugin_slug}", false ) . $append;
+	 * Get admin url for the plugin
+	 */
+	public static function get_admin_url($append = '') {
+		//return menu_page_url(PERMALINK_MANAGER_PLUGIN_SLUG, false) . $append;
+		$admin_page = sprintf("tools.php?page=%s", PERMALINK_MANAGER_PLUGIN_SLUG . $append);
+
+		return admin_url($admin_page);
 	}
 
 	/**
-	* Additional links on "Plugins" page
-	*/
+	 * Additional links on "Plugins" page
+	 */
 	public function plugins_page_links($links) {
 		$links[] = sprintf('<a href="%s">%s</a>', $this->get_admin_url(), __( 'URI Editor', 'permalink-manager' ));
 		if(!defined('PERMALINK_MANAGER_PRO')) {
@@ -207,7 +212,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 				$checked = ($value == 1) ? "checked='checked'" : "";
 				$checkbox_label = (isset($args['checkbox_label'])) ? $args['checkbox_label'] : '';
 
-				$fields .= "<input type='hidden' {$input_atts} value='0' name='{$input_name}' checked=\"checked\" />";
+				$fields .= "<input type='hidden' {$input_atts} value='0' name='{$input_name}' />";
 				$fields .= "<label for='{$input_name}'><input type='checkbox' {$input_atts} value='1' name='{$input_name}' {$checked} /> {$checkbox_label}</label>";
 				$fields .= '</div>';
 			break;
@@ -262,8 +267,13 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 				return "<div class=\"clearfix\"></div>";
 
 			case 'permastruct' :
-				$siteurl = get_option('home');
-				$fields .= "<div class=\"permastruct-container\"><span><code>{$siteurl}/</code></span><span><input type='text' {$input_atts} value='{$value}' name='{$input_name}'/></span></div>";
+				$siteurl = Permalink_Manager_Helper_Functions::get_permalink_base();
+
+				$fields .= "<div class=\"permastruct-container\">";
+				$fields .= "<span><code>{$siteurl}/</code></span>";
+				$fields .= "<span><input type='text' {$input_atts} value='{$value}' name='{$input_name}'/></span>";
+				$fields .= "</div>";
+
 				break;
 
 			default :
@@ -304,7 +314,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	/**
 	 * Display the form
 	 */
-	static public function get_the_form($fields = array(), $container = '', $button = array(), $sidebar = '', $nonce = array(), $wrap = false) {
+	static public function get_the_form($fields = array(), $container = '', $button = array(), $sidebar = '', $nonce = array(), $wrap = false, $form_class = '') {
 		// 1. Check if the content will be displayed in columns and button details
 		switch($container) {
 			case 'columns-3' :
@@ -326,6 +336,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		$button_attributes = (!empty($button['attributes'])) ? $button['attributes'] : '';
 		$nonce_action = (!empty($nonce['action'])) ? $nonce['action'] : '';
 		$nonce_name = (!empty($nonce['name'])) ? $nonce['name'] : '';
+		$form_classes = (!empty($form_class)) ? $form_class : '';
 
 		// 2. Now get the HTML output (start section row container)
 		$html = ($wrapper_class) ? "<div class=\"{$wrapper_class}\">" : '';
@@ -341,7 +352,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 
 		// 4. Start fields' section
 		$html .= ($form_column_class) ? "<div class=\"{$form_column_class}\">" : "";
-		$html .= "<form method=\"POST\">";
+		$html .= "<form method=\"POST\" class=\"{$form_classes}\">";
 		$html .= ($wrap) ? "<table class=\"form-table\">" : "";
 
 		// Loop through all fields assigned to this section
@@ -382,7 +393,10 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		$html .= ($wrap) ? "</table>" : "";
 
 		// End the fields' section + add button & nonce fields
-		$html .= ($nonce_action && $nonce_name) ? wp_nonce_field($nonce_action, $nonce_name, true, true) : "";
+		if($nonce_action && $nonce_name) {
+			$html .= wp_nonce_field($nonce_action, $nonce_name, true, true);
+			$html .= self::generate_option_field('pm_session_id', array('value' => uniqid(), 'type' => 'hidden'));
+		}
 		$html .= ($button_text) ? get_submit_button($button_text, $button_class, '', false, $button_attributes) : "";
 		$html .= '</form>';
 		$html .= ($form_column_class) ? "</div>" : "";
@@ -401,7 +415,7 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 
 		$html = "<div id=\"permalink-manager\" class=\"wrap\">";
 
-		$donate_link = sprintf("<a href=\"%s\" target=\"_blank\" class=\"page-title-action\">%s</a>", PERMALINK_MANAGER_DONATE, __("Donate", "permalink-manager"));
+		$donate_link = defined('PERMALINK_MANAGER_PRO') ? "" : sprintf("<a href=\"%s\" target=\"_blank\" class=\"page-title-action\">%s</a>", PERMALINK_MANAGER_DONATE, __("Donate", "permalink-manager"));
 		$html .= sprintf("<h2 id=\"plugin-name-heading\">%s <a href=\"http://maciejbis.net\" class=\"author-link\" target=\"_blank\">%s</a> %s</h2>", PERMALINK_MANAGER_PLUGIN_NAME, __("by Maciej Bis", "permalink-manager"), $donate_link);
 
 		// Display the tab navigation
@@ -480,12 +494,6 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		return $html;
 	}
 
-	static function pro_text($text_only = false) {
-		$text = sprintf(__('This functionality is available only in <a href="%s" target="_blank">Permalink Manager Pro</a>.', 'permalink-manager'), PERMALINK_MANAGER_WEBSITE);
-
-		return ($text_only) ? $text : sprintf("<div class=\"alert info\"> %s</div>", wpautop($text, 'alert', false));
-	}
-
 	/**
 	 * Help tooltip
 	 */
@@ -497,69 +505,104 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	/**
 	 * Display the table with updated slugs after one of the actions is triggered
 	 */
-	static function display_updated_slugs($updated_array, $uri_type = 'post') {
-		// Check if slugs should be displayed
-		$first_slug = reset($updated_array);
-
-		$header_footer = '<tr>';
-		$header_footer .= '<th class="column-primary">' . __('Title', 'permalink-manager') . '</th>';
-		$header_footer .= '<th>' . __('Old URI', 'permalink-manager') . '</th>';
-		$header_footer .= '<th>' . __('New URI', 'permalink-manager') . '</th>';
-		$header_footer .= (isset($first_slug['old_slug'])) ? '<th>' . __('Old Slug', 'permalink-manager') . '</th>' : "";
-		$header_footer .= (isset($first_slug['new_slug'])) ? '<th>' . __('New Slug', 'permalink-manager') . '</th>' : "";
-		$header_footer .= '</tr>';
+	static function display_updated_slugs($updated_array, $return_array = false, $display_full_table = true) {
+		global $permalink_manager_before_sections_html, $permalink_manager_after_sections_html;
 
 		$updated_slugs_count = 0;
-		$main_content = "";
-		foreach($updated_array as $row) {
-			// Odd/even class
-			$updated_slugs_count++;
-			$alternate_class = ($updated_slugs_count % 2 == 1) ? ' class="alternate"' : '';
+		$html = $main_content = $alert = "";
 
-			// Taxonomy
-			if(!empty($row['tax'])) {
-				$term_link = get_term_link(intval($row['ID']), $row['tax']);
-				$permalink = (is_wp_error($term_link)) ? "-" : $term_link;
-			} else {
-				$permalink = get_permalink($row['ID']);
+		if(is_array($updated_array)) {
+			// Check if slugs should be displayed
+			$first_slug = reset($updated_array);
+
+			$header_footer = '<tr>';
+			$header_footer .= '<th class="column-primary">' . __('Title', 'permalink-manager') . '</th>';
+			$header_footer .= '<th>' . __('Old URI', 'permalink-manager') . '</th>';
+			$header_footer .= '<th>' . __('New URI', 'permalink-manager') . '</th>';
+			$header_footer .= (isset($first_slug['old_slug'])) ? '<th>' . __('Old Slug', 'permalink-manager') . '</th>' : "";
+			$header_footer .= (isset($first_slug['new_slug'])) ? '<th>' . __('New Slug', 'permalink-manager') . '</th>' : "";
+			$header_footer .= '</tr>';
+
+			foreach($updated_array as $row) {
+				// Odd/even class
+				$updated_slugs_count++;
+				$alternate_class = ($updated_slugs_count % 2 == 1) ? ' class="alternate"' : '';
+
+				// Taxonomy
+				if(!empty($row['tax'])) {
+					$term_link = get_term_link(intval($row['ID']), $row['tax']);
+					$permalink = (is_wp_error($term_link)) ? "-" : $term_link;
+				} else {
+					$permalink = get_permalink($row['ID']);
+				}
+
+				// Decode permalink
+				$permalink = urldecode(urldecode($permalink));
+
+				$main_content .= "<tr{$alternate_class}>";
+				$main_content .= '<td class="row-title column-primary" data-colname="' . __('Title', 'permalink-manager') . '">' . $row['item_title'] . "<a target=\"_blank\" href=\"{$permalink}\"><span class=\"small\">{$permalink}</span></a>" . '<button type="button" class="toggle-row"><span class="screen-reader-text">' . __('Show more details', 'permalink-manager') . '</span></button></td>';
+				$main_content .= '<td data-colname="' . __('Old URI', 'permalink-manager') . '">' . urldecode($row['old_uri']) . '</td>';
+				$main_content .= '<td data-colname="' . __('New URI', 'permalink-manager') . '">' . urldecode($row['new_uri']) . '</td>';
+				$main_content .= (isset($row['old_slug'])) ? '<td data-colname="' . __('Old Slug', 'permalink-manager') . '">' . urldecode($row['old_slug']) . '</td>' : "";
+				$main_content .= (isset($row['new_slug'])) ? '<td data-colname="' . __('New Slug', 'permalink-manager') . '">' . urldecode($row['new_slug']) . '</td>' : "";
+				$main_content .= '</tr>';
 			}
 
-			$main_content .= "<tr{$alternate_class}>";
-			$main_content .= '<td class="row-title column-primary" data-colname="' . __('Title', 'permalink-manager') . '">' . $row['item_title'] . "<a target=\"_blank\" href=\"{$permalink}\"><span class=\"small\">{$permalink}</span></a>" . '<button type="button" class="toggle-row"><span class="screen-reader-text">' . __('Show more details', 'permalink-manager') . '</span></button></td>';
-			$main_content .= '<td data-colname="' . __('Old URI', 'permalink-manager') . '">' . urldecode($row['old_uri']) . '</td>';
-			$main_content .= '<td data-colname="' . __('New URI', 'permalink-manager') . '">' . urldecode($row['new_uri']) . '</td>';
-			$main_content .= (isset($row['old_slug'])) ? '<td data-colname="' . __('Old Slug', 'permalink-manager') . '">' . urldecode($row['old_slug']) . '</td>' : "";
-			$main_content .= (isset($row['new_slug'])) ? '<td data-colname="' . __('New Slug', 'permalink-manager') . '">' . urldecode($row['new_slug']) . '</td>' : "";
-			$main_content .= '</tr>';
+			// Merge header, footer and content
+			if($display_full_table) {
+				$html = '<h3 id="updated-list">' . __('List of updated items', 'permalink-manager') . '</h3>';
+				$html .= '<table class="widefat wp-list-table updated-slugs-table">';
+				$html .= "<thead>{$header_footer}</thead><tbody>{$main_content}</tbody><tfoot>{$header_footer}</tfoot>";
+			} else {
+				$html = $main_content;
+			}
+
+			$html .= '</table>';
 		}
 
-		// Merge header, footer and content
-		$html = '<h3 id="updated-list">' . __('List of updated items', 'permalink-manager') . '</h3>';
-		$html .= '<table class="widefat wp-list-table updated-slugs-table">';
-		$html .= "<thead>{$header_footer}</thead><tbody>{$main_content}</tbody><tfoot>{$header_footer}</tfoot>";
-		$html .= '</table>';
+		// 3. Display the alert
+		if(isset($updated_slugs_count)) {
+			if($updated_slugs_count > 0) {
+				$alert_content = sprintf( _n( '<strong class="updated_count">%d</strong> slug was updated!', '<strong class="updated_count">%d</strong> slugs were updated!', $updated_slugs_count, 'permalink-manager' ), $updated_slugs_count ) . ' ';
+				$alert_content .= sprintf( __( '<a %s>Click here</a> to go to the list of updated slugs', 'permalink-manager' ), "href=\"#updated-list\"");
 
-		return $html;
+				$alert = Permalink_Manager_Admin_Functions::get_alert_message($alert_content, 'updated updated_slugs');
+			} else {
+				$alert = Permalink_Manager_Admin_Functions::get_alert_message(__( '<strong>No slugs</strong> were updated!', 'permalink-manager' ), 'error updated_slugs');
+			}
+		}
+
+		if($return_array) {
+			return array(
+				'html' => $html,
+				'alert' => $alert
+			);
+		} else {
+			$permalink_manager_before_sections_html .= $alert;
+
+			return $html;
+		}
 	}
 
 	/**
 	 * "Quick Edit" Box
 	 */
 	public static function quick_edit_column_form($is_taxonomy = false) {
-		$html = Permalink_Manager_Admin_Functions::generate_option_field('permalink-manager-quick-edit', array('value' => true, 'type' => 'hidden'));
+		$html = self::generate_option_field('permalink-manager-quick-edit', array('value' => true, 'type' => 'hidden'));
 		$html .= "<fieldset class=\"inline-edit-permalink\">";
 		$html .= sprintf("<legend class=\"inline-edit-legend\">%s</legend>", __("Permalink Manager", "permalink-manager"));
 
 		$html .= "<div class=\"inline-edit-col\">";
 		$html .= sprintf("<label class=\"inline-edit-group\"><span class=\"title\">%s</span><span class=\"input-text-wrap\">%s</span></label>",
 			__("Current URI", "permalink-manager"),
-			Permalink_Manager_Admin_Functions::generate_option_field("custom_uri", array("input_class" => "custom_uri", "value" => ''))
+			self::generate_option_field("custom_uri", array("input_class" => "custom_uri", "value" => ''))
 		);
 		$html .= "</div>";
 
 		$html .= "</fieldset>";
 
-		// Append nonce field
+		// Append nonce field & element ID
+		$html .= Permalink_Manager_Admin_Functions::generate_option_field("permalink-manager-edit-uri-element-id", array("type" => "hidden", "input_class" => "permalink-manager-edit-uri-element-id", "value" => ""));
 		$html .= wp_nonce_field( 'permalink-manager-edit-uri-box', 'permalink-manager-nonce', true, false );
 
 		return $html;
@@ -568,11 +611,13 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 	/**
 	 * Display "Permalink Manager" box
 	 */
-	public static function display_uri_box($element, $default_uri, $uri, $native_uri, $home_with_prefix) {
-		global $permalink_manager_options;
+	public static function display_uri_box($element, $gutenberg = false) {
+		global $permalink_manager_options, $permalink_manager_uris;
 
 		if(!empty($element->ID)) {
-			$id = $element->ID;
+			$id = $element_id = $element->ID;
+			$native_slug = $element->post_name;
+			$is_draft = (!empty($element->post_status) && (in_array($element->post_status, array('draft', 'auto-draft')))) ? true : false;
 
 			// Auto-update settings
 			$auto_update_val = get_post_meta($id, "auto_update_uri", true);
@@ -583,62 +628,117 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 				-1 => array("label" => __("No", "permalink-manager"), "atts" => "data-auto-update=\"0\""),
 				1 => array("label" => __("Yes", "permalink-manager"), "atts" => "data-auto-update=\"1\"")
 			);
-		} else {
+
+			// Get URIs
+			$uri = Permalink_Manager_URI_Functions_Post::get_post_uri($id, true, $is_draft);
+			$default_uri = Permalink_Manager_URI_Functions_Post::get_default_post_uri($id);
+			$native_uri = Permalink_Manager_URI_Functions_Post::get_default_post_uri($id, true);
+		} else if(class_exists('Permalink_Manager_URI_Functions_Tax')) {
 			$id = $element->term_id;
+			$element_id = "tax-{$id}";
+			$native_slug = $element->slug;
+
+			// Get URIs
+			$uri = Permalink_Manager_URI_Functions_Tax::get_term_uri($element->term_id, true);
+			$default_uri = Permalink_Manager_URI_Functions_Tax::get_default_term_uri($element->term_id);
+			$native_uri = Permalink_Manager_URI_Functions_Tax::get_default_term_uri($element->term_id, true);
+		} else {
+			return;
 		}
 
+		// Decode default URI
+		$default_uri = urldecode($default_uri);
+
+		// Start HTML output
 		// 1. Button
-		$html = sprintf("<span><button type=\"button\" class=\"button button-small hide-if-no-js\" id=\"permalink-manager-toggle\">%s</button></span>", __("Permalink Manager", "permalink-manager"));
+		if(!$gutenberg) {
+			$html = sprintf("<span><button type=\"button\" class=\"button button-small hide-if-no-js\" id=\"permalink-manager-toggle\">%s</button></span>", __("Permalink Manager", "permalink-manager"));
 
-		$html .= "<div id=\"permalink-manager\" class=\"postbox permalink-manager-edit-uri-box\" style=\"display: none;\">";
+			$html .= "<div id=\"permalink-manager\" class=\"postbox permalink-manager-edit-uri-box\" style=\"display: none;\">";
 
-		// 2. The heading
-		$html .= "<a class=\"close-button\"><span class=\"screen-reader-text\">" . __("Close: ", "permalink-manager") . __("Permalink Manager", "permalink-manager") . "</span><span class=\"close-icon\" aria-hidden=\"false\"></span></a>";
-		$html .= sprintf("<h2><span>%s</span></h2>", __("Permalink Manager", "permalink-manager"));
+			// 2. The heading
+			$html .= "<a class=\"close-button\"><span class=\"screen-reader-text\">" . __("Close: ", "permalink-manager") . __("Permalink Manager", "permalink-manager") . "</span><span class=\"close-icon\" aria-hidden=\"false\"></span></a>";
+			$html .= sprintf("<h2><span>%s</span></h2>", __("Permalink Manager", "permalink-manager"));
 
-		// 3. The fields container [start]
-		$html .= "<div class=\"inside\">";
+			// 3. The fields container [start]
+			$html .= "<div class=\"inside\">";
+		} else {
+			$html = "<div class=\"permalink-manager-gutenberg permalink-manager-edit-uri-box\">";
+		}
 
 		// 4. Custom URI
-		$html .= sprintf("<div><label for=\"custom_uri\" class=\"strong\">%s %s</label><span>%s</span></div>",
+		if(!empty($element->ID) && get_option('page_on_front') == $id) {
+			$custom_uri_field = Permalink_Manager_Admin_Functions::generate_option_field("custom_uri", array("type" => "hidden", "extra_atts" => "data-default=\"{$default_uri}\" data-element-id=\"{$element_id}\"", "input_class" => "widefat custom_uri", "value" => urldecode($uri)));
+			$custom_uri_field .= __("The custom URI cannot be edited on frontpage.", "permalink-manager");
+		} else {
+			$custom_uri_field = Permalink_Manager_Admin_Functions::generate_option_field("custom_uri", array("extra_atts" => "data-default=\"{$default_uri}\" data-element-id=\"{$element_id}\"", "input_class" => "widefat custom_uri", "value" => urldecode($uri)));
+		}
+
+		$html .= sprintf("<div class=\"custom_uri_container\"><p><label for=\"custom_uri\" class=\"strong\">%s %s</label></p><span>%s</span><span class=\"duplicated_uri_alert\"></span></div>",
 			__("Current URI", "permalink-manager"),
-			($element->ID) ? Permalink_Manager_Admin_Functions::help_tooltip(__("The custom URI can be edited only if 'Auto-update the URI' feature is not enabled.", "permalink-manager")) : "",
-			Permalink_Manager_Admin_Functions::generate_option_field("custom_uri", array("extra_atts" => "data-default=\"{$default_uri}\"", "input_class" => "widefat custom_uri", "value" => urldecode($uri)))
+			($element->ID) ? Permalink_Manager_Admin_Functions::help_tooltip(__("If custom URI is not defined, a default URI will be set (see below). The custom URI can be edited only if 'Auto-update the URI' feature is not enabled.", "permalink-manager")) : "",
+			$custom_uri_field
 		);
 
-		// 5. Auto-update URI
-		if(!empty($auto_update_choices)) {
-			$html .= sprintf("<div><label for=\"auto_auri\" class=\"strong\">%s %s</label><span>%s</span></div>",
-				__("Auto-update the URI", "permalink-manager"),
-				Permalink_Manager_Admin_Functions::help_tooltip(__("If enabled, the 'Current URI' field will be automatically changed to 'Default URI' (displayed below) after the post is saved or updated.", "permalink-manager")),
-				Permalink_Manager_Admin_Functions::generate_option_field("auto_update_uri", array("type" => "select", "input_class" => "widefat auto_update", "value" => $auto_update_val, "choices" => $auto_update_choices))
+		// 5. Native slug
+		if(!empty($element->ID) && !empty($permalink_manager_options["general"]["show_native_slug_field"])) {
+			$native_slug_field = Permalink_Manager_Admin_Functions::generate_option_field("native_slug", array("extra_atts" => "data-default=\"{$native_slug}\" data-element-id=\"{$element_id}\"", "input_class" => "widefat native_slug", "value" => urldecode($native_slug)));
+
+			$html .= sprintf("<div class=\"native_slug_container\"><p><label for=\"native_slug\" class=\"strong\">%s %s</label></p><span>%s</span></div>",
+				__("Native slug", "permalink-manager"),
+				Permalink_Manager_Admin_Functions::help_tooltip(__("The native slug is by default automatically used in native permalinks (when Permalink Manager is disabled).", "permalink-manager")),
+				$native_slug_field
 			);
 		}
 
-		// 6. Default URI
-		$html .= sprintf(
-			"<div class=\"default-permalink-row columns-container\"><span class=\"column-3_4\"><strong>%s:</strong> %s</span><span class=\"column-1_4\"><a href=\"#\" class=\"restore-default\"><span class=\"dashicons dashicons-image-rotate\"></span> %s</a></span></div>",
-			__("Default URI", "permalink-manager"), urldecode(esc_html($default_uri)),
-			__("Restore to Default URI", "permalink-manager")
-		);
+		// Three fields that should be hidden on front-page
+		if(get_option('page_on_front') != $id) {
+			// 6. Auto-update URI
+			if(!empty($auto_update_choices)) {
+				$html .= sprintf("<div><p><label for=\"auto_auri\" class=\"strong\">%s %s</label></p><span>%s</span></div>",
+					__("Auto-update the URI", "permalink-manager"),
+					Permalink_Manager_Admin_Functions::help_tooltip(__("If enabled, the 'Current URI' field will be automatically changed to 'Default URI' (displayed below) after the post is saved or updated.", "permalink-manager")),
+					Permalink_Manager_Admin_Functions::generate_option_field("auto_update_uri", array("type" => "select", "input_class" => "widefat auto_update", "value" => $auto_update_val, "choices" => $auto_update_choices))
+				);
+			}
 
-		// 7. Native URI info
-		if(!empty($permalink_manager_options['general']['redirect']) && ((!empty($element->post_status) && in_array($element->post_status, array('auto-draft', 'trash', 'draft'))) == false)) {
+			// 7. Default URI
 			$html .= sprintf(
-				"<div class=\"default-permalink-row columns-container\"><span><strong>%s</strong> <a href=\"%s\">%s</a></span></div>",
-				__("Automatic redirect for native URI enabled:", "permalink-manager"),
-				"{$home_with_prefix}{$native_uri}",
-				urldecode($native_uri)
+				"<div class=\"default-permalink-row columns-container\"><span class=\"column-3_4\"><strong>%s:</strong> %s</span><span class=\"column-1_4\"><a href=\"#\" class=\"restore-default\"><span class=\"dashicons dashicons-image-rotate\"></span> %s</a></span></div>",
+				__("Default URI", "permalink-manager"), esc_html($default_uri),
+				__("Restore Default URI", "permalink-manager")
 			);
+
+			// 8. Native URI info
+			if(!empty($permalink_manager_options['general']['redirect']) && ((!empty($element->post_status) && in_array($element->post_status, array('auto-draft', 'trash', 'draft'))) == false)) {
+				$native_permalink = trim(Permalink_Manager_Helper_Functions::get_permalink_base($element), "/") . "/";
+				$native_permalink .= $native_uri;
+
+				$html .= sprintf(
+					"<div class=\"default-permalink-row columns-container\"><span><strong>%s</strong> <a href=\"%s\">%s</a></span></div>",
+					__("Automatic redirect for native URI enabled:", "permalink-manager"),
+					$native_permalink,
+					urldecode($native_uri)
+				);
+			}
 		}
 
-		// 8. Custom redirects
+		// 9. Custom redirects
 		$html .= ($element->ID) ? self::display_redirect_panel($id) : self::display_redirect_panel("tax-{$id}");
 
+		// 10. Extra save button for Gutenberg
+		if($gutenberg) {
+			$html .= sprintf(
+				"<div class=\"default-permalink-row save-row columns-container hidden\"><div><a href=\"#\" class=\"button button-primary\" id=\"permalink-manager-save-button\">%s</a></div></div>",
+				__("Save permalink", "permalink-manager")
+			);
+		}
+
 		$html .= "</div>";
 		$html .= "</div>";
 
-		// 9. Append nonce field
+		// 11. Append nonce field & element ID
+		$html .= Permalink_Manager_Admin_Functions::generate_option_field("permalink-manager-edit-uri-element-id", array("type" => "hidden", "value" => $element_id));
 		$html .= wp_nonce_field('permalink-manager-edit-uri-box', 'permalink-manager-nonce', true, false);
 
 		return $html;
@@ -652,14 +752,14 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 
 		// Heading
 		$html = sprintf(
-			"<div class=\"permalink-manager redirects-row redirects-panel columns-container\"><div class=\"heading\"><span class=\"dashicons dashicons-redo\"></span> <a href=\"#\" id=\"toggle-redirect-panel\">%s</a></span></div>",
-			__("Add Extra Redirects", "permalink-manager")
+			"<div class=\"permalink-manager redirects-row redirects-panel columns-container\"><div><a class=\"button\" href=\"#\" id=\"toggle-redirect-panel\">%s</a></span></div>",
+			__("Manage redirects", "permalink-manager")
 		);
 
 		$html .= "<div id=\"redirect-panel-inside\">";
 
 		// Table
-		if(class_exists('Permalink_Manager_Pro_Addons')) {
+		if(Permalink_Manager_Admin_Functions::is_pro_active()) {
 			$html .= Permalink_Manager_Pro_Addons::display_redirect_form($element_id);
 		} else {
 			$html .= self::pro_text(true);
@@ -727,6 +827,65 @@ class Permalink_Manager_Admin_Functions extends Permalink_Manager_Class {
 		global $permalink_manager_before_sections_html;
 
 		echo $permalink_manager_before_sections_html;
+	}
+
+	/**
+	 * Check if URI was used before
+	 */
+	function ajax_detect_duplicates($uri = null, $element_id = null) {
+		$duplicate_alert = __("URI is already in use, please select another one!", "permalink-manager");
+
+		if(!empty($_REQUEST['custom_uris'])) {
+			// Sanitize the array
+			$custom_uris = Permalink_Manager_Helper_Functions::sanitize_array($_REQUEST['custom_uris']);
+			$duplicates_array = array();
+
+			// Check each URI
+			foreach($custom_uris as $element_id => $uri) {
+				$duplicates_array[$element_id] = Permalink_Manager_Helper_Functions::is_uri_duplicated($uri, $element_id) ? $duplicate_alert : 0;
+			}
+
+			// Convert the output to JSON and stop the function
+			echo json_encode($duplicates_array);
+		} else if(!empty($_REQUEST['custom_uri']) && !empty($_REQUEST['element_id'])) {
+			$is_duplicated = Permalink_Manager_Helper_Functions::is_uri_duplicated($uri, $element_id) ? $duplicate_alert : 0;
+
+			echo $is_duplicated;
+		}
+
+		die();
+	}
+
+	/**
+	 * Check if Permalink Manager Pro is active
+	 */
+	public static function is_pro_active($return_text = false) {
+		if(defined('PERMALINK_MANAGER_PRO') && PERMALINK_MANAGER_PRO == true) {
+			$is_pro = true;
+		} else {
+			$is_pro = false;
+		}
+
+		// Check if license is active
+		if(class_exists('Permalink_Manager_Pro_Functions')) {
+			$exp_date = Permalink_Manager_Pro_Functions::get_expiration_date(true);
+
+			$is_pro = ($exp_date > 0) ? false : true;
+		} else {
+			$is_pro = false;
+		}
+
+		return $is_pro;
+	}
+
+	static function pro_text($text_only = false) {
+		if(class_exists('Permalink_Manager_Pro_Functions')) {
+			$text = Permalink_Manager_Pro_Functions::get_expiration_date(false, true);
+		} else {
+			$text = sprintf(__('This functionality is available only in <a href="%s" target="_blank">Permalink Manager Pro</a>.', 'permalink-manager'), PERMALINK_MANAGER_WEBSITE);
+		}
+
+		return ($text_only) ? $text : sprintf("<div class=\"alert info\"> %s</div>", wpautop($text, 'alert', false));
 	}
 
 }

@@ -40,51 +40,25 @@ class Permalink_Manager_Settings extends Permalink_Manager_Class {
 						'input_class' => '',
 						'description' => __('If enabled, the custom permalinks will be automatically updated every time the post is saved or updated.', 'permalink-manager')
 					),
-					'case_insensitive_permalinks' => array(
+					'show_native_slug_field' => array(
 						'type' => 'single_checkbox',
-						'label' => __('Case insensitive permalinks', 'permalink-manager'),
+						'label' => __('Show "Native slug" field', 'permalink-manager'),
 						'input_class' => '',
-						'description' => __('Make all the permalinks case-insensitive.', 'permalink-manager')
+						'description' => __('If enabled, it would be possible to edit the native slug via URI Editor on single post/term edit page.', 'permalink-manager')
 					)
 				)
 			),
-			'miscellaneous' => array(
+			'seo' => array(
 				'section_name' => __('SEO functions', 'permalink-manager'),
 				'container' => 'row',
 				'name' => 'general',
 				'fields' => array(
-					'yoast_primary_term' => array(
-						'type' => 'single_checkbox',
-						'label' => __('Primary term/category support', 'permalink-manager'),
-						'input_class' => '',
-						'description' => __('Used to generate default permalinks in pages, posts & custom post types. Works only when "Yoast SEO" plugin is enabled.', 'permalink-manager')
-					),
-					'yoast_attachment_redirect' => array(
-						'type' => 'single_checkbox',
-						'label' => __('Attachment redirect support', 'permalink-manager'),
-						'input_class' => '',
-						'description' => __('Redirect attachment URLs to their parent posts. Works only when "Yoast SEO Premium" plugin is enabled.', 'permalink-manager')
-					),
 					'canonical_redirect' => array(
 						'type' => 'single_checkbox',
 						'label' => __('Canonical redirect', 'permalink-manager'),
 						'input_class' => '',
 						'description' => __('This function allows Wordpress to correct the URLs used by the visitors.', 'permalink-manager')
 					),
-					'redirect' => array(
-						'type' => 'select',
-						'label' => __('Redirect', 'permalink-manager'),
-						'input_class' => 'settings-select',
-						'choices' => array(0 => __('Disable', 'permalink-manager'), "301" => __('Enable "301 redirect"', 'permalink-manager'), "302" => __('Enable "302 redirect"', 'permalink-manager')),
-						'description' => __('If enabled - the visitors will be redirected from native permalinks to your custom permalinks.<br /><strong>Only native permalinks & extra redirects will be redirected to new custom permalinks</strong>.', 'permalink-manager')
-					)
-				)
-			),
-			'advanced' => array(
-				'section_name' => __('Advanced settings', 'permalink-manager'),
-				'container' => 'row',
-				'name' => 'general',
-				'fields' => array(
 					'setup_redirects' => array(
 						'type' => 'single_checkbox',
 						'label' => __('Auto-create "Extra Redirects" for old permalinks', 'permalink-manager'),
@@ -93,35 +67,57 @@ class Permalink_Manager_Settings extends Permalink_Manager_Class {
 						'disabled' => true,
 						'description' => __('If enabled, the redirects will be automatially created for old custom permalinks, after posts or terms are updated.', 'permalink-manager')
 					),
-					'auto_remove_duplicates' => array(
-						'type' => 'single_checkbox',
-						'label' => __('Automatically remove duplicates', 'permalink-manager'),
-						'input_class' => '',
-						'description' => sprintf(__('If enabled, the duplicated redirects & custom permalinks will be automatically removed if they were previously assigned to removed posts or terms.<br />To manually remove the duplicates please go <a href="%s">to this page</a>.', 'permalink-manager'), admin_url('tools.php?page=permalink-manager&section=tools&subsection=duplicates'))
+					'redirect' => array(
+						'type' => 'select',
+						'label' => __('Redirect', 'permalink-manager'),
+						'input_class' => 'settings-select',
+						'choices' => array(0 => __('Disable', 'permalink-manager'), "301" => __('Enable "301 redirect"', 'permalink-manager'), "302" => __('Enable "302 redirect"', 'permalink-manager')),
+						'description' => __('If enabled - the visitors will be redirected from native permalinks to your custom permalinks.<br /><strong>Only native permalinks & extra redirects will be redirected to new custom permalinks</strong>.', 'permalink-manager')
 					),
-					'force_custom_slugs' => array(
-						'type' => 'single_checkbox',
-						'label' => __('Force custom slugs', 'permalink-manager'),
-						'input_class' => '',
-						'description' => __('If enabled, the slugs in the default custom permalinks will be recreated from the post titles.<br />This may cause permalinks duplicates when the post or term title is used more than once.', 'permalink-manager')
-					),
-					/*'deep_detect' => array(
-						'type' => 'single_checkbox',
-						'label' => __('Enable "Deep detect"', 'permalink-manager'),
-						'description' => __('Please keep it enabled if your custom URIs end with numerals, e.g. <strong>example.com/projects/20171025</strong> or if $_GET parameters should be detected as endpoints e.g. <strong>?page=1</strong>.', 'permalink-manager')
-					),
-					'decode_uris' => array(
-						'type' => 'single_checkbox',
-						'label' => __('Decode URIs', 'permalink-manager'),
-						'input_class' => '',
-						'description' => __('If enabled, the permalinks with non-ASCII characters may not be recognized in older browsers versions (advanced users only).', 'permalink-manager')
-					),*/
 					'trailing_slashes' => array(
 						'type' => 'select',
 						'label' => __('Trailing slashes', 'permalink-manager'),
 						'input_class' => 'settings-select',
 						'choices' => array(0 => __('Use default settings', 'permalink-manager'), 1 => __('Add trailing slashes', 'permalink-manager'), 10 => __('Add trailing slashes (+ auto-redirect links without them)', 'permalink-manager'), 2 => __('Remove trailing slashes', 'permalink-manager'), 20 => __('Remove trailing slashes (+ auto-redirect links with them)', 'permalink-manager'),),
 						'description' => __('This option can be used to alter the native settings and control if trailing slash should be added or removed from the end of posts & terms permalinks.', 'permalink-manager')
+					),
+					'pagination_redirect' => array(
+						'type' => 'single_checkbox',
+						'label' => __('Force 404 on non-existing pagination pages', 'permalink-manager'),
+						'input_class' => '',
+						'description' => __('If enabled, the non-existing pagination pages (for single posts) will return 404 ("Not Found") error.<br /><strong>Please disable it, if you encounter any problems with pagination pages or use custom pagination system.</strong>', 'permalink-manager')
+					),
+				)
+			),
+			'advanced' => array(
+				'section_name' => __('Advanced settings', 'permalink-manager'),
+				'container' => 'row',
+				'name' => 'general',
+				'fields' => array(
+					'auto_remove_duplicates' => array(
+						'type' => 'single_checkbox',
+						'label' => __('Automatically remove broken URIs', 'permalink-manager'),
+						'input_class' => '',
+						'description' => sprintf(__('If enabled, the custom URIs assigned to removed posts & terms will be automatically removed.<br />To manually remove the duplicates please go <a href="%s">to this page</a>.', 'permalink-manager'), admin_url('tools.php?page=permalink-manager&section=tools&subsection=duplicates'))
+					),
+					'fix_language_mismatch' => array(
+						'type' => 'single_checkbox',
+						'label' => __('Fix language mismatch', 'permalink-manager'),
+						'input_class' => '',
+						'description' => __('If enabled, the plugin will load the adjacent translation of post when the custom permalink is detected, but the language code in the URL does not match the language code assigned to the post/term.', 'permalink-manager')
+					),
+					'pmxi_import_support' => array(
+						'type' => 'single_checkbox',
+						'label' => __('Disable support for WP All Import', 'permalink-manager'),
+						'input_class' => '',
+						'description' => __('If checked, the custom URIs will not be assigned to the posts imported by Wp All Import Pro plugin.', 'permalink-manager')
+					),
+					'force_custom_slugs' => array(
+						'type' => 'select',
+						'label' => __('Force custom slugs', 'permalink-manager'),
+						'input_class' => 'settings-select',
+						'choices' => array(0 => __('No, use native slugs', 'permalink-manager'), 1 => __('Yes, use post/term titles', 'permalink-manager'), 2 => __('Yes, use post/term titles + do not strip special characters: .|-+', 'permalink-manager')),
+						'description' => __('If enabled, the slugs in the default custom permalinks will be recreated from the post titles.<br />This may cause permalinks duplicates when the post or term title is used more than once.', 'permalink-manager')
 					),
 					'partial_disable' => array(
 						'type' => 'checkbox',

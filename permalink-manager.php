@@ -4,7 +4,7 @@
 * Plugin Name:       Permalink Manager Lite
 * Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
 * Description:       Advanced plugin that allows to set-up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
-* Version:           2.0.5.1
+* Version:           2.1.2
 * Author:            Maciej Bis
 * Author URI:        http://maciejbis.net/
 * License:           GPL-2.0+
@@ -21,11 +21,11 @@ if (!defined('WPINC')) {
 // Define the directories used to load plugin files.
 define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-define( 'PERMALINK_MANAGER_VERSION', '2.0.5.1' );
+define( 'PERMALINK_MANAGER_VERSION', '2.1.2' );
 define( 'PERMALINK_MANAGER_FILE', __FILE__ );
-define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
-define( 'PERMALINK_MANAGER_BASENAME', plugin_basename(__FILE__) );
-define( 'PERMALINK_MANAGER_URL', untrailingslashit( plugins_url( '', __FILE__ ) ) );
+define( 'PERMALINK_MANAGER_DIR', untrailingslashit(dirname(__FILE__)) );
+define( 'PERMALINK_MANAGER_BASENAME', dirname(plugin_basename(__FILE__)));
+define( 'PERMALINK_MANAGER_URL', untrailingslashit( plugins_url('', __FILE__) ) );
 define( 'PERMALINK_MANAGER_WEBSITE', 'http://permalinkmanager.pro?utm_source=plugin' );
 define( 'PERMALINK_MANAGER_DONATE', 'https://www.paypal.me/Bismit' );
 
@@ -60,6 +60,7 @@ class Permalink_Manager_Class {
 				'actions' => 'Permalink_Manager_Actions',
 				'third-parties' => 'Permalink_Manager_Third_Parties',
 				'core-functions' => 'Permalink_Manager_Core_Functions',
+				'gutenberg' => 'Permalink_Manager_Gutenberg',
 				'pro-functions' => 'Permalink_Manager_Pro_Functions'
 			),
 			'views' => array(
@@ -93,7 +94,7 @@ class Permalink_Manager_Class {
 	*/
 	public function register_init_hooks() {
 		// Localize plugin
-		add_action( 'plugins_loaded', array($this, 'localize_me'), 1 );
+		add_action( 'init', array($this, 'localize_me'), 1 );
 
 		// Load globals & options
 		add_action( 'plugins_loaded', array($this, 'get_options_and_globals'), 9 );
@@ -110,7 +111,7 @@ class Permalink_Manager_Class {
 	* Localize this plugin
 	*/
 	function localize_me() {
-		load_plugin_textdomain( 'permalink-manager', false, PERMALINK_MANAGER_DIR );
+		load_plugin_textdomain( 'permalink-manager', false, PERMALINK_MANAGER_BASENAME . "/languages" );
 	}
 
 	/**
@@ -118,12 +119,13 @@ class Permalink_Manager_Class {
 	*/
 	public function get_options_and_globals() {
 		// 1. Globals with data stored in DB
-		global $permalink_manager_options, $permalink_manager_uris, $permalink_manager_permastructs, $permalink_manager_redirects;
+		global $permalink_manager_options, $permalink_manager_uris, $permalink_manager_permastructs, $permalink_manager_redirects, $permalink_manager_external_redirects;
 
 		$this->permalink_manager_options = $permalink_manager_options = apply_filters('permalink-manager-options', get_option('permalink-manager', array()));
 		$this->permalink_manager_uris = $permalink_manager_uris = apply_filters('permalink-manager-uris', get_option('permalink-manager-uris', array()));
 		$this->permalink_manager_permastructs = $permalink_manager_permastructs = apply_filters('permalink-manager-permastructs', get_option('permalink-manager-permastructs', array()));
 		$this->permalink_manager_redirects = $permalink_manager_redirects = apply_filters('permalink-manager-redirects', get_option('permalink-manager-redirects', array()));
+		$this->permalink_manager_external_redirects = $permalink_manager_external_redirects = apply_filters('permalink-manager-external-redirects', get_option('permalink-manager-external-redirects', array()));
 
 		// 2. Globals used to display additional content (eg. alerts)
 		global $permalink_manager_alerts, $permalink_manager_before_sections_html, $permalink_manager_after_sections_html;
@@ -148,17 +150,17 @@ class Permalink_Manager_Class {
 			),
 			'general' => array(
 				'force_custom_slugs' => 0,
+				'show_native_slug_field' => 0,
 				'auto_update_uris' => 0,
-				'case_insensitive_permalinks' => 0,
-				'yoast_primary_term' => 1,
+				'setup_redirects' => 1,
 				'redirect' => '301',
-				'yoast_attachment_redirect' => 1,
 				'canonical_redirect' => 1,
 				'trailing_slashes' => 0,
-				'setup_redirects' => 1,
+				'pagination_redirect' => 0,
 				'auto_remove_duplicates' => 0,
 				'partial_disable' => array(),
-				'deep_detect' => 1
+				'deep_detect' => 1,
+				'fix_language_mismatch' => 1
 			),
 			'licence' => array()
 		));
@@ -180,20 +182,23 @@ class Permalink_Manager_Class {
 	*/
 	public function default_alerts($alerts) {
 		$default_alerts = apply_filters('permalink-manager-default-alerts', array(
-			'november' => array(
+			'spring' => array(
 				'txt' => sprintf(
-					__("Get access to extra features: full taxonomy and WooCommerce support, possibility to use custom fields inside the permalinks and more!<br /><strong>Buy Permalink Manager Pro <a href=\"%s\" target=\"_blank\">here</a> and save 20&#37; using \"NOVEMBER\" coupon code!</strong> Valid until 31.11!", "permalink-manager"),
-					PERMALINK_MANAGER_WEBSITE
+					__("Get access to extra features: full taxonomy and WooCommerce support, possibility to use custom fields inside the permalinks and more!<br /><strong>Buy Permalink Manager Pro <a href=\"%s\" target=\"_blank\">here</a> and save %s using \"%s\" coupon code!</strong> Valid until %s!", "permalink-manager"),
+					PERMALINK_MANAGER_WEBSITE,
+					'20&#37;',
+					'SPRING',
+					'31.03'
 				),
 				'type' => 'notice-info',
 				'show' => 'pro_hide',
 				'plugin_only' => true,
-				'until' => '2017-11-31'
+				'until' => '2018-04-01'
 			)
 		));
 
 		// Apply the default settings (if empty values) in all settings sections
-		return $alerts + $default_alerts;
+		return (array) $alerts + (array) $default_alerts;
 	}
 
 	/**

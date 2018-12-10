@@ -56,7 +56,7 @@ class Permalink_Manager_Upgrade extends Permalink_Manager_Class {
 		$output .= "</div>";
 		$output .= "</div>";
 
-		$output .= sprintf("<p><a class=\"button button-default margin-top\" href=\"%s\" target=\"_blank\">%s</a>&nbsp;&nbsp;<a class=\"button button-primary margin-top\" href=\"%s\" target=\"_blank\">%s</a></p>", PERMALINK_MANAGER_WEBSITE, __("More info about Permalink Manager Pro"), "https://gumroad.com/l/permalink-manager", __("Buy Permalink Manager Pro"));
+		$output .= sprintf("<p><a class=\"button button-default margin-top\" href=\"%s\" target=\"_blank\">%s</a>&nbsp;&nbsp;<a class=\"button button-primary margin-top\" href=\"%s\" target=\"_blank\">%s</a></p>", PERMALINK_MANAGER_WEBSITE, __("More info about Permalink Manager Pro", "permalink-manager"), "https://gumroad.com/l/permalink-manager", __("Buy Permalink Manager Pro", "permalink-manager"));
 
 		return $output;
 	}
