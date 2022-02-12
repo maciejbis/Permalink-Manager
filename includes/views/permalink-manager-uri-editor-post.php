@@ -51,7 +51,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	* Override the parent columns method. Defines the columns to use in your listing table
 	*/
 	public function get_columns() {
-		return apply_filters('permalink-manager-uri-editor-columns', array(
+		return apply_filters('permalink_manager_uri_editor_columns', array(
 			'item_title'		=> __('Post title', 'permalink-manager'),
 			'item_uri'	=> __('Full URI & Permalink', 'permalink-manager')
 		));
@@ -76,7 +76,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	/**
 	* Data inside the columns
 	*/
-	public function column_default( $item, $column_name ) {
+	public function column_default($item, $column_name) {
 		global $permalink_manager_options;
 
 		$uri = Permalink_Manager_URI_Functions_Post::get_post_uri($item['ID'], true);
@@ -88,11 +88,19 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		$post_statuses_array = get_post_statuses();
 		$post_statuses_array['inherit'] = __('Inherit (Attachment)', 'permalink-manager');
 
-		$output = apply_filters('permalink-manager-uri-editor-column-content', '', $column_name, get_post($item['ID']));
+		$output = apply_filters('permalink_manager_uri_editor_column_content', '', $column_name, get_post($item['ID']));
 		if(!empty($output)) { return $output; }
 
 		switch( $column_name ) {
 			case 'item_uri':
+				// Get auto-update settings
+				$auto_update_val = get_post_meta($item['ID'], "auto_update_uri", true);
+				$auto_update_uri = (!empty($auto_update_val)) ? $auto_update_val : $permalink_manager_options["general"]["auto_update_uris"];
+				if($auto_update_uri) {
+					$field_args_base['readonly'] = true;
+					$field_args_base['append_content'] = sprintf('<p class="small uri_locked">%s %s</p>', '<span class="dashicons dashicons-lock"></span>', __('The above permalink will be automatically updated and is locked for editing.', 'permalink-manager'));
+				}
+
 				$output = '<div class="custom_uri_container">';
 				$output .= Permalink_Manager_Admin_Functions::generate_option_field("uri[{$item['ID']}]", $field_args_base);
 				$output .= "<span class=\"duplicated_uri_alert\"></span>";
@@ -105,7 +113,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 				$output .= '<div class="extra-info small">';
 				$output .= sprintf("<span><strong>%s:</strong> %s</span>", __("Slug", "permalink-manager"), urldecode($item['post_name']));
 				$output .= sprintf(" | <span><strong>%s:</strong> {$post_statuses_array[$item["post_status"]]}</span>", __("Post status", "permalink-manager"));
-				$output .= apply_filters('permalink-manager-uri-editor-extra-info', '', $column_name, get_post($item['ID']));
+				$output .= apply_filters('permalink_manager_uri_editor_extra_info', '', $column_name, get_post($item['ID']));
 				$output .= '</div>';
 
 				$output .= '<div class="row-actions">';
@@ -123,10 +131,10 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	/**
 	* Sort the data
 	*/
-	private function sort_data( $a, $b ) {
+	private function sort_data($a, $b) {
 		// Set defaults
-		$orderby = (!empty($_GET['orderby'])) ? $_GET['orderby'] : 'post_title';
-		$order = (!empty($_GET['order'])) ? $_GET['order'] : 'asc';
+		$orderby = (!empty($_GET['orderby'])) ? sanitize_sql_orderby($_GET['orderby']) : 'post_title';
+		$order = (!empty($_GET['order'])) ? sanitize_sql_orderby($_GET['order']) : 'asc';
 		$result = strnatcasecmp( $a[$orderby], $b[$orderby] );
 
 		return ($order === 'asc') ? $result : -$result;
@@ -138,8 +146,8 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	function extra_tablenav($which) {
 		global $wpdb, $active_section, $active_subsection;
 
-		$button_top = __( 'Update all the URIs below', 'permalink-manager' );
-		$button_bottom = __( 'Update all the URIs above', 'permalink-manager' );
+		$button_top = __( 'Save all the URIs below', 'permalink-manager' );
+		$button_bottom = __( 'Save all the URIs above', 'permalink-manager' );
 
 		$html = "<div class=\"alignleft actions\">";
 		$html .= get_submit_button( ${"button_$which"}, 'primary alignleft', "update_all_slugs[{$which}]", false, array( 'id' => 'doaction', 'value' => 'update_all_slugs' ) );
@@ -172,7 +180,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 					$html .= "<option value=\"{$month_raw}\" {$selected}>{$month_human_name}</option>";
 				}
 				$html .= "</select>";
-				$html .= sprintf("<input id=\"months-filter-button\" class=\"button\" value=\"%s\" type=\"submit\">", __("Filter", "permalink-manager"));
+				$html .= get_submit_button(__("Filter", "permalink-manager"), 'button', false, false, array('id' => 'months-filter-button', 'name' => 'months-filter-button'));
 				$html .= "</div>";
 			}
     }
@@ -185,7 +193,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	* Search box
 	*/
 	public function search_box($text = '', $input_id = '') {
-		$search_query = (!empty($_REQUEST['s'])) ? esc_attr(wp_unslash($_REQUEST['s'])) : "";
+		$search_query = (!empty($_REQUEST['s'])) ? esc_attr($_REQUEST['s']) : "";
 
     $output = "<p class=\"search-box\">";
 		$output .= "<label class=\"screen-reader-text\" for=\"{$input_id}\">{$text}:</label>";
@@ -211,8 +219,8 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		$per_page = $permalink_manager_options['screen-options']['per_page'];
 
 		// SQL query parameters
-		$order = (isset($_REQUEST['order']) && in_array($_REQUEST['order'], array('asc', 'desc'))) ? $_REQUEST['order'] : 'desc';
-		$orderby = (isset($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'ID';
+		$order = (isset($_REQUEST['order']) && in_array($_REQUEST['order'], array('asc', 'desc'))) ? sanitize_sql_orderby($_REQUEST['order']) : 'desc';
+		$orderby = (isset($_REQUEST['orderby'])) ? sanitize_sql_orderby($_REQUEST['orderby']) : 'ID';
 		$offset = ($current_page - 1) * $per_page;
 		$search_query = (!empty($_REQUEST['s'])) ? esc_sql($_REQUEST['s']) : "";
 
@@ -233,34 +241,45 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		// Grab posts from database
 		$sql_parts['start'] = "SELECT * FROM {$wpdb->posts} ";
 		if($search_query) {
-			$sql_parts['where'] = "WHERE post_name LIKE ('%{$search_query}%') ";
+			$sql_parts['where'] = "WHERE (LOWER(post_title) LIKE LOWER('%{$search_query}%') ";
 
 			// Search in array with custom URIs
 			$found = Permalink_Manager_Helper_Functions::search_uri($search_query, 'posts');
 			if($found) {
-				$sql_parts['where'] .= sprintf("OR ID IN ('%s')", implode(',', (array) $found));
+				$sql_parts['where'] .= sprintf("OR ID IN (%s)", implode(',', (array) $found));
 			}
+			$sql_parts['where'] .= " ) AND ((post_status IN ($this->displayed_post_statuses) AND post_type IN ($this->displayed_post_types)) {$attachment_support}) {$extra_filters} ";
 		} else {
 			$sql_parts['where'] = "WHERE ((post_status IN ($this->displayed_post_statuses) AND post_type IN ($this->displayed_post_types)) {$attachment_support}) {$extra_filters} ";
 		}
+
+		// Do not display excluded posts in Bulk URI Editor
+		$excluded_posts = (array) apply_filters('permalink_manager_excluded_post_ids', array());
+		if(!empty($excluded_posts)) {
+			$sql_parts['where'] .= sprintf("AND ID NOT IN ('%s') ", implode("', '", $excluded_posts));
+		}
+
 		$sql_parts['end'] = "ORDER BY {$orderby} {$order}";
 
+		// Prepare the SQL query
 		$sql_query = implode("", $sql_parts);
 
+		// Count items
+		$count_query = str_replace('SELECT *', 'SELECT COUNT(*)', $sql_query);
+		$total_items = $wpdb->get_var($count_query);
+
+		// Pagination support
+		$sql_query .= sprintf(" LIMIT %d, %d", $offset, $per_page);
+
+		// Get items
 		$sql_query = apply_filters('permalink_manager_filter_uri_editor_query', $sql_query, $this, $sql_parts, $is_taxonomy = false);
-		$all_data = $wpdb->get_results($sql_query, ARRAY_A);
-
-		// How many items?
-		$total_items = $wpdb->num_rows;
-
-		// Sort posts and count all posts
-		usort( $all_data, array( &$this, 'sort_data' ) );
-
-		$data = array_slice($all_data, $offset, $per_page);
+		$all_items = $wpdb->get_results($sql_query, ARRAY_A);
 
 		// Debug SQL query
-		$debug_txt = "<textarea style=\"width:100%;height:300px\">{$sql_query} \n\nOffset: {$offset} \nPage: {$current_page}\nPer page: {$per_page} \nTotal: {$total_items}</textarea>";
-		if(isset($_REQUEST['debug_editor_sql'])) { wp_die($debug_txt); }
+		if(isset($_REQUEST['debug_editor_sql'])) {
+			$debug_txt = "<textarea style=\"width:100%;height:300px\">{$sql_query} \n\nOffset: {$offset} \nPage: {$current_page}\nPer page: {$per_page} \nTotal: {$total_items}</textarea>";
+			wp_die($debug_txt);
+		}
 
 		$this->set_pagination_args( array(
 			'total_items' => $total_items,
@@ -268,7 +287,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		));
 
 		$this->_column_headers = array($columns, $hidden, $sortable);
-		$this->items = $data;
+		$this->items = $all_items;
 	}
 
 }

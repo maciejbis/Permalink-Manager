@@ -7,7 +7,7 @@ class Permalink_Manager_Uri_Editor extends Permalink_Manager_Class {
 	public $this_section = 'uri_editor';
 
 	public function __construct() {
-		add_filter( 'permalink-manager-sections', array($this, 'add_admin_section'), 1 );
+		add_filter( 'permalink_manager_sections', array($this, 'add_admin_section'), 0 );
 		add_filter( 'screen_settings', array($this, 'screen_options'), 99, 2 );
 	}
 

@@ -1,4 +1,14 @@
 # Permalink-Manager
-A simple tool that helps managing the slugs for Posts, Pages and Custom Post Types.
+Permalink Manager lets you customize the complete URL addresses of your posts, pages, custom post types, terms, and WooCommerce links with ease without touching any core files.
 
-More info: https://wordpress.org/plugins/permalink-manager/
+## Pro version:
+https://permalinkmanager.pro/
+
+## Free version:
+https://wordpress.org/plugins/permalink-manager/
+
+## List of helpful plugin articles
+* [What is a permalink?](https://permalinkmanager.pro/docs/basics/wordpress-permalinks-guide/)
+* [How to add category slugs to post permalinks?](https://permalinkmanager.pro/docs/tutorials/add-category-slug-wordpress-permalinks/)
+* [How to add custom fields to WordPress permalinks?](https://permalinkmanager.pro/docs/tutorials/how-to-use-custom-fields-inside-wordpress-permalinks/)
+* [How to remove parent slugs from children permalinks](https://permalinkmanager.pro/docs/basics/bulk-edit-wordpress-permalinks/#remove-parent-slugs)

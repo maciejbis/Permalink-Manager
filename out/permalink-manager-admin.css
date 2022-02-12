@@ -15,6 +15,7 @@
 #permalink-manager .lead{font-size:125%}
 #permalink-manager .licence-info{font-weight:bold}
 #permalink-manager p label{font-size:13px;color:#555d66;font-weight:bold}
+#permalink-manager a:focus{box-shadow:none}
 
 #permalink-manager .woocommerce-icon:before{font-family:"WooCommerce";font-style:normal}
 #permalink-manager .woocommerce-cart:before{content:"\e01d"}
@@ -31,10 +32,11 @@
 #permalink-manager .tablenav #months-filter{margin-left:10px}
 #permalink-manager .search-box{margin-left:1em}
 #permalink-manager th#count a{display:inline-block}
-#permalink-manager .post_permalink a,.post_permalink .dashicons{font-size:13px;color:#aaa;line-height:1.5em;height:auto;width:auto}
 #permalink-manager .post_permalink{margin-top:5px;display:block}
+#permalink-manager .post_permalink a,#permalink-manager .post_permalink .dashicons,#permalink-manager .uri_locked .dashicons{font-size:13px;color:#aaa;line-height:1.5em;height:auto;width:auto}
 #permalink-manager .column-count,#permalink-manager .column-post_lang{width:1%}
 #permalink-manager .column-count,#permalink-manager .column-post_lang,#permalink-manager th#count{text-align:right}
+#permalink-manager .column-item_uri .uri_locked{font-weight:bold}
 #permalink-manager .extra-info span{white-space:nowrap}
 
 #permalink-manager .info{box-shadow:0 1px 1px 0 rgba(0,0,0,.1);display:block;overflow:hidden;clear:both;font-weight:bold;border-left:4px solid #dc3232;}
@@ -45,16 +47,21 @@
 #permalink-manager .warning{background:#dc3232}
 #permalink-manager .warning,#permalink-manager .warning a{color:#fff}
 #permalink-manager .info{background:#f9f9f9}
-#permalink-manager .section-notes,#permalink-manager .short-pre,#permalink-manager .short-textarea{padding:15px;font-size:13px;margin-top:15px;line-height:20px;background:#e5e5e5;border:1px solid #ccc;color:#555}
+/*#permalink-manager .section-notes,#permalink-manager .short-pre,#permalink-manager .short-textarea{padding:15px;font-size:13px;margin-top:15px;line-height:20px;background:#e5e5e5;border:1px solid #ccc;color:#555}
 #permalink-manager .section-notes a,#permalink-manager .section-notes h3{color:#111}
-#permalink-manager .section-notes h3,#permalink-manager .section-notes h4{margin-top:0}
+#permalink-manager .section-notes h3,#permalink-manager .section-notes h4{margin-top:0}*/
 #permalink-manager .section-notes h4{font-size:14px}
-#permalink-manager .section-notes code{font-size:11px;background:#444;color:#fff}
+#permalink-manager .section-notes code{font-size:11px}
 #permalink-manager .section-notes ol{margin-top:0;margin-bottom:0}
 #permalink-manager .section-notes ol li:last-of-type{margin-bottom:0}
 #permalink-manager .short-pre,#permalink-manager .short-textarea{height:150px;overflow:auto;max-width:100%;display:block}
 #permalink-manager .structure-tags-list{margin-top:15px}
 #permalink-manager .duplicated_uri_alert,.permalink-manager .duplicated_uri_alert{display:block;font-weight:bold;font-size:90%;margin-top:8px;color:#dc3232}
+
+#permalink-manager .settings-tabs,#permalink-manager .settings-tabs form,#permalink-manager .settings-tabs form > div{clear:both;overflow:hidden}
+#permalink-manager .settings-tabs .subsubsub{margin-bottom:0}
+#permalink-manager .settings-tabs form > div{display:none}
+#permalink-manager .settings-tabs form > div.active-tab{display:block}
 
 #permalink-manager .checkbox_actions{padding-top:10px;border-top:1px solid #ddd}
 #permalink-manager .extra-links,.permalink-manager-screen-options .extra-links{margin-top:5px;font-size:12px}
@@ -65,6 +72,8 @@
 #permalink-manager .checkboxes{margin-left:-15px;margin-right:15px;overflow:hidden;display:block}
 #permalink-manager .checkboxes > label{display:inline-block;width:33%;float:left;padding:0 15px;box-sizing:border-box;padding-bottom:5px;overflow:hidden}
 #permalink-manager .checkboxes > label:nth-of-type(3n+1){clear:both}
+#permalink-manager .checkboxes > p{font-weight:bold;margin-left:15px;display:block;clear:both;margin-bottom:5px}
+#permalink-manager .checkboxes > label + p{padding-top:15px}
 #permalink-manager .field-description{font-size:12px}
 #permalink-manager .appended-row td{padding-left:0;padding-right:0}
 #permalink-manager #tools{margin:0 -15px;padding:0 15px 15px}
@@ -76,6 +85,10 @@
 
 #permalink-manager .updated-slugs-table .row-title{max-width:400px}
 
+/**
+ * Plugins admin page
+ */
+.plugin_license_info_row{transform:translate(0,-1px)}
 
 /**
  * Columns
@@ -107,10 +120,13 @@
 #permalink-manager.permalink-manager-edit-uri-box .close-button{float:right;width:36px;height:36px;padding:0;cursor:pointer;display:block}
 #permalink-manager.permalink-manager-edit-uri-box .close-icon{margin-top:4px;-webkit-border-radius:50%;border-radius:50%;text-indent:-1px;color:#72777c;line-height:36px;display:block;text-align:center}
 #permalink-manager.permalink-manager-edit-uri-box .close-icon:before{content:"\f158";display:inline-block;font:400 20px/1 dashicons;speak:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-decoration:none!important}
+#permalink-manager.permalink-manager-edit-uri-box .uri_locked{color:#aaa;font-size:13px}
 #permalink-manager .default-permalink-row,#permalink-manager .redirects-row{border-top:1px solid #eee;padding-top:15px}
 #permalink-manager .default-permalink-row,#permalink-manager .default-permastruct-row,#permalink-manager .redirects-row{color:#aaa;font-size:90%}
-#permalink-manager .restore-default{display:inline-block;text-align:right;width:100%;border-radius:0;color:#959595;text-decoration:none}
-#permalink-manager .widefat,#permalink-manager #redirect-panel-inside,#permalink-manager #redirect-panel-inside table{width:100%!important}
+#permalink-manager .restore-default,#permalink-manager .permastruct-toggle-button a{display:inline-block;width:100%;border-radius:0;color:#959595;text-decoration:none}
+#permalink-manager .restore-default{text-align:right}
+#permalink-manager .widefat,#permalink-manager #redirect-panel-inside,#permalink-manager #redirect-panel-inside table{width:100%!important;max-width:none;min-height:0!important;box-sizing:border-box;height:32px}
+#permalink-manager textarea.widefat,#permalink-manager #redirect-panel-inside table{height:auto}
 #permalink-manager .heading,#permalink-manager .heading a{margin:0;line-height:1.4;font-weight:600;text-decoration:none;color:#777}
 #permalink-manager.permalink-manager-edit-term .permalink-manager-edit-uri-box{display:block!important;margin:0}
 #permalink-manager.permalink-manager-edit-term .permalink-manager-edit-uri-box h2,.permalink-manager.postbox .heading{font-size:14px!important;padding:8px 12px;margin:0;line-height:1.4}
@@ -138,7 +154,7 @@
  * Redirect panel
  */
 #permalink-manager #redirect-panel-inside{display:none}
-#permalink-manager #redirect-panel-inside,#permalink-manager #redirect-panel-inside p{margin-top:15px;}
+#permalink-manager #redirect-panel-inside,#permalink-manager #redirect-panel-inside p{margin-top:15px;height:auto}
 #permalink-manager #redirect-panel-inside table{margin-bottom:10px;margin-top:-5px}
 #permalink-manager #redirect-panel-inside table td{padding:5px 0;width:100%}
 #permalink-manager #redirect-panel-inside table td a{text-decoration:none;text-align:right}
@@ -159,6 +175,21 @@
  * Tippy.js custom theme
  */
 .tippy-tooltip.tippy-pm-theme{text-align:left;font-size:13px}
+
+/**
+ * Permastructures
+ */
+#permalink-manager .all-permastruct-container{}
+#permalink-manager .all-permastruct-container > *{margin-bottom:15px}
+#permalink-manager .all-permastruct-container > *:last-child{margin:0}
+#permalink-manager .all-permastruct-container .permastruct-toggle{display:none;padding-bottom:15px;border-bottom:1px dashed #ddd}
+#permalink-manager .all-permastruct-container h4{font-size:14px}
+#permalink-manager .all-permastruct-container p{font-size:13px}
+#permalink-manager .all-permastruct-container p.default-permastruct-row{margin-top:15px}
+#permalink-manager .all-permastruct-container label{font-weight:600;margin-top:15px!important;font-size:13px;margin-bottom:5px!important;display:block;clear:both}
+#permalink-manager .all-permastruct-container .settings-container label{font-weight:400}
+#permalink-manager .permastruct-toggle-button a{font-size:90%;font-weight:bold}
+
 
 /**
  * TagEditor custom theme & "Stop Words"

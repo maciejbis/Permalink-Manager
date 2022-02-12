@@ -6,7 +6,7 @@
 class Permalink_Manager_Tools extends Permalink_Manager_Class {
 
 	public function __construct() {
-		add_filter( 'permalink-manager-sections', array($this, 'add_admin_section'), 1 );
+		add_filter( 'permalink_manager_sections', array($this, 'add_admin_section'), 1 );
 	}
 
 	public function add_admin_section($admin_sections) {
@@ -125,11 +125,11 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 
 	public function find_and_replace_output() {
 		// Get all registered post types array & statuses
-		$all_post_statuses_array = get_post_statuses();
+		$all_post_statuses_array = Permalink_Manager_Helper_Functions::get_post_statuses();
 		$all_post_types = Permalink_Manager_Helper_Functions::get_post_types_array();
 		$all_taxonomies = Permalink_Manager_Helper_Functions::get_taxonomies_array();
 
-		$fields = apply_filters('permalink-manager-tools-fields', array(
+		$fields = apply_filters('permalink_manager_tools_fields', array(
 			'old_string' => array(
 				'label' => __( 'Find ...', 'permalink-manager' ),
 				'type' => 'text',
@@ -146,7 +146,10 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 				'label' => __( 'Mode', 'permalink-manager' ),
 				'type' => 'select',
 				'container' => 'row',
-				'choices' => array('custom_uris' => __('Custom URIs', 'permalink-manager'), 'slugs' => __('Native slugs', 'permalink-manager')),
+				'choices' => array(
+					'custom_uris' => __('Custom URIs', 'permalink-manager'),
+					'slugs' => __('Native slugs', 'permalink-manager')
+				),
 			),
 			'content_type' => array(
 				'label' => __( 'Select content type', 'permalink-manager' ),
@@ -155,7 +158,10 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 				'pro' => true,
 				'container' => 'row',
 				'default' => 'post_types',
-				'choices' => array('post_types' => __('Post types', 'permalink-manager'), 'taxonomies' => __('Taxonomies', 'permalink-manager')),
+				'choices' => array(
+					'post_types' => __('Post types', 'permalink-manager'),
+					'taxonomies' => __('Taxonomies', 'permalink-manager')
+				),
 			),
 			'post_types' => array(
 				'label' => __( 'Select post types', 'permalink-manager' ),
@@ -207,16 +213,20 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 
 	public function regenerate_slugs_output() {
 		// Get all registered post types array & statuses
-		$all_post_statuses_array = get_post_statuses();
+		$all_post_statuses_array = Permalink_Manager_Helper_Functions::get_post_statuses();
 		$all_post_types = Permalink_Manager_Helper_Functions::get_post_types_array();
 		$all_taxonomies = Permalink_Manager_Helper_Functions::get_taxonomies_array();
 
-		$fields = apply_filters('permalink-manager-tools-fields', array(
+		$fields = apply_filters('permalink_manager_tools_fields', array(
 			'mode' => array(
 				'label' => __( 'Mode', 'permalink-manager' ),
 				'type' => 'select',
 				'container' => 'row',
-				'choices' => array('custom_uris' => __('Custom URIs', 'permalink-manager'), 'slugs' => __('Restore native slugs', 'permalink-manager'), 'native' => __('Restore native permalinks', 'permalink-manager')),
+				'choices' => array(
+					'custom_uris' => __('Regenerate custom permalinks', 'permalink-manager'),
+					'slugs' => __('Regenerate native slugs', 'permalink-manager'),
+					'native' => __('Use original URLs as custom permalinks', 'permalink-manager')
+				),
 			),
 			'content_type' => array(
 				'label' => __( 'Select content type', 'permalink-manager' ),
@@ -225,7 +235,10 @@ class Permalink_Manager_Tools extends Permalink_Manager_Class {
 				'pro' => true,
 				'container' => 'row',
 				'default' => 'post_types',
-				'choices' => array('post_types' => __('Post types', 'permalink-manager'), 'taxonomies' => __('Taxonomies', 'permalink-manager')),
+				'choices' => array(
+					'post_types' => __('Post types', 'permalink-manager'),
+					'taxonomies' => __('Taxonomies', 'permalink-manager')
+				),
 			),
 			'post_types' => array(
 				'label' => __( 'Select post types', 'permalink-manager' ),
