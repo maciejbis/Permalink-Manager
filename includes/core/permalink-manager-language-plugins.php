@@ -71,7 +71,9 @@ class Permalink_Manager_Language_Plugins extends Permalink_Manager_Class {
 			add_filter('permalink_manager_filter_permastructure', array($this, 'translate_permastructure'), 9, 2);
 
 			// Translate custom permalinks
-			add_filter('permalink_manager_filter_final_post_permalink', array($this, 'translate_permalinks'), 9, 2);
+			if($this->is_wpml_compatible()) {
+				add_filter('permalink_manager_filter_final_post_permalink', array($this, 'translate_permalinks'), 9, 2);
+			}
 
 			// Translate post type slug
 			if(class_exists('WPML_Slug_Translation')) {
@@ -105,6 +107,16 @@ class Permalink_Manager_Language_Plugins extends Permalink_Manager_Class {
 	}
 
 	/**
+	 * Let users decide if they want Permalink Manager to force language code in the custom permalinks
+	 */
+	public static function is_wpml_compatible() {
+		global $permalink_manager_options;
+
+		// Use the current language if translation is not available but fallback mode is turned on
+		return (!empty($permalink_manager_options['general']['wpml_support'])) ? $permalink_manager_options['general']['wpml_support'] : false;
+	}
+
+	/**
 	 * WPML/Polylang/TranslatePress filters
 	 */
 	public static function get_language_code($element) {
@@ -127,21 +139,22 @@ class Permalink_Manager_Language_Plugins extends Permalink_Manager_Class {
 		}
 		// B. WPML & Polylang
 		else {
+			$is_wpml_compatible = self::is_wpml_compatible();
+
 			if(isset($element->post_type)) {
 				$element_id = $element->ID;
 				$element_type = $element->post_type;
 
-				$fallback_lang_on = (!empty($sitepress)) ? $sitepress->is_display_as_translated_post_type($element_type) : false;
+				$fallback_lang_on = (!empty($sitepress) && $is_wpml_compatible) ? $sitepress->is_display_as_translated_post_type($element_type) : false;
 			} else if(isset($element->taxonomy)) {
 				$element_id = $element->term_taxonomy_id;
 				$element_type = $element->taxonomy;
 
-				$fallback_lang_on = (!empty($sitepress)) ? $sitepress->is_display_as_translated_taxonomy($element_type) : false;
+				$fallback_lang_on = (!empty($sitepress) && $is_wpml_compatible) ? $sitepress->is_display_as_translated_taxonomy($element_type) : false;
 			} else {
 				return false;
 			}
 
-			// Use the current language if translation is not available but fallback mode is turned on
 			if(!empty($fallback_lang_on) && !empty($sitepress) && !is_admin() && !wp_doing_ajax() && !defined('REST_REQUEST')) {
 				$current_language = $sitepress->get_current_language();
 
