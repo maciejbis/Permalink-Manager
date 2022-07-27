@@ -165,7 +165,7 @@ class Permalink_Manager_Core_Functions extends Permalink_Manager_Class {
 				$post_ids = $wpdb->get_col("SELECT DISTINCT ID FROM {$wpdb->posts} AS p WHERE p.post_status = 'draft' ORDER BY ID DESC");
 				if(!empty($post_ids)) {
 					foreach($post_ids as $post_id) {
-						unset($permalink_manager_uris[$post_id]);
+						unset($all_uris[$post_id]);
 					}
 				}
 			}
