@@ -60,7 +60,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	public function get_columns() {
 		return apply_filters( 'permalink_manager_uri_editor_columns', array(
 			'item_title' => __( 'Post title', 'permalink-manager' ),
-			'item_uri'   => __( 'Full URI & Permalink', 'permalink-manager' )
+			'item_uri'   => __( 'Custom permalink', 'permalink-manager' )
 		) );
 	}
 
@@ -107,12 +107,16 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 				$auto_update_val = get_post_meta( $item['ID'], "auto_update_uri", true );
 				$auto_update_uri = ( ! empty( $auto_update_val ) ) ? $auto_update_val : $permalink_manager_options["general"]["auto_update_uris"];
 
-				if ( $auto_update_uri == 1 ) {
-					$field_args_base['readonly']       = true;
+				// Check if drafts are allowed
+				if ( Permalink_Manager_Helper_Functions::is_draft_excluded( (int) $item['ID'] ) ) {
+					$field_args_base['disabled']       = true;
+					$field_args_base['append_content'] = sprintf( '<p class="small uri_locked">%s %s</p>', '<span class="dashicons dashicons-lock"></span>', __( 'URI Editor disabled due to "Exclude drafts & pending posts" setting and the post status.', 'permalink-manager' ) );
+				} else if ( $auto_update_uri == 1 ) {
+					$field_args_base['disabled']       = true;
 					$field_args_base['append_content'] = sprintf( '<p class="small uri_locked">%s %s</p>', '<span class="dashicons dashicons-lock"></span>', __( 'The above permalink will be automatically updated and is locked for editing.', 'permalink-manager' ) );
 				} else if ( $auto_update_uri == 2 ) {
-					$field_args_base['readonly']       = true;
-					$field_args_base['append_content'] = sprintf( '<p class="small uri_locked">%s %s</p>', '<span class="dashicons dashicons-lock"></span>', __( 'URI Editor disabled due to "URI update mode" setting.', 'permalink-manager' ) );
+					$field_args_base['disabled']       = true;
+					$field_args_base['append_content'] = sprintf( '<p class="small uri_locked">%s %s</p>', '<span class="dashicons dashicons-lock"></span>', __( 'URI Editor disabled due to "Permalink update" setting.', 'permalink-manager' ) );
 				}
 
 				$output = '<div class="custom_uri_container">';
@@ -150,8 +154,8 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	function extra_tablenav( $which ) {
 		global $wpdb, $active_section, $active_subsection;
 
-		$button_top    = __( 'Save all the URIs below', 'permalink-manager' );
-		$button_bottom = __( 'Save all the URIs above', 'permalink-manager' );
+		$button_top    = __( 'Save all the permalinks below', 'permalink-manager' );
+		$button_bottom = __( 'Save all the permalinks above', 'permalink-manager' );
 
 		$html = "<div class=\"alignleft actions\">";
 		$html .= get_submit_button( ${"button_$which"}, 'primary alignleft', "update_all_slugs[{$which}]", false, array( 'id' => 'doaction', 'value' => 'update_all_slugs' ) );
@@ -259,8 +263,8 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		}
 
 		// Do not display excluded posts in Bulk URI Editor
-		$excluded_posts = (array) apply_filters( 'permalink_manager_excluded_post_ids', array() );
-		if ( ! empty( $excluded_posts ) ) {
+		$excluded_posts = Permalink_Manager_Helper_Functions::get_excluded_post_ids();
+		if ( ! empty( $excluded_posts ) && is_array( $excluded_posts ) ) {
 			$sql_parts['where'] .= sprintf( "AND ID NOT IN ('%s') ", implode( "', '", $excluded_posts ) );
 		}
 

@@ -18,7 +18,7 @@ class Permalink_Manager_URI_Functions_Post {
 
 		add_filter( 'url_to_postid', array( $this, 'url_to_postid' ), 999 );
 
-		add_filter( 'get_sample_permalink_html', array( $this, 'edit_uri_box' ), 10, 5 );
+		add_filter( 'get_sample_permalink_html', array( $this, 'edit_uri_box' ), 20, 5 );
 
 		add_action( 'save_post', array( $this, 'update_post_uri' ), 99, 1 );
 		add_action( 'edit_attachment', array( $this, 'update_post_uri' ), 99, 1 );
@@ -31,7 +31,7 @@ class Permalink_Manager_URI_Functions_Post {
 	}
 
 	/**
-	 * Add "Current URI" input field to "Quick Edit" form
+	 * Add "Custom Permalink" input field to "Quick Edit" form
 	 */
 	function admin_init() {
 		$post_types = Permalink_Manager_Helper_Functions::get_post_types_array();
@@ -175,7 +175,7 @@ class Permalink_Manager_URI_Functions_Post {
 	}
 
 	/**
-	 * Get the default custom permalink (not overwritten by the user) or native URI (unfiltered)
+	 * Get the default custom permalink (not overwritten by the user) or native permalink (unfiltered)
 	 *
 	 * @param WP_Post|int $post
 	 * @param bool $native_uri
@@ -694,18 +694,11 @@ class Permalink_Manager_URI_Functions_Post {
 	 * @return string
 	 */
 	function edit_uri_box( $html, $id, $new_title, $new_slug, $post ) {
-		global $permalink_manager_uris, $permalink_manager_options;
-
 		// Detect auto drafts
 		$autosave = ( ! empty( $new_title ) && empty( $new_slug ) ) ? true : false;
 
 		// Check if the post is excluded
-		if ( empty( $post->post_type ) || Permalink_Manager_Helper_Functions::is_post_excluded( $post ) ) {
-			return $html;
-		}
-
-		// Ignore drafts
-		if ( ! empty( $permalink_manager_options["general"]["ignore_drafts"] ) && ! empty( $post->post_status ) && $post->post_status == 'draft' ) {
+		if ( empty( $post->post_type ) || Permalink_Manager_Helper_Functions::is_post_excluded( $post, true ) ) {
 			return $html;
 		}
 
@@ -714,10 +707,6 @@ class Permalink_Manager_URI_Functions_Post {
 		if ( ! $show_uri_editor ) {
 			return $html;
 		}
-
-		$new_html    = preg_replace( "/^(<strong>(.*)<\/strong>)(.*)/is", "$1 ", $html );
-		$default_uri = self::get_default_post_uri( $id );
-		$native_uri  = self::get_default_post_uri( $id, true );
 
 		// Make sure that home URL ends with slash
 		$home_url = Permalink_Manager_Helper_Functions::get_permalink_base( $post );
@@ -729,10 +718,10 @@ class Permalink_Manager_URI_Functions_Post {
 		} else {
 			// B. Do not change anything if post is not saved yet (display sample permalink instead)
 			if ( $autosave || empty( $post->post_status ) ) {
-				$sample_permalink_uri = $default_uri;
+				$sample_permalink_uri = self::get_default_post_uri( $id );
 			} // C. Display custom URI if set
 			else {
-				$sample_permalink_uri = ( ! empty( $permalink_manager_uris[ $id ] ) ) ? $permalink_manager_uris[ $id ] : $native_uri;
+				$sample_permalink_uri = Permalink_Manager_URI_Functions::get_single_uri( $post, true );
 			}
 
 			// Decode URI & allow to filter it
@@ -740,17 +729,27 @@ class Permalink_Manager_URI_Functions_Post {
 
 			// Prepare the sample & default permalink
 			$sample_permalink = sprintf( "%s/<span class=\"editable\">%s</span>", $home_url, str_replace( "//", "/", $sample_permalink_uri ) );
-
-			// Allow to filter the sample permalink URL
-			// $sample_permalink = apply_filters('permalink_manager_filter_post_sample_permalink', $sample_permalink, $post);
 		}
 
-		// Append new HTML output
-		$new_html .= sprintf( "<span class=\"sample-permalink-span\"><a id=\"sample-permalink\" href=\"%s\">%s</a></span>&nbsp;", strip_tags( $sample_permalink ), $sample_permalink );
+		$sample_permalink_html = sprintf( "<span id=\"sample-permalink\"><span class=\"sample-permalink-span\"><a id=\"sample-permalink\" href=\"%s\">%s</a></span></span>&nbsp;", strip_tags( $sample_permalink ), $sample_permalink );
+
+		// 1. Overwrite the sample permalink
+		if ( preg_match( '/(<span id="sample-permalink"><a.*<\/a><\/span>)/m', $html ) ) {
+			$new_html = preg_replace('/(<span id="sample-permalink"><a.*<\/a><\/span>)/m', $sample_permalink_html, $html);
+		} else if ( preg_match( '/(<a id="sample-permalink"[^<]*>.*<\/a>)/m', $html ) ) {
+			$new_html = preg_replace('/(<a id="sample-permalink"[^<]*>.*<\/a>)/m', $sample_permalink_html, $html);
+		} else {
+			$new_html = $html;
+		}
+
+		// 2. Append the Permalink Editor
 		$new_html .= ( ! $autosave ) ? Permalink_Manager_Admin_Functions::display_uri_box( $post ) : "";
 
-		// Append hidden field with native slug
-		$new_html .= ( ! empty( $post->post_name ) ) ? "<span id=\"editable-post-name-full\">{$post->post_name}</span>" : "";
+		// 3. Hide the "Edit" slug button
+		$new_html = str_replace('edit-slug button', 'edit-slug button hidden', $new_html );
+
+		// 4. Append hidden field with native slug
+		$new_html .= ( ! empty( $post->post_name ) && strpos( $new_html, 'editable-post-name-full' ) === false ) ? "<span id=\"editable-post-name-full\">{$post->post_name}</span>" : "";
 
 		return $new_html;
 	}
@@ -773,11 +772,11 @@ class Permalink_Manager_URI_Functions_Post {
 			return $columns;
 		}
 
-		return ( is_array( $columns ) ) ? array_merge( $columns, array( 'permalink-manager-col' => __( 'Current URI', 'permalink-manager' ) ) ) : $columns;
+		return ( is_array( $columns ) ) ? array_merge( $columns, array( 'permalink-manager-col' => __( 'Custom permalink', 'permalink-manager' ) ) ) : $columns;
 	}
 
 	/**
-	 * Display the URI of the current post in the "Current URI" column
+	 * Display the URI of the current post in the "Custom Permalink" column
 	 *
 	 * @param string $column_name The name of the column to display. In this case, we named our column permalink-manager-col.
 	 * @param int $post_id The ID of the term.
@@ -803,7 +802,7 @@ class Permalink_Manager_URI_Functions_Post {
 	}
 
 	/**
-	 * Display the simplified URI Editor in "Quick Edit" mode
+	 * Display the simplified Permalink Editor in "Quick Edit" mode
 	 *
 	 * @param string $column_name
 	 * @param string $post_type
@@ -821,15 +820,10 @@ class Permalink_Manager_URI_Functions_Post {
 	 * @param int $post_id Term ID.
 	 */
 	function new_post_uri( $post_id ) {
-		global $post, $permalink_manager_uris, $permalink_manager_options;
+		global $permalink_manager_uris, $permalink_manager_options;
 
 		// Do not trigger if post is a revision or imported via WP All Import (URI should be set after the post meta is added)
 		if ( wp_is_post_revision( $post_id ) || ( ! empty( $_REQUEST['page'] ) && $_REQUEST['page'] == 'pmxi-admin-import' ) ) {
-			return;
-		}
-
-		// Prevent language mismatch in MultilingualPress plugin
-		if ( is_admin() && ! empty( $post->ID ) && $post->ID != $post_id ) {
 			return;
 		}
 
@@ -840,6 +834,11 @@ class Permalink_Manager_URI_Functions_Post {
 
 		// Do not do anything if post is auto-saved
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Do not process REST API requests originating from Gutenberg JS functions
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST && ! empty( $_SERVER['HTTP_REFERER'] ) && ( strpos( $_SERVER['HTTP_REFERER'], 'wp-admin/post' ) !== false ) ) {
 			return;
 		}
 
@@ -856,12 +855,7 @@ class Permalink_Manager_URI_Functions_Post {
 		$post_object = get_post( $post_id );
 
 		// Check if post is allowed
-		if ( empty( $post_object->post_type ) || Permalink_Manager_Helper_Functions::is_post_excluded( $post_object, true ) ) {
-			return;
-		}
-
-		// Ignore auto-drafts, revisions, removed posts and posts without title
-		if ( in_array( $post_object->post_status, array( 'auto-draft', 'trash' ) ) || ( strpos( $post_object->post_name, 'revision-v1' ) !== false ) || empty( $post_object->post_title ) || ( ! empty( $post_object->post_name ) && $post_object->post_name == 'auto-draft' ) ) {
+		if ( empty( $post_object->post_type ) || empty( $post_object->post_title ) || Permalink_Manager_Helper_Functions::is_post_excluded( $post_object, true, true ) ) {
 			return;
 		}
 
@@ -899,13 +893,8 @@ class Permalink_Manager_URI_Functions_Post {
 			return;
 		}
 
-		// Do not do anything if the field with URI or element ID are not present
-		if ( ! isset( $_POST['custom_uri'] ) || empty( $_POST['permalink-manager-edit-uri-element-id'] ) ) {
-			return;
-		}
-
-		// Hotfix
-		if ( $_POST['permalink-manager-edit-uri-element-id'] != $post_id ) {
+		// Do not do anything if the field with URI or element ID are not present or different from the provided post ID
+		if ( ! isset( $_POST['custom_uri'] ) || empty( $_POST['permalink-manager-edit-uri-element-id'] ) || $_POST['permalink-manager-edit-uri-element-id'] != $post_id ) {
 			return;
 		}
 
@@ -926,11 +915,6 @@ class Permalink_Manager_URI_Functions_Post {
 
 		// Check if post is allowed
 		if ( empty( $post->post_type ) || Permalink_Manager_Helper_Functions::is_post_excluded( $post, true ) ) {
-			return;
-		}
-
-		// Ignore auto-drafts, removed posts and posts without title
-		if ( in_array( $post->post_status, array( 'auto-draft', 'trash' ) ) || empty( $post->post_title ) ) {
 			return;
 		}
 
@@ -964,8 +948,8 @@ class Permalink_Manager_URI_Functions_Post {
 		$native_uri  = self::get_default_post_uri( $post_id, true );
 		$old_uri     = ( isset( $permalink_manager_uris[ $post->ID ] ) ) ? $permalink_manager_uris[ $post->ID ] : $native_uri;
 
-		// Use default URI if URI is cleared by user OR URI should be automatically updated
-		$new_uri = ( ( $_POST['custom_uri'] == '' ) || $auto_update_uri == 1 ) ? $default_uri : Permalink_Manager_Helper_Functions::sanitize_title( $_POST['custom_uri'], true );
+		// If the post is not draft AND "auto-update" mode is enabled OR the custom permalink field is empty, use default custom permalink
+		$new_uri = ( ( $_POST['custom_uri'] == '' || $auto_update_uri == 1 ) && ! in_array( $post->post_status, array( 'draft', 'auto-draft' ) ) ) ? $default_uri : Permalink_Manager_Helper_Functions::sanitize_title( $_POST['custom_uri'], true );
 
 		// Save or remove "Auto-update URI" settings
 		if ( ! empty( $auto_update_uri_current ) ) {

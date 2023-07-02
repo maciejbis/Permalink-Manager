@@ -13,7 +13,7 @@ class Permalink_Manager_Language_Plugins {
 	 * Register hooks adding support for WPML and Polylang
 	 */
 	function init_hooks() {
-		global $sitepress_settings, $polylang, $translate_press_settings, $permalink_manager_options;
+		global $sitepress_settings, $polylang, $translate_press_settings;
 
 		// 1. WPML, Polylang & TranslatePress
 		if ( $sitepress_settings || ! empty( $polylang->links_model->options ) || class_exists( 'TRP_Translate_Press' ) ) {
@@ -105,7 +105,7 @@ class Permalink_Manager_Language_Plugins {
 			add_action( 'icl_make_duplicate', array( $this, 'wpml_duplicate_uri' ), 999, 4 );
 
 			// Allow canonical redirect for default language if "Hide URL language information for default language" is turned on in Polylang settings
-			if ( ! empty( $polylang ) && ! empty( $polylang->links_model ) && ! empty( $polylang->links_model->options['hide_default'] ) ) {
+			if ( ! empty( $polylang ) && ! empty( $polylang->links_model ) && isset( $polylang->links_model->options['hide_default'] ) ) {
 				add_filter( 'permalink_manager_filter_query', array( $this, 'pl_allow_canonical_redirect' ), 3, 5 );
 			}
 		}
@@ -146,7 +146,7 @@ class Permalink_Manager_Language_Plugins {
 		if ( ! empty( $TRP_LANGUAGE ) ) {
 			$lang_code = self::get_translatepress_language_code( $TRP_LANGUAGE );
 		} // B. Polylang
-		else if ( ! empty( $polylang ) && function_exists( 'pll_get_post_language' ) ) {
+		else if ( ! empty( $polylang ) && function_exists( 'pll_get_post_language' ) && function_exists( 'pll_get_term_language' ) ) {
 			if ( isset( $element->post_type ) ) {
 				$lang_code = pll_get_post_language( $element->ID, 'slug' );
 			} else if ( isset( $element->taxonomy ) ) {
@@ -299,7 +299,7 @@ class Permalink_Manager_Language_Plugins {
 	 * @return false|int
 	 */
 	function fix_language_mismatch( $item_id, $uri_parts, $is_term = false ) {
-		global $polylang, $permalink_manager_options, $icl_adjust_id_url_filter_off;
+		global $permalink_manager_options, $pm_query, $polylang, $icl_adjust_id_url_filter_off;
 
 		$mode = ( ! empty( $permalink_manager_options['general']['fix_language_mismatch'] ) ) ? $permalink_manager_options['general']['fix_language_mismatch'] : 0;
 
@@ -310,7 +310,7 @@ class Permalink_Manager_Language_Plugins {
 		if ( $is_term ) {
 			$element = get_term( $item_id );
 			if ( ! empty( $element ) && ! is_wp_error( $element ) ) {
-				$element_id   = $element->term_taxonomy_id;
+				$element_id   = $element->term_id;
 				$element_type = $element->taxonomy;
 			} else {
 				return false;
@@ -343,7 +343,8 @@ class Permalink_Manager_Language_Plugins {
 
 		if ( $detected_language_code !== $element_language_code ) {
 			// A. Display the content in requested language
-			if ( $mode == 1 ) {
+			// B. Allow the canonical redirect
+			if ( $mode == 1 || $mode == 2 ) {
 				if ( ! empty( $polylang ) ) {
 					if ( function_exists( 'pll_get_post' ) && ! $is_term ) {
 						$translated_item_id = pll_get_post( $element_id, $detected_language_code );
@@ -355,7 +356,18 @@ class Permalink_Manager_Language_Plugins {
 				} else {
 					$item_id = apply_filters( 'wpml_object_id', $element_id, $element_type );
 				}
-			} // C. Display "404 error"
+
+				// Compare the URIs to prevent the redirect loop
+				if ( $mode == 2 && ! empty( $item_id ) && $item_id !== $element_id ) {
+					$detected_element_uri   = Permalink_Manager_URI_Functions::get_single_uri( $element_id, false, false, $is_term );
+					$translated_element_uri = Permalink_Manager_URI_Functions::get_single_uri( $item_id, false, false, $is_term );
+
+					if ( ! empty( $detected_element_uri ) && ! empty( $translated_element_uri ) && $detected_element_uri !== $translated_element_uri ) {
+						$pm_query['flag'] = 'language_mismatch';
+					}
+				}
+			}
+			 // C. Display "404 error"
 			else {
 				$item_id = 0;
 			}
@@ -547,7 +559,7 @@ class Permalink_Manager_Language_Plugins {
 	}
 
 	/**
-	 * Display the language code in a table column in bulk URI Editor
+	 * Display the language code in a table column in bulk permalink Editor
 	 *
 	 * @param string $output
 	 * @param string $column
@@ -857,7 +869,8 @@ class Permalink_Manager_Language_Plugins {
 		}
 
 		if ( isset( $data['pm-custom_uri'] ) && isset( $data['pm-custom_uri']['data'] ) && ! empty( $translation_id ) ) {
-			$custom_uri = ( ! empty( $data['pm-custom_uri']['data'] ) ) ? Permalink_Manager_Helper_Functions::sanitize_title( $data['pm-custom_uri']['data'], true ) : Permalink_Manager_URI_Functions_Post::get_default_post_uri( $translation_id );
+			$pre_custom_uri = trim( $data['pm-custom_uri']['data'] );
+			$custom_uri     = ( ! empty( $pre_custom_uri ) && $pre_custom_uri !== '-' ) ? Permalink_Manager_Helper_Functions::sanitize_title( $pre_custom_uri, true ) : Permalink_Manager_URI_Functions_Post::get_default_post_uri( $translation_id );
 
 			Permalink_Manager_URI_Functions::save_single_uri( $translation_id, $custom_uri, false, true );
 		}
@@ -900,14 +913,16 @@ class Permalink_Manager_Language_Plugins {
 	function pl_allow_canonical_redirect( $query, $old_query, $uri_parts, $pm_query, $content_type ) {
 		global $polylang;
 
-		// Run only if "Hide URL language information for default language" is turned on in Polylang settings
-		if ( ! empty( $pm_query['id'] ) && ! empty( $pm_query['lang'] ) ) {
+		// Run only if "Hide URL language information for default language" is available in Polylang settings
+		if ( ! empty( $pm_query['id'] ) && ! empty( $pm_query['lang'] ) && function_exists( 'pll_default_language' ) ) {
 			$url_lang = $polylang->links_model->get_language_from_url();
 			$def_lang = pll_default_language( 'slug' );
 
-			// Check if the slug of default language is present in the requested URL
-			if ( $url_lang == $def_lang ) {
-				// Allow canonical redirect
+			// A. Check if the slug of default language is present in the requested URL + "Hide URL language information for default language" is turned on
+			if ( ( $url_lang == $def_lang ) && ! empty( $polylang->links_model->options['hide_default'] ) ) {
+				unset( $query['do_not_redirect'] );
+			} // B. Check if the slug of default language is NOT present in the requested URL + "Hide URL language information for default language" is turned off
+			else if ( empty( $url_lang ) && empty( $polylang->links_model->options['hide_default'] ) ) {
 				unset( $query['do_not_redirect'] );
 			}
 		}

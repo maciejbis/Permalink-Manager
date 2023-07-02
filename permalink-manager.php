@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager Lite
  * Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
  * Description:       Advanced plugin that allows to set up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
- * Version:           2.3.1
+ * Version:           2.4.1.2
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -12,7 +12,7 @@
  * Text Domain:       permalink-manager
  * Domain Path:       /languages
  * WC requires at least: 3.0.0
- * WC tested up to:      7.1.1
+ * WC tested up to:      7.8.0
  */
 
 // If this file is called directly or plugin is already defined, abort
@@ -25,7 +25,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 	// Define the directories used to load plugin files.
 	define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 	define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-	define( 'PERMALINK_MANAGER_VERSION', '2.3.1' );
+	define( 'PERMALINK_MANAGER_VERSION', '2.4.1.2' );
 	define( 'PERMALINK_MANAGER_FILE', __FILE__ );
 	define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 	define( 'PERMALINK_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
@@ -170,7 +170,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 					'auto_update_uris'          => 0,
 					'show_native_slug_field'    => 0,
 					'pagination_redirect'       => 0,
-					'sslwww_redirect'           => 0,
+					'sslwww_redirect'           => 1,
 					'canonical_redirect'        => 1,
 					'old_slug_redirect'         => 0,
 					'setup_redirects'           => 0,
@@ -385,7 +385,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 		global $permalink_manager;
 
 		// Do not run when Elementor is opened
-		if ( ( ! empty( $_REQUEST['action'] ) && strpos( $_REQUEST['action'], 'elementor' ) !== false ) || isset( $_REQUEST['elementor-preview'] ) ) {
+		if ( ( ! empty( $_REQUEST['action'] ) && is_string( $_REQUEST['action'] ) && strpos( $_REQUEST['action'], 'elementor' ) !== false ) || isset( $_REQUEST['elementor-preview'] ) ) {
 			return;
 		}
 

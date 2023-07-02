@@ -65,7 +65,7 @@ class Permalink_Manager_Core_Functions {
 	 * @return array|WP_Post|WP_Term
 	 */
 	public static function detect_post( $query, $request_url = false, $return_object = false ) {
-		global $wpdb, $wp, $wp_rewrite, $permalink_manager_uris, $permalink_manager_options, $pm_query;
+		global $wp, $wp_rewrite, $permalink_manager_uris, $permalink_manager_options, $pm_query;
 
 		// Check if the array with custom URIs is set
 		if ( ! ( is_array( $permalink_manager_uris ) ) ) {
@@ -157,241 +157,267 @@ class Permalink_Manager_Core_Functions {
 				return $query;
 			}
 
-			// Store an array with custom permalinks in a separate variable
-			$all_uris = $permalink_manager_uris;
-
 			// Check what content type should be loaded in case of duplicate ("posts" or "terms")
 			$duplicates_priority = apply_filters( 'permalink_manager_duplicates_priority', false );
-			if ( $duplicates_priority !== false ) {
-				$uri_count = array_count_values( $all_uris );
 
-				foreach ( $uri_count as $duplicated_uri => $count ) {
-					if ( $count <= 1 ) {
-						continue;
-					}
+			/**
+			 * 2. Check if the requested URI matches any custom permalink assigned to a post or term
+			 */
+			$uri_query_iteration = 1;
+			$element_object      = '';
+			$excluded_ids        = array();
 
-					$duplicates_ids = array_keys( $all_uris, $duplicated_uri );
+			do {
+				// Store an array with custom permalinks in a separate variable
+				$all_uris = $permalink_manager_uris;
 
-					foreach ( $duplicates_ids as $id ) {
-						if ( $duplicates_priority == 'posts' && ! is_numeric( $id ) ) {
-							unset( $all_uris[ $id ] );
-						} else if ( $duplicates_priority !== 'posts' && is_numeric( $id ) ) {
-							unset( $all_uris[ $id ] );
+				// Remove empty rows
+				$all_uris = array_filter( $all_uris );
+
+				// In case of multiple elements using the same URI, the function will follow the "permalink_manager_duplicates_priority" filter value to determine whether terms or posts should be ignored
+				if ( $duplicates_priority ) {
+					$duplicated_uris    = array_keys( $all_uris, $uri );
+					$duplicates_removed = 0;
+					$duplicates_count   = count( $duplicated_uris );
+
+					if ( $duplicates_count > 1 ) {
+						foreach ( $duplicated_uris as $duplicated_uri_id ) {
+							if ( ( $duplicates_priority == 'posts' && ! is_numeric( $duplicated_uri_id ) ) || ( $duplicates_priority !== 'posts' && is_numeric( $duplicated_uri_id ) ) ) {
+								$duplicates_removed++;
+
+								if ( $duplicates_removed < $duplicates_count ) {
+									$excluded_ids[] = $duplicated_uri_id;
+								}
+							}
 						}
 					}
 				}
-			}
 
-			// Exclude draft posts
-			$exclude_drafts = ( isset( $permalink_manager_options['general']['ignore_drafts'] ) ) ? $permalink_manager_options['general']['ignore_drafts'] : false;
-			$exclude_drafts = apply_filters( 'permalink_manager_exclude_drafts', $exclude_drafts );
+				// If the element was excluded in the previous iteration add it to the array
+				if ( ! empty( $excluded ) ) {
+					$excluded_ids[] = $excluded;
+				}
+				$excluded = '';
 
-			if ( $exclude_drafts ) {
-				$post_ids = $wpdb->get_col( "SELECT DISTINCT ID FROM {$wpdb->posts} AS p WHERE p.post_status = 'draft' ORDER BY ID DESC" );
-				if ( ! empty( $post_ids ) ) {
-					foreach ( $post_ids as $post_id ) {
-						unset( $all_uris[ $post_id ] );
+				// Exclude all the element detected in the previous iterations
+				if ( ! empty( $excluded_ids ) ) {
+					$excluded_ids = array_unique( $excluded_ids );
+					foreach ( $excluded_ids as $excluded_element ) {
+						unset( $all_uris[ $excluded_element ] );
 					}
 				}
-			}
 
-			// Flip array for better performance
-			$all_uris = array_flip( $all_uris );
+				// Flip array for better performance
+				$all_uris = array_flip( $all_uris );
 
-			// Attempt 1.
-			// Find the element ID
-			$element_id = isset( $all_uris[ $uri ] ) ? $all_uris[ $uri ] : false;
+				// Attempt 1.
+				// Find the element ID
+				$element_id = isset( $all_uris[ $uri ] ) ? $all_uris[ $uri ] : false;
 
-			// Attempt 2.
-			// Decode both request URI & URIs array & make them lowercase (and save in a separate variable)
-			if ( empty( $element_id ) ) {
-				$uri = strtolower( urldecode( $uri ) );
+				// Attempt 2.
+				// Decode both request URI & URIs array & make them lowercase (and save in a separate variable)
+				if ( empty( $element_id ) ) {
+					$uri = strtolower( urldecode( $uri ) );
 
-				foreach ( $all_uris as $raw_uri => $uri_id ) {
-					$raw_uri              = urldecode( $raw_uri );
-					$all_uris[ $raw_uri ] = $uri_id;
+					foreach ( $all_uris as $raw_uri => $uri_id ) {
+						$raw_uri              = urldecode( $raw_uri );
+						$all_uris[ $raw_uri ] = $uri_id;
+					}
+
+					// Convert array keys lowercase
+					$all_uris = array_change_key_case( $all_uris );
+
+					$element_id = isset( $all_uris[ $uri ] ) ? $all_uris[ $uri ] : $element_id;
 				}
 
-				// Convert array keys lowercase
-				$all_uris = array_change_key_case( $all_uris );
-
-				$element_id = isset( $all_uris[ $uri ] ) ? $all_uris[ $uri ] : $element_id;
-			}
-
-			// Attempt 3.
-			// Check again in case someone used post/tax IDs instead of slugs
-			if ( $deep_detect_enabled && is_numeric( $endpoint_value ) && isset( $all_uris["{$uri}/{$endpoint_value}"] ) ) {
-				$element_id     = $all_uris["{$uri}/{$endpoint_value}"];
-				$endpoint_value = $endpoint = "";
-			}
-
-			// Attempt 4.
-			// Check again for attachment custom URIs
-			if ( empty( $element_id ) && isset( $old_query['attachment'] ) ) {
-				$element_id = isset( $all_uris["{$uri}/{$endpoint}/{$endpoint_value}"] ) ? $all_uris["{$uri}/{$endpoint}/{$endpoint_value}"] : $element_id;
-
-				if ( $element_id ) {
+				// Attempt 3.
+				// Check again in case someone used post/tax IDs instead of slugs
+				if ( $deep_detect_enabled && is_numeric( $endpoint_value ) && isset( $all_uris["{$uri}/{$endpoint_value}"] ) ) {
+					$element_id     = $all_uris["{$uri}/{$endpoint_value}"];
 					$endpoint_value = $endpoint = "";
 				}
-			}
 
-			// Allow to filter the item_id by third-parties after initial detection
-			$element_id = apply_filters( 'permalink_manager_detected_element_id', $element_id, $uri_parts, $request_url );
+				// Attempt 4.
+				// Check again for attachment custom URIs
+				if ( empty( $element_id ) && isset( $old_query['attachment'] ) ) {
+					$element_id = isset( $all_uris["{$uri}/{$endpoint}/{$endpoint_value}"] ) ? $all_uris["{$uri}/{$endpoint}/{$endpoint_value}"] : $element_id;
 
-			// Clear the original query before it is filtered
-			$query = ( $element_id ) ? array() : $query;
-
-			/**
-			 * 3A. Custom URI assigned to taxonomy
-			 */
-			if ( strpos( $element_id, 'tax-' ) !== false ) {
-				// Remove the "tax-" prefix
-				$element_id = intval( preg_replace( "/[^0-9]/", "", $element_id ) );
-
-				// Filter detected post ID
-				$element_id = apply_filters( 'permalink_manager_detected_term_id', $element_id, $uri_parts, true );
-
-				// Get the variables to filter wp_query and double-check if taxonomy exists
-				$term          = get_term( $element_id );
-				$term_taxonomy = ( ! empty( $term->taxonomy ) ) ? $term->taxonomy : false;
-
-				// Check if term is allowed
-				$disabled = ( $term_taxonomy && Permalink_Manager_Helper_Functions::is_term_excluded( $term ) ) ? true : false;
-
-				// Proceed only if the term is not removed and its taxonomy is not disabled
-				if ( ! $disabled && $term_taxonomy ) {
-					// Get some term data
-					if ( $term_taxonomy == 'category' ) {
-						$query_parameter = 'category_name';
-					} else if ( $term_taxonomy == 'post_tag' ) {
-						$query_parameter = 'tag';
-					} else {
-						$query["taxonomy"] = $term_taxonomy;
-						$query_parameter   = $term_taxonomy;
+					if ( $element_id ) {
+						$endpoint_value = $endpoint = "";
 					}
-					$term_ancestors = get_ancestors( $element_id, $term_taxonomy );
-					$final_uri      = $term->slug;
-
-					// Fix for hierarchical terms
-					if ( ! empty( $term_ancestors ) ) {
-						foreach ( $term_ancestors as $parent_id ) {
-							$parent = get_term( $parent_id, $term_taxonomy );
-							if ( ! empty( $parent->slug ) ) {
-								$final_uri = $parent->slug . '/' . $final_uri;
-							}
-						}
-					}
-
-					// $query["term"] = $final_uri;
-					// $query[$query_parameter] = $final_uri;
-
-					$query["term"]             = $term->slug;
-					$query[ $query_parameter ] = $term->slug;
-				} else if ( $disabled ) {
-					$broken_uri = true;
-					$query      = $old_query;
-				} else {
-					$query = $old_query;
-				}
-			}
-			/**
-			 * 3B. Custom URI assigned to post/page/CPT item
-			 */ else if ( isset( $element_id ) && is_numeric( $element_id ) ) {
-				// Fix for revisions
-				$is_revision = wp_is_post_revision( $element_id );
-				if ( $is_revision ) {
-					$revision_id = $element_id;
-					$element_id  = $is_revision;
 				}
 
-				// Filter detected post ID
-				$element_id = apply_filters( 'permalink_manager_detected_post_id', $element_id, $uri_parts );
+				// Allow to filter the item_id by third-parties after initial detection
+				$element_id = apply_filters( 'permalink_manager_detected_element_id', $element_id, $uri_parts, $request_url );
 
-				$post_to_load = get_post( $element_id );
-				$final_uri    = ( ! empty( $post_to_load->post_name ) ) ? $post_to_load->post_name : false;
-				$post_type    = ( ! empty( $post_to_load->post_type ) ) ? $post_to_load->post_type : false;
+				// Clear the original query before it is filtered
+				$query = ( $element_id ) ? array() : $query;
 
-				// Check if post is allowed
-				$disabled = ( $post_type && Permalink_Manager_Helper_Functions::is_post_excluded( $post_to_load ) ) ? true : false;
+				/**
+				 * 2A. Custom URI assigned to taxonomy
+				 */
+				if ( strpos( $element_id, 'tax-' ) !== false ) {
+					// Remove the "tax-" prefix
+					$term_element_id = intval( preg_replace( "/[^0-9]/", "", $element_id ) );
 
-				// Proceed only if the term is not removed and its taxonomy is not disabled
-				if ( ! $disabled && $post_type ) {
-					$post_type_object = get_post_type_object( $post_type );
+					// Filter detected post ID
+					$term_element_id = apply_filters( 'permalink_manager_detected_term_id', $term_element_id, $uri_parts, true );
 
-					// Fix for hierarchical CPT & pages
-					if ( ! ( empty( $post_to_load->ancestors ) ) && ! empty( $post_type_object->hierarchical ) ) {
-						foreach ( $post_to_load->ancestors as $parent ) {
-							$parent = get_post( $parent );
-							if ( $parent && $parent->post_name ) {
-								$final_uri = $parent->post_name . '/' . $final_uri;
-							}
-						}
-					}
+					// Get the variables to filter wp_query and double-check if taxonomy exists
+					$term          = $element_object = get_term( $term_element_id );
+					$term_taxonomy = ( ! empty( $term->taxonomy ) ) ? $term->taxonomy : false;
 
-					// Alter the final query array
-					if ( $post_to_load->post_status == 'private' && ( ! is_user_logged_in() || current_user_can( 'read_private_posts', $element_id ) !== true ) ) {
-						$element_id = null;
-						$query      = $old_query;
-					} else if ( $post_to_load->post_status == 'draft' || empty( $final_uri ) ) {
-						if ( is_user_logged_in() ) {
-							if ( $post_type == 'page' ) {
-								$query['page_id'] = $element_id;
-							} else {
-								$query['p'] = $element_id;
-							}
+					// Check if term is allowed
+					$disabled = ( $term_taxonomy && Permalink_Manager_Helper_Functions::is_term_excluded( $term ) ) ? true : false;
 
-							$query['preview']   = true;
-							$query['post_type'] = $post_type;
-						} else if ( $post_to_load->post_status == 'draft' ) {
-							$query['pagename'] = '-';
-							$query['error']    = '404';
-
-							$element_id = 0;
+					// Proceed only if the term is not removed and its taxonomy is not disabled
+					if ( ! $disabled && $term_taxonomy ) {
+						// Get some term data
+						if ( $term_taxonomy == 'category' ) {
+							$query_parameter = 'category_name';
+						} else if ( $term_taxonomy == 'post_tag' ) {
+							$query_parameter = 'tag';
 						} else {
-							$query = $old_query;
+							$query["taxonomy"] = $term_taxonomy;
+							$query_parameter   = $term_taxonomy;
 						}
-					} else if ( $post_type == 'page' ) {
-						$query['pagename'] = $final_uri;
-						// $query['post_type'] = $post_type;
-					} else if ( $post_type == 'post' ) {
-						$query['name'] = $final_uri;
-					} else if ( $post_type == 'attachment' ) {
-						$query['attachment'] = $final_uri;
+						$term_ancestors = get_ancestors( $element_id, $term_taxonomy );
+						$final_uri      = $term->slug;
+
+						// Fix for hierarchical terms
+						if ( ! empty( $term_ancestors ) ) {
+							foreach ( $term_ancestors as $parent_id ) {
+								$parent = get_term( $parent_id, $term_taxonomy );
+								if ( ! empty( $parent->slug ) ) {
+									$final_uri = $parent->slug . '/' . $final_uri;
+								}
+							}
+						}
+
+						$query["term"]             = $term->slug;
+						$query[ $query_parameter ] = $term->slug;
+					} else if ( $disabled ) {
+						$broken_uri = true;
+						$query      = $old_query;
+						$excluded   = $element_id;
 					} else {
-						// Get the query var
-						$query_var = ( ! empty( $post_type_object->query_var ) ) ? $post_type_object->query_var : $post_type;
-
-						$query['name']       = $final_uri;
-						$query['post_type']  = $post_type;
-						$query[ $query_var ] = $final_uri;
-					}
-				} else if ( $disabled ) {
-					$broken_uri = true;
-					$query      = $old_query;
-				} else {
-					$query = $old_query;
-				}
-			}
-
-			/**
-			 * 4. Auto-remove removed term custom URI & redirects (works if enabled in plugin settings)
-			 */
-			if ( ! empty( $broken_uri ) && ( ! empty( $permalink_manager_options['general']['auto_fix_duplicates'] ) ) && $permalink_manager_options['general']['auto_fix_duplicates'] == 1 ) {
-				// Do not trigger if WP Rocket cache plugin is turned on
-				if ( ! defined( 'WP_ROCKET_VERSION' ) && is_array( $permalink_manager_uris ) ) {
-					$broken_element_id = ( ! empty( $revision_id ) ) ? $revision_id : $element_id;
-					$remove_broken_uri = ( ! empty( $broken_element_id ) ) ? Permalink_Manager_Actions::force_clear_single_element_uris_and_redirects( $broken_element_id ) : '';
-
-					// Reload page if success
-					if ( $remove_broken_uri && ! headers_sent() ) {
-						header( "Refresh:0" );
-						exit();
+						$query    = $old_query;
+						$excluded = $element_id;
 					}
 				}
-			}
+				/**
+				 * 2B. Custom URI assigned to post/page/CPT item
+				 */
+				else if ( isset( $element_id ) && is_numeric( $element_id ) ) {
+					// Fix for revisions
+					$is_revision = wp_is_post_revision( $element_id );
+					if ( $is_revision ) {
+						$revision_id = $element_id;
+						$element_id  = $is_revision;
+					}
+
+					// Filter detected post ID
+					$post_element_id = apply_filters( 'permalink_manager_detected_post_id', $element_id, $uri_parts );
+
+					$post_to_load = $element_object = get_post( $post_element_id );
+					$final_uri    = ( ! empty( $post_to_load->post_name ) ) ? $post_to_load->post_name : false;
+					$post_type    = ( ! empty( $post_to_load->post_type ) ) ? $post_to_load->post_type : false;
+
+					// Check if post is allowed
+					$disabled = ( $post_type && Permalink_Manager_Helper_Functions::is_post_excluded( $post_to_load ) ) ? true : false;
+
+					// Proceed only if the term is not removed and its taxonomy is not disabled
+					if ( ! $disabled && $post_type ) {
+						$post_type_object = get_post_type_object( $post_type );
+
+						// Fix for hierarchical CPT & pages
+						if ( ! ( empty( $post_to_load->ancestors ) ) && ! empty( $post_type_object->hierarchical ) ) {
+							foreach ( $post_to_load->ancestors as $parent ) {
+								$parent = get_post( $parent );
+								if ( $parent && $parent->post_name ) {
+									$final_uri = $parent->post_name . '/' . $final_uri;
+								}
+							}
+						}
+
+						// Alter the final query array
+						if ( $post_to_load->post_status == 'private' && ( ! is_user_logged_in() || current_user_can( 'read_private_posts', $element_id ) !== true ) ) {
+							$element_id = 0;
+							$query      = $old_query;
+						} else if ( $post_to_load->post_status == 'draft' || empty( $final_uri ) ) {
+							// A. The draft permalinks should be allowed for logged-in users
+							if ( is_user_logged_in() ) {
+								if ( $post_type == 'page' ) {
+									$query['page_id'] = $element_id;
+								} else {
+									$query['p'] = $element_id;
+								}
+
+								$query['preview']   = true;
+								$query['post_type'] = $post_type;
+							} // B. The draft permalinks should be disabled for non-logged-in visitors
+							else if ( $post_to_load->post_status == 'draft' ) {
+								$query['pagename'] = '-';
+								$query['error']    = '404';
+
+								$element_id = 0;
+							} else {
+								$query    = $old_query;
+								$excluded = $element_id;
+							}
+						} else if ( $post_type == 'page' ) {
+							$query['pagename'] = $final_uri;
+							// $query['post_type'] = $post_type;
+						} else if ( $post_type == 'post' ) {
+							$query['name'] = $final_uri;
+						} else if ( $post_type == 'attachment' ) {
+							$query['attachment'] = $final_uri;
+						} else {
+							// Get the query var
+							$query_var = ( ! empty( $post_type_object->query_var ) ) ? $post_type_object->query_var : $post_type;
+
+							$query['name']       = $final_uri;
+							$query['post_type']  = $post_type;
+							$query[ $query_var ] = $final_uri;
+						}
+					} else if ( $disabled ) {
+						$broken_uri = true;
+						$query      = $old_query;
+						$excluded   = $element_id;
+					} else {
+						$query    = $old_query;
+						$excluded = $element_id;
+					}
+				}
+
+				// Auto-remove removed term custom URI & redirects (works if enabled in plugin settings)
+				if ( ! empty( $broken_uri ) && ( ! empty( $permalink_manager_options['general']['auto_fix_duplicates'] ) ) && $permalink_manager_options['general']['auto_fix_duplicates'] == 1 ) {
+					// Do not trigger if WP Rocket cache plugin is turned on
+					if ( ! defined( 'WP_ROCKET_VERSION' ) && is_array( $permalink_manager_uris ) ) {
+						$broken_element_id = ( ! empty( $revision_id ) ) ? $revision_id : $element_id;
+						$remove_broken_uri = ( ! empty( $broken_element_id ) ) ? Permalink_Manager_Actions::force_clear_single_element_uris_and_redirects( $broken_element_id ) : '';
+
+						// Reload page if success
+						if ( $remove_broken_uri && ! headers_sent() ) {
+							header( "Refresh:0" );
+							exit();
+						}
+					}
+				}
+
+				// Overwrite the detect function and decide whether to exclude the detected item
+				$excluded = apply_filters( 'permalink_manager_excluded_element_id', $excluded, $element_object, $old_query, $pm_query );
+
+				// Make sure the loop does not execute infinitely (limit it to 10 iterations)
+				$uri_query_iteration ++;
+				if ( $uri_query_iteration === 10 ) {
+					break;
+				}
+			} // If the detected element was excluded repeat the URI query and try to find a new one
+			while ( ! empty( $excluded ) );
 
 			/**
-			 * 5A. Endpoints
+			 * 3A. Endpoints
 			 */
 			if ( ! empty( $element_id ) && empty( $disabled ) && ( ! empty( $endpoint ) || ! empty( $endpoint_value ) ) ) {
 				if ( is_array( $endpoint ) ) {
@@ -439,7 +465,7 @@ class Permalink_Manager_Core_Functions {
 			}
 
 			/**
-			 * 5B. Endpoints - check if any endpoint is set with $_GET parameter
+			 * 3B. Endpoints - check if any endpoint is set with $_GET parameter
 			 */
 			if ( ! empty( $element_id ) && $deep_detect_enabled && ! empty( $_GET ) ) {
 				$get_endpoints = array_intersect( $wp->public_query_vars, array_keys( $_GET ) );
@@ -450,8 +476,8 @@ class Permalink_Manager_Core_Functions {
 						// Numeric endpoints
 						$endpoint_value = ( in_array( $endpoint, array( 'page', 'paged', 'attachment_id' ) ) ) ? filter_var( $_GET[ $endpoint ], FILTER_SANITIZE_NUMBER_INT ) : $_GET[ $endpoint ];
 
-						// Ignore page endpoint if its value is 1
-						if ( in_array( $endpoint, array( 'page', 'paged' ) ) && $endpoint_value == 1 ) {
+						// Ignore page endpoint if its value is empty or equal to 1
+						if ( in_array( $endpoint, array( 'page', 'paged' ) ) && ( empty( $endpoint_value ) || $endpoint_value == 1 ) ) {
 							continue;
 						}
 
@@ -463,28 +489,33 @@ class Permalink_Manager_Core_Functions {
 			}
 
 			/**
-			 * 6. Set global with detected item id
+			 * 4. Set global with detected item id
 			 */
-			if ( ! empty( $element_id ) && empty( $disabled ) ) {
-				$pm_query['id'] = ( ! empty( $term_taxonomy ) ) ? "tax-{$element_id}" : $element_id;
+			if ( ! empty( $element_id ) && empty( $disabled ) && empty( $excluded ) ) {
+				if ( ! empty( $element_object->taxonomy ) ) {
+					$pm_query['id'] = $element_object->term_id;
+					$content_type = "Taxonomy: {$element_object->taxonomy}";
+				} else if ( ! empty( $element_object->post_type ) ) {
+					$pm_query['id'] = $element_object->ID;
+					$content_type = "Post type: {$element_object->post_type}";
+				}
 
-				// Make the redirects more clever - see new_uri_redirect_and_404() method
-				$query['do_not_redirect'] = 1;
+				// If language mismatch is detected do not set 'do_not_redirect' to allow canonical redirect
+				if ( empty( $pm_query['flag'] ) || $pm_query['flag'] !== 'language_mismatch' ) {
+					$query['do_not_redirect'] = 1;
+				}
 			}
 		}
 
 		/**
-		 * 7. Debug data
+		 * 5. Debug data
 		 */
-		if ( ! empty( $term_taxonomy ) ) {
-			$content_type = "Taxonomy: {$term_taxonomy}";
-		} else if ( ! empty( $post_type ) ) {
-			$content_type = "Post type: {$post_type}";
-		} else {
-			$content_type = '';
+		if ( empty ( $element_object ) || empty ( $content_type ) ) {
+			$content_type = $element_object = '';
 		}
+
 		$uri_parts = ( ! empty( $uri_parts ) ) ? $uri_parts : '';
-		$query     = apply_filters( 'permalink_manager_filter_query', $query, $old_query, $uri_parts, $pm_query, $content_type );
+		$query     = apply_filters( 'permalink_manager_filter_query', $query, $old_query, $uri_parts, $pm_query, $content_type, $element_object );
 
 		if ( $return_object && ! empty( $term ) ) {
 			return $term;
@@ -513,26 +544,31 @@ class Permalink_Manager_Core_Functions {
 		// Keep the original permalink in a separate variable
 		$original_permalink = $permalink;
 
-		$trailing_slash_setting = ( ! empty( $permalink_manager_options['general']['trailing_slashes'] ) ) ? $permalink_manager_options['general']['trailing_slashes'] : "";
+		$trailing_slash_mode = ( ! empty( $permalink_manager_options['general']['trailing_slashes'] ) ) ? $permalink_manager_options['general']['trailing_slashes'] : "";
 
-		// Remove trailing slashes from URLs that end with file extension (eg. .html)
-		if ( preg_match( '/(http(?:s)?:\/\/(?:[^\/]+)\/.*\.([a-zA-Z]{3,4}))\/?$/', $permalink ) ) {
-			$permalink = preg_replace( '/^(?!http(?:s):\/\/[^\/]+\/$)(.+?)([\/]*)(\[\?\#][^\/]+|$)/', '$1$3', $permalink ); // Instead of untrailingslashit()
-		} else {
-			// Add trailing slashes
-			if ( in_array( $trailing_slash_setting, array( 1, 10 ) ) ) {
-				$permalink = preg_replace( '/(.+?)([\/]*)(\[\?\#][^\/]+|$)/', '$1/$3', $permalink ); // Instead of trailingslashit()
-			} // Remove trailing slashes
-			else if ( in_array( $trailing_slash_setting, array( 2, 20 ) ) ) {
-				$permalink = preg_replace( '/(.+?)([\/]*)(\[\?\#][^\/]+|$)/', '$1$3', $permalink ); // Instead of untrailingslashit()
-			} // Default settings
-			else {
-				$permalink = user_trailingslashit( $permalink );
-			}
+		// Ignore homepage URLs
+		if ( ( filter_var( $permalink, FILTER_VALIDATE_URL ) && trim( parse_url( $permalink, PHP_URL_PATH ), '/' ) == '' ) ) {
+			return $permalink;
+		}
+
+		// Always remove trailing slashes from URLs/URIs that end with file extension (eg. .html)
+		if ( preg_match( '/(http(?:s)\:\/\/[^\/]+\/)?.*\.([a-zA-Z]{3,4})[\/]*(\?[^\/]+|$)/', $permalink ) ) {
+			$trailing_slash_mode = 2;
+		}
+
+		// Add trailing slashes
+		if ( in_array( $trailing_slash_mode, array( 1, 10 ) ) ) {
+			$permalink = preg_replace( '/(.+?)([\/]*)([\?\#][^\/]+|$)/', '$1/$3', $permalink ); // Instead of trailingslashit()
+		} // Remove trailing slashes
+		else if ( in_array( $trailing_slash_mode, array( 2, 20 ) ) ) {
+			$permalink = preg_replace( '/(.+?)([\/]*)([\?\#][^\/]+|$)/', '$1$3', $permalink ); // Instead of untrailingslashit()
+		} // Default settings
+		else {
+			$permalink = user_trailingslashit( $permalink );
 		}
 
 		// Remove double slashes
-		$permalink = preg_replace( '/([^:])(\/{2,})/', '$1/', $permalink );
+		$permalink = preg_replace( '/(?<!:)(\/{2,})/', '/', $permalink );
 
 		// Remove trailing slashes from URLs that end with query string or anchors
 		$permalink = preg_replace( '/([\?\#]{1}[^\/]+)([\/]+)$/', '$1', $permalink );
@@ -620,6 +656,7 @@ class Permalink_Manager_Core_Functions {
 
 		$query_string = ( $copy_query_redirect && ! empty( $_SERVER['QUERY_STRING'] ) ) ? $_SERVER['QUERY_STRING'] : '';
 		$old_uri      = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
+		$old_uri      = ( empty( $old_uri ) ) ? strtok( $_SERVER["REQUEST_URI"], '?' ) : $old_uri;
 
 		// Fix for WP installed in directories (remove the directory name from the URI)
 		if ( ! empty( $home_dir ) ) {
@@ -755,19 +792,9 @@ class Permalink_Manager_Core_Functions {
 			}
 
 			/**
-			 * 2. Check if URL contains duplicated slashes
+			 * 2. Prevent redirect loop
 			 */
-			if ( ! empty( $old_uri ) && ( $old_uri !== '/' ) && preg_match( '/\/{2,}/', $old_uri ) ) {
-				$new_uri           = ltrim( preg_replace( '/([^:])([\/]+)/', '$1/', $old_uri ), '/' );
-				$correct_permalink = sprintf( "%s/%s", $home_url, $new_uri );
-
-				$redirect_type = ( $redirect_type == '-' ) ? 'duplicated_slash_redirect' : $redirect_type;
-			}
-
-			/**
-			 * 3. Prevent redirect loop
-			 */
-			if ( ! empty( $correct_permalink ) && is_string( $correct_permalink ) && ! empty( $wp->request ) && ! empty( $redirect_type ) && ! in_array( $redirect_type, array( 'slash_redirect', 'duplicated_slash_redirect' ) ) ) {
+			if ( ! empty( $correct_permalink ) && is_string( $correct_permalink ) && ! empty( $wp->request ) && ! empty( $redirect_type ) && $redirect_type != 'slash_redirect' ) {
 				$current_uri  = trim( $wp->request, "/" );
 				$redirect_uri = trim( parse_url( $correct_permalink, PHP_URL_PATH ), "/" );
 
@@ -775,9 +802,9 @@ class Permalink_Manager_Core_Functions {
 			}
 
 			/**
-			 * 4. Add endpoints to redirect URL
+			 * 3. Add endpoints to redirect URL
 			 */
-			if ( ! empty( $correct_permalink ) && $endpoint_redirect && ( $redirect_type !== 'slash_redirect' ) && ( ! empty( $pm_query['endpoint_value'] ) || ! empty( $pm_query['endpoint'] ) ) ) {
+			if ( ! empty( $correct_permalink ) && $endpoint_redirect && ( ! empty( $pm_query['endpoint_value'] ) || ! empty( $pm_query['endpoint'] ) ) ) {
 				$endpoint_value = $pm_query['endpoint_value'];
 
 				if ( empty( $pm_query['endpoint'] ) && is_numeric( $endpoint_value ) ) {
@@ -797,42 +824,31 @@ class Permalink_Manager_Core_Functions {
 		}
 
 		/**
-		 * 5. Check trailing slashes (ignore links with query parameters)
+		 * 4. Check trailing & duplicated slashes (ignore links with query parameters)
 		 */
-		if ( $trailing_slashes_mode && $trailing_slashes_redirect && empty( $correct_permalink ) && empty( $query_string ) && ! empty( $old_uri ) && ! is_front_page() ) {
-			// Check if $old_uri ends with slash or not
-			$ends_with_slash       = ( substr( $old_uri, - 1 ) == "/" ) ? true : false;
-			$trailing_slashes_mode = ( preg_match( "/.*\.([a-zA-Z]{3,4})\/?$/", $old_uri ) && $trailing_slashes_mode == 1 ) ? 2 : $trailing_slashes_mode;
+		if ( ( ( $trailing_slashes_mode && $trailing_slashes_redirect ) || preg_match( '/\/{2,}/', $old_uri ) ) && empty( $correct_permalink ) && empty( $query_string ) && ! empty( $old_uri ) && $old_uri !== "/" ) {
+			$trailing_slash = ( substr( $old_uri, - 1 ) == "/" ) ? true : false;
+			$obsolete_slash = ( preg_match( '/\/{2,}/', $old_uri ) || preg_match( "/.*\.([a-zA-Z]{3,4})\/$/", $old_uri ) );
 
-			// Ignore empty URIs
-			if ( $old_uri != "/" ) {
-				$new_uri = trim( $old_uri, '/' );
+			if ( ( $trailing_slashes_mode == 1 && ! $trailing_slash ) || ( $trailing_slashes_mode == 2 && $trailing_slash ) || $obsolete_slash ) {
+				$new_uri = self::control_trailing_slashes( $old_uri );
 
-				// 2A. Force trailing slashes
-				if ( $trailing_slashes_mode == 1 && ! $ends_with_slash ) {
-					$correct_permalink = sprintf( "%s/%s/", $home_url, $new_uri );
-				} // 2B. Remove trailing slashes
-				else if ( $trailing_slashes_mode == 2 && $ends_with_slash ) {
-					$correct_permalink = sprintf( "%s/%s", $home_url, $new_uri );
-				} // 2C. Remove duplicated trailing slashes
-				else if ( $trailing_slashes_mode == 1 && preg_match( '/[\/]{2,}$/', $old_uri ) ) {
-					$correct_permalink = sprintf( "%s/%s/", $home_url, $new_uri );
+				if ( $new_uri !== $old_uri ) {
+					$correct_permalink = sprintf( "%s/%s", $home_url, ltrim( $new_uri, '/' ) );
+					$redirect_type     = 'slash_redirect';
 				}
 			}
-
-			$redirect_type = ( ! empty( $correct_permalink ) ) ? 'slash_redirect' : '-';
 		}
 
 		/**
-		 * 6. WWW prefix | SSL mismatch redirect
+		 * 5. WWW prefix | SSL mismatch redirect
 		 */
-		if ( ! empty( $permalink_manager_options['general']['sslwww_redirect'] ) ) {
+		if ( ! empty( $permalink_manager_options['general']['sslwww_redirect'] ) && ! empty( $_SERVER['HTTP_HOST'] ) ) {
 			$home_url_has_www      = ( strpos( $home_url, 'www.' ) !== false ) ? true : false;
 			$requested_url_has_www = ( strpos( $_SERVER['HTTP_HOST'], 'www.' ) !== false ) ? true : false;
 			$home_url_has_ssl      = ( strpos( $home_url, 'https' ) !== false ) ? true : false;
-			$requested_url_has_ssl = is_ssl();
 
-			if ( ( $home_url_has_www !== $requested_url_has_www ) || ( $home_url_has_ssl !== $requested_url_has_ssl ) ) {
+			if ( ( $home_url_has_www !== $requested_url_has_www ) || ( ! is_ssl() && $home_url_has_ssl !== false ) ) {
 				$new_uri           = ltrim( $old_uri, '/' );
 				$correct_permalink = sprintf( "%s/%s", $home_url, $new_uri );
 
@@ -841,12 +857,12 @@ class Permalink_Manager_Core_Functions {
 		}
 
 		/**
-		 * 7. Debug redirect
+		 * 6. Debug redirect
 		 */
 		$correct_permalink = apply_filters( 'permalink_manager_filter_redirect', $correct_permalink, $redirect_type, $queried_object, $old_uri );
 
 		/**
-		 * 8. Ignore default URIs (or do nothing if redirects are disabled)
+		 * 7. Ignore default URIs (or do nothing if redirects are disabled)
 		 */
 		if ( ! empty( $correct_permalink ) && is_string( $correct_permalink ) && ! empty( $redirect_mode ) ) {
 			// Allow redirect
@@ -873,7 +889,7 @@ class Permalink_Manager_Core_Functions {
 	 * Control how the canonical redirect function in WordPress and other popular plugins works
 	 */
 	function adjust_canonical_redirect() {
-		global $permalink_manager_options, $permalink_manager_uris, $wp, $wp_rewrite;
+		global $permalink_manager_options, $wp, $wp_rewrite;
 
 		// Adjust rewrite settings for trailing slashes
 		$trailing_slash_setting = ( ! empty( $permalink_manager_options['general']['trailing_slashes'] ) ) ? $permalink_manager_options['general']['trailing_slashes'] : "";
@@ -895,16 +911,6 @@ class Permalink_Manager_Core_Functions {
 			}
 		}
 
-		// Do nothing for posts and terms without custom URIs (when canonical redirect is enabled)
-		if ( is_singular() || is_tax() || is_category() || is_tag() ) {
-			$element = get_queried_object();
-			if ( ! empty( $element->ID ) ) {
-				$custom_uri = ( ! empty( $permalink_manager_uris[ $element->ID ] ) ) ? $permalink_manager_uris[ $element->ID ] : "";
-			} else if ( ! empty( $element->term_id ) ) {
-				$custom_uri = ( ! empty( $permalink_manager_uris["tax-{$element->term_id}"] ) ) ? $permalink_manager_uris["tax-{$element->term_id}"] : "";
-			}
-		}
-
 		if ( empty( $permalink_manager_options['general']['canonical_redirect'] ) ) {
 			remove_action( 'template_redirect', 'redirect_canonical' );
 		}
@@ -914,9 +920,18 @@ class Permalink_Manager_Core_Functions {
 		}
 
 		if ( ! empty( $wp->query_vars['do_not_redirect'] ) ) {
-			// RankMath
-			remove_action( 'template_redirect', 'do_redirection', 11 );
-			remove_action( 'wp', 'do_redirection', 11 );
+			if ( function_exists( 'rank_math' ) ) {
+				$rank_math_instance = rank_math();
+
+				if ( property_exists( $rank_math_instance, 'container' ) && is_array( $rank_math_instance->container ) && is_object( $rank_math_instance->container['manager'] ) && method_exists( $rank_math_instance->container['manager'], 'get_module' ) ) {
+					$rank_math_redirections_module = $rank_math_instance->container['manager']->get_module( 'redirections' );
+
+					if ( ! empty( $rank_math_redirections_module ) ) {
+						remove_action( 'template_redirect', array( $rank_math_redirections_module, 'do_redirection' ), 11 );
+						remove_action( 'wp', array( $rank_math_redirections_module, 'do_redirection' ), 11 );
+					}
+				}
+			}
 
 			// SEOPress
 			remove_action( 'template_redirect', 'seopress_category_redirect', 1 );
