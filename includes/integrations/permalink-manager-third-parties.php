@@ -16,89 +16,32 @@ class Permalink_Manager_Third_Parties {
 	function init_hooks() {
 		global $permalink_manager_options;
 
-		// 0. Stop redirect
+		// Stop redirect
 		add_action( 'wp', array( $this, 'stop_redirect' ), 0 );
 
-		// 1. AMP
+		// AMP
 		if ( defined( 'AMP_QUERY_VAR' ) ) {
 			add_filter( 'permalink_manager_detect_uri', array( $this, 'detect_amp' ), 10, 2 );
 			add_filter( 'request', array( $this, 'enable_amp' ), 10, 1 );
 		}
 
-		// 2. AMP for WP
+		// AMP for WP
 		if ( defined( 'AMPFORWP_AMP_QUERY_VAR' ) ) {
 			add_filter( 'permalink_manager_filter_query', array( $this, 'detect_amp_for_wp' ), 5 );
 		}
 
-		// 4. WooCommerce
-		if ( class_exists( 'WooCommerce' ) ) {
-			add_filter( 'permalink_manager_filter_query', array( $this, 'woocommerce_detect' ), 9, 5 );
-			add_filter( 'template_redirect', array( $this, 'woocommerce_checkout_fix' ), 9 );
-
-			if ( class_exists( 'Permalink_Manager_Pro_Functions' ) ) {
-				if ( empty( $permalink_manager_options['general']['partial_disable']['post_types'] ) || ! in_array( 'shop_coupon', $permalink_manager_options['general']['partial_disable']['post_types'] ) ) {
-					if ( is_admin() ) {
-						add_filter( 'woocommerce_coupon_data_tabs', 'Permalink_Manager_Pro_Functions::woocommerce_coupon_tabs' );
-						add_action( 'woocommerce_coupon_data_panels', 'Permalink_Manager_Pro_Functions::woocommerce_coupon_panel' );
-						add_action( 'woocommerce_coupon_options_save', 'Permalink_Manager_Pro_Functions::woocommerce_save_coupon_uri', 9, 2 );
-					}
-
-					add_filter( 'request', 'Permalink_Manager_Pro_Functions::woocommerce_detect_coupon_code', 1, 1 );
-					add_filter( 'permalink_manager_disabled_post_types', 'Permalink_Manager_Pro_Functions::woocommerce_coupon_uris', 9, 1 );
-				}
-			}
-
-			// WooCommerce Import/Export
-			add_filter( 'woocommerce_product_export_product_default_columns', array( $this, 'woocommerce_csv_custom_uri_column' ), 9 );
-			add_filter( 'woocommerce_product_export_product_column_custom_uri', array( $this, 'woocommerce_export_custom_uri_value' ), 9, 3 );
-
-			add_filter( 'woocommerce_csv_product_import_mapping_options', array( $this, 'woocommerce_csv_custom_uri_column' ), 9 );
-			add_filter( 'woocommerce_csv_product_import_mapping_default_columns', array( $this, 'woocommerce_csv_custom_uri_column' ), 9 );
-			add_action( 'woocommerce_product_import_inserted_product_object', array( $this, 'woocommerce_csv_import_custom_uri' ), 9, 2 );
-
-			add_action( 'woocommerce_product_duplicate', array( $this, 'woocommerce_generate_permalinks_after_duplicate' ), 9, 2 );
-			add_filter( 'permalink_manager_filter_default_post_uri', array( $this, 'woocommerce_product_attributes' ), 5, 5 );
-
-			if ( wp_doing_ajax() && class_exists( 'SitePress' ) ) {
-				add_filter( 'permalink_manager_filter_final_post_permalink', array( $this, 'woocommerce_translate_ajax_fragments_urls' ), 9999, 3 );
-			}
-		}
-
-		// 5. Theme My Login
+		// Theme My Login
 		if ( class_exists( 'Theme_My_Login' ) ) {
 			add_action( 'wp', array( $this, 'tml_ignore_custom_permalinks' ), 10 );
 		}
 
-		// 6. Yoast SEO
-		add_filter( 'wpseo_xml_sitemap_post_url', array( $this, 'yoast_fix_sitemap_urls' ), 9 );
-		if ( defined( 'WPSEO_VERSION' ) && version_compare( WPSEO_VERSION, '14.0', '>=' ) ) {
-			add_action( 'permalink_manager_updated_post_uri', array( $this, 'yoast_update_indexable_permalink' ), 10, 3 );
-			add_action( 'permalink_manager_updated_term_uri', array( $this, 'yoast_update_indexable_permalink' ), 10, 3 );
-			add_filter( 'wpseo_canonical', array( $this, 'yoast_fix_canonical' ), 10 );
-			add_filter( 'wpseo_opengraph_url', array( $this, 'yoast_fix_canonical' ), 10 );
-		}
-
-		// 7. Breadcrumbs
-		add_filter( 'wpseo_breadcrumb_links', array( $this, 'filter_breadcrumbs' ), 9 );
-		add_filter( 'rank_math/frontend/breadcrumb/items', array( $this, 'filter_breadcrumbs' ), 9 );
-		add_filter( 'seopress_pro_breadcrumbs_crumbs', array( $this, 'filter_breadcrumbs' ), 9 );
-		add_filter( 'woocommerce_get_breadcrumb', array( $this, 'filter_breadcrumbs' ), 9 );
-		add_filter( 'slim_seo_breadcrumbs_links', array( $this, 'filter_breadcrumbs' ), 9 );
-		// add_filter( 'aioseo_breadcrumbs_trail', array( $this, 'filter_breadcrumbs' ), 9 );
-		add_filter( 'avia_breadcrumbs_trail', array( $this, 'filter_breadcrumbs' ), 100 );
-
-		// 8. WooCommerce Wishlist Plugin
-		if ( function_exists( 'tinv_get_option' ) ) {
-			add_filter( 'permalink_manager_detect_uri', array( $this, 'ti_woocommerce_wishlist_uris' ), 15, 3 );
-		}
-
-		// 9. Revisionize
+		// Revisionize
 		if ( defined( 'REVISIONIZE_ROOT' ) ) {
 			add_action( 'revisionize_after_create_revision', array( $this, 'revisionize_keep_post_uri' ), 9, 2 );
 			add_action( 'revisionize_before_publish', array( $this, 'revisionize_clone_uri' ), 9, 2 );
 		}
 
-		// 10. WP All Import
+		// WP All Import
 		if ( class_exists( 'PMXI_Plugin' ) && ( ! empty( $permalink_manager_options['general']['pmxi_support'] ) ) ) {
 			add_action( 'pmxi_extend_options_featured', array( $this, 'wpaiextra_uri_display' ), 9, 2 );
 			add_filter( 'pmxi_options_options', array( $this, 'wpai_api_options' ) );
@@ -112,59 +55,54 @@ class Permalink_Manager_Third_Parties {
 			add_action( 'wpai_regenerate_uris_after_import_event', array( $this, 'wpai_regenerate_uris_after_import' ), 10, 1 );
 		}
 
-		// 11. WP All Export
+		// WP All Export
 		if ( class_exists( 'PMXE_Plugin' ) && ( ! empty( $permalink_manager_options['general']['pmxi_support'] ) ) ) {
 			add_filter( 'wp_all_export_available_sections', array( $this, 'wpae_custom_uri_section' ), 9 );
 			add_filter( 'wp_all_export_available_data', array( $this, 'wpae_custom_uri_section_fields' ), 9 );
 			add_filter( 'wp_all_export_csv_rows', array( $this, 'wpae_export_custom_uri' ), 10, 2 );
 		}
 
-		// 12. Duplicate Post
+		// Duplicate Post
 		if ( defined( 'DUPLICATE_POST_CURRENT_VERSION' ) ) {
 			add_action( 'dp_duplicate_post', array( $this, 'duplicate_custom_uri' ), 100, 2 );
 			add_action( 'dp_duplicate_page', array( $this, 'duplicate_custom_uri' ), 100, 2 );
 		}
 
-		// 13. My Listing by 27collective
+		// My Listing by 27collective
 		if ( class_exists( '\MyListing\Post_Types' ) ) {
 			add_filter( 'permalink_manager_filter_default_post_uri', array( $this, 'ml_listing_custom_fields' ), 5, 5 );
 			add_action( 'mylisting/submission/save-listing-data', array( $this, 'ml_set_listing_uri' ), 100 );
 			add_filter( 'permalink_manager_filter_query', array( $this, 'ml_detect_archives' ), 1, 2 );
 		}
 
-		// 14. bbPress
+		// bbPress
 		if ( class_exists( 'bbPress' ) && function_exists( 'bbp_get_edit_slug' ) ) {
 			add_filter( 'permalink_manager_endpoints', array( $this, 'bbpress_endpoints' ), 9 );
 			add_action( 'wp', array( $this, 'bbpress_detect_endpoints' ), 0 );
 		}
 
-		// 15. Dokan
+		// Dokan
 		if ( class_exists( 'WeDevs_Dokan' ) ) {
 			add_action( 'wp', array( $this, 'dokan_detect_endpoints' ), 999 );
 			add_filter( 'permalink_manager_endpoints', array( $this, 'dokan_endpoints' ) );
 		}
 
-		// 16. GeoDirectory
+		// GeoDirectory
 		if ( class_exists( 'GeoDirectory' ) ) {
 			add_filter( 'permalink_manager_filter_default_post_uri', array( $this, 'geodir_custom_fields' ), 5, 5 );
 		}
 
-		// 17. BasePress
+		// BasePress
 		if ( class_exists( 'Basepress' ) ) {
 			add_filter( 'permalink_manager_filter_query', array( $this, 'kb_adjust_query' ), 5, 5 );
 		}
 
-		// 18. Ultimate Member
+		// Ultimate Member
 		if ( class_exists( 'UM' ) && ! ( empty( $permalink_manager_options['general']['um_support'] ) ) ) {
 			add_filter( 'permalink_manager_detect_uri', array( $this, 'um_detect_extra_pages' ), 20 );
 		}
 
-		// 19. WooCommerce Subscriptions
-		if ( class_exists( 'WC_Subscriptions' ) ) {
-			add_filter( 'permalink_manager_filter_final_post_permalink', array( $this, 'wcs_fix_subscription_links' ), 10, 3 );
-		}
-
-		// 20. LearnPress
+		// LearnPress
 		if ( class_exists( 'LearnPress' ) ) {
 			add_filter( 'permalink_manager_excluded_post_ids', array( $this, 'learnpress_exclude_pages' ) );
 		}
@@ -179,15 +117,10 @@ class Permalink_Manager_Third_Parties {
 			add_action( 'added_post_meta', array( $this, 'wpsl_regenerate_after_import' ), 10, 4 );
 			add_action( 'updated_post_meta', array( $this, 'wpsl_regenerate_after_import' ), 10, 4 );
 		}
-		// Woocommerce
-		if ( class_exists( 'WooCommerce' ) ) {
-			add_filter( 'woocommerce_get_endpoint_url', array( 'Permalink_Manager_Core_Functions', 'control_trailing_slashes' ), 9 );
-			add_action( 'before_woocommerce_init', array( $this, 'woocommerce_cot_compatibility' ) );
-		}
 	}
 
 	/**
-	 * 0. Stop canonical redirect if specific query variables are set
+	 * Stop canonical redirect if specific query variables are set
 	 */
 	public static function stop_redirect() {
 		global $wp_query, $post;
@@ -254,7 +187,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 1A. AMP hooks (support for older versions)
+	 * AMP hooks (support for older versions)
 	 *
 	 * @param array $uri_parts
 	 * @param string $request_url
@@ -279,7 +212,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 1B. AMP hooks
+	 * AMP hooks
 	 *
 	 * @param array $query
 	 *
@@ -296,7 +229,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 2. AMP for WP hooks (support for older versions)
+	 * AMP for WP hooks (support for older versions)
 	 *
 	 * @param array $query
 	 *
@@ -323,14 +256,14 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 3A. Parse Custom Permalinks import
+	 * Parse Custom Permalinks import
 	 */
 	public static function custom_permalinks_uris() {
 		global $wpdb;
 
 		$custom_permalinks_uris = array();
 
-		// 1. List tags/categories
+		// List tags/categories
 		$table = get_option( 'custom_permalink_table' );
 		if ( $table && is_array( $table ) ) {
 			foreach ( $table as $permalink => $info ) {
@@ -341,7 +274,7 @@ class Permalink_Manager_Third_Parties {
 			}
 		}
 
-		// 2. List posts/pages
+		// List posts/pages
 		$query = "SELECT p.ID, m.meta_value FROM $wpdb->posts AS p LEFT JOIN $wpdb->postmeta AS m ON (p.ID = m.post_id)  WHERE m.meta_key = 'custom_permalink' AND m.meta_value != '';";
 		$posts = $wpdb->get_results( $query );
 		foreach ( $posts as $post ) {
@@ -355,7 +288,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 3B. Import the URIs from the Custom Permalinks plugin.
+	 * Import the URIs from the Custom Permalinks plugin.
 	 */
 	static public function import_custom_permalinks_uris() {
 		global $permalink_manager_uris, $permalink_manager_before_sections_html;
@@ -381,247 +314,15 @@ class Permalink_Manager_Third_Parties {
 				$permalink_manager_uris[ $item['id'] ] = Permalink_Manager_Helper_Functions::sanitize_title( $item_uri );
 			}
 
-			$permalink_manager_before_sections_html .= Permalink_Manager_Admin_Functions::get_alert_message( __( '"Custom Permalinks" URIs were imported!', 'permalink-manager' ), 'updated' );
+			$permalink_manager_before_sections_html .= Permalink_Manager_UI_Elements::get_alert_message( __( '"Custom Permalinks" URIs were imported!', 'permalink-manager' ), 'updated' );
 			update_option( 'permalink-manager-uris', $permalink_manager_uris );
 		} else {
-			$permalink_manager_before_sections_html .= Permalink_Manager_Admin_Functions::get_alert_message( __( 'No "Custom Permalinks" URIs were imported!', 'permalink-manager' ), 'error' );
+			$permalink_manager_before_sections_html .= Permalink_Manager_UI_Elements::get_alert_message( __( 'No "Custom Permalinks" URIs were imported!', 'permalink-manager' ), 'error' );
 		}
 	}
 
 	/**
-	 * 4A. Fix query on WooCommerce shop page & disable the canonical redirect if WooCommerce query variables are set
-	 */
-	function woocommerce_detect( $query, $old_query, $uri_parts, $pm_query, $content_type ) {
-		global $woocommerce, $pm_query;
-
-		$shop_page_id = get_option( 'woocommerce_shop_page_id' );
-
-		// WPML - translate shop page id
-		$shop_page_id = apply_filters( 'wpml_object_id', $shop_page_id, 'page', true );
-
-		// Fix shop page
-		if ( get_theme_support( 'woocommerce' ) && ! empty( $pm_query['id'] ) && is_numeric( $pm_query['id'] ) && $shop_page_id == $pm_query['id'] ) {
-			$query['post_type'] = 'product';
-			unset( $query['pagename'] );
-		}
-
-		// Fix WooCommerce pages
-		if ( ! empty( $woocommerce->query->query_vars ) ) {
-			$query_vars = $woocommerce->query->query_vars;
-
-			foreach ( $query_vars as $key => $val ) {
-				if ( isset( $query[ $key ] ) ) {
-					$query['do_not_redirect'] = 1;
-					break;
-				}
-			}
-		}
-
-		return $query;
-	}
-
-	/**
-	 * 4B. Redirects the user from the Shop archive to the Shop page if the user is not searching for anything
-	 * Disable canonical redirect on "thank you" & another WooCommerce pages
-	 */
-	function woocommerce_checkout_fix() {
-		global $wp_query, $pm_query, $permalink_manager_options;
-
-		// Redirect from Shop archive to selected page
-		if ( is_shop() && empty( $pm_query['id'] ) ) {
-			$redirect_mode = ( ! empty( $permalink_manager_options['general']['redirect'] ) ) ? $permalink_manager_options['general']['redirect'] : false;
-			$redirect_shop = apply_filters( 'permalink_manager_redirect_shop_archive', false );
-			$shop_page     = get_option( 'woocommerce_shop_page_id' );
-
-			if ( $redirect_mode && $redirect_shop && $shop_page && empty( $wp_query->query_vars['s'] ) ) {
-				$shop_url = get_permalink( $shop_page );
-				wp_safe_redirect( $shop_url, $redirect_mode );
-				exit();
-			}
-		}
-
-		if ( is_checkout() || ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url() ) ) {
-			$wp_query->query_vars['do_not_redirect'] = 1;
-		}
-	}
-
-	/**
-	 * 4C. Generate a new custom permalink for duplicated product
-	 *
-	 * @param WC_Product $new_product The new product object.
-	 * @param WC_Product $old_product The product that was duplicated.
-	 */
-	function woocommerce_generate_permalinks_after_duplicate( $new_product, $old_product ) {
-		if ( ! empty( $new_product ) ) {
-			$product_id = $new_product->get_id();
-
-			// Ignore variations
-			if ( $new_product->get_type() !== 'variation' ) {
-				$custom_uri = Permalink_Manager_URI_Functions_Post::get_default_post_uri( $product_id, false, true );
-
-				Permalink_Manager_URI_Functions::save_single_uri( $product_id, $custom_uri, false, true );
-			}
-		}
-	}
-
-	/**
-	 * 4D. If the URI contains %pa_attribute_name% tag, replace it with the value of the attribute
-	 *
-	 * @param string $default_uri The default custom permalink that WordPress would use for the post.
-	 * @param string $slug The post slug.
-	 * @param WP_Post $post The post object.
-	 * @param string $post_name The post slug.
-	 * @param bool $native_uri true if the URI is a native URI, false if it's a custom URI
-	 *
-	 * @return string The default custom permalink
-	 */
-	function woocommerce_product_attributes( $default_uri, $slug, $post, $post_name, $native_uri ) {
-		// Do not affect native URIs
-		if ( $native_uri ) {
-			return $default_uri;
-		}
-
-		// Use only for products
-		if ( empty( $post->post_type ) || $post->post_type !== 'product' ) {
-			return $default_uri;
-		}
-
-		preg_match_all( "/%pa_(.[^\%]+)%/", $default_uri, $custom_fields );
-
-		if ( ! empty( $custom_fields[1] ) ) {
-			$product = wc_get_product( $post->ID );
-
-			foreach ( $custom_fields[1] as $i => $custom_field ) {
-				$attribute_name  = sanitize_title( $custom_field );
-				$attribute_value = $product->get_attribute( $attribute_name );
-
-				$default_uri = str_replace( $custom_fields[0][ $i ], Permalink_Manager_Helper_Functions::sanitize_title( $attribute_value ), $default_uri );
-			}
-		}
-
-		return $default_uri;
-	}
-
-	/**
-	 * 4E. Check the current request is a WooCommerce AJAX request. If it is, check the translated page's URL should be returned
-	 *
-	 * @param string $permalink The full URL of the post
-	 * @param WP_Post $post The post object
-	 * @param string $old_permalink The original URL of the post.
-	 *
-	 * @return string The permalink is being returned.
-	 */
-	function woocommerce_translate_ajax_fragments_urls( $permalink, $post, $old_permalink ) {
-		// Use it only if the permalinks are different
-		if ( $permalink == $old_permalink || $post->post_type !== 'page' ) {
-			return $permalink;
-		}
-
-		// A. Native WooCommerce AJAX events
-		if ( ! empty( $_REQUEST['wc-ajax'] ) ) {
-			$action = sanitize_title( $_REQUEST['wc-ajax'] );
-		} // B. Shoptimizer theme
-		else if ( ! empty( $_REQUEST['action'] ) ) {
-			$action = sanitize_title( $_REQUEST['action'] );
-		}
-
-		// Allowed action names
-		$allowed_actions = array( 'shoptimizer_pdp_ajax_atc', 'get_refreshed_fragments' );
-
-		if ( ! empty( $action ) && in_array( $action, $allowed_actions ) ) {
-			$translated_post_id = apply_filters( 'wpml_object_id', $post->ID, 'page' );
-			$permalink          = ( $translated_post_id !== $post->ID ) ? get_permalink( $translated_post_id ) : $permalink;
-		}
-
-		return $permalink;
-	}
-
-	/**
-	 * 4FA. Add a new column to the WooCommerce CSV Import/Export tool
-	 *
-	 * @param array $columns The array of columns to be displayed.
-	 *
-	 * @return array The $columns array.
-	 */
-	function woocommerce_csv_custom_uri_column( $columns ) {
-		if ( ! is_array( $columns ) ) {
-			return $columns;
-		}
-
-		$label = __( 'Custom URI', 'permalink-manager' );
-		$key   = 'custom_uri';
-
-		if ( current_filter() == 'woocommerce_csv_product_import_mapping_default_columns' ) {
-			$columns[ $label ] = $key;
-		} else {
-			$columns[ $key ] = $label;
-		}
-
-		return $columns;
-	}
-
-	/**
-	 * 4FB. Return the custom permalink of the product if it exists, otherwise return the default URI
-	 *
-	 * @param string $value The value of the column.
-	 * @param WC_Product $product The product object.
-	 * @param mixed $column_id The column ID.
-	 *
-	 * @return string The custom permalink or default permalink
-	 */
-	function woocommerce_export_custom_uri_value( $value, $product, $column_id ) {
-		if ( empty( $value ) && ! empty( $product ) ) {
-			$product_id = $product->get_id();
-
-			// Get custom permalink or default permalink
-			$value = Permalink_Manager_URI_Functions_Post::get_post_uri( $product_id );
-		}
-
-		return $value;
-	}
-
-	/**
-	 * 4FC. Set the custom URI for the product using the value from CSV file, if not set use the default permalink
-	 *
-	 * @param WC_Product $product The product object.
-	 * @param array $data The data array for the current row being imported.
-	 */
-	function woocommerce_csv_import_custom_uri( $product, $data ) {
-		global $permalink_manager_uris;
-
-		if ( ! empty( $product ) ) {
-			$product_id = $product->get_id();
-
-			// Ignore variations
-			if ( $product->get_type() == 'variation' ) {
-				return;
-			}
-
-			// A. Use default permalink if "Custom URI" is not set and did not exist before
-			if ( empty( $permalink_manager_uris[ $product_id ] ) && empty( $data['custom_uri'] ) ) {
-				$custom_uri = Permalink_Manager_URI_Functions_Post::get_default_post_uri( $product_id, false, true );
-			} else if ( ! empty( $data['custom_uri'] ) ) {
-				$custom_uri = Permalink_Manager_Helper_Functions::sanitize_title( $data['custom_uri'] );
-			} else {
-				return;
-			}
-
-			Permalink_Manager_URI_Functions::save_single_uri( $product_id, $custom_uri, false, true );
-		}
-	}
-
-	/**
-	 * 4G. Declare support for 'High-Performance order storage (COT)' in WooCommerce
-	 */
-	function woocommerce_cot_compatibility() {
-		if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) && method_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil', 'declare_compatibility' ) ) {
-			$plugin_name = strtok( PERMALINK_MANAGER_BASENAME, '/' );
-			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', $plugin_name );
-		}
-	}
-
-	/**
-	 * 5. Do not use custom permalinks if any action is triggered inside Theme My Login plugin
+	 * Do not use custom permalinks if any action is triggered inside Theme My Login plugin
 	 */
 	function tml_ignore_custom_permalinks() {
 		global $wp, $permalink_manager_ignore_permalink_filters;
@@ -637,345 +338,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 6A. Get the HTTP protocol of the home URL and use it in Yoast SEO sitemap permalinks
-	 *
-	 * @param string $permalink The permalink in the sitemap
-	 *
-	 * @return string The sitemap's permalink
-	 */
-	function yoast_fix_sitemap_urls( $permalink ) {
-		if ( class_exists( 'WPSEO_Utils' ) ) {
-			$home_url      = WPSEO_Utils::home_url();
-			$home_protocol = parse_url( $home_url, PHP_URL_SCHEME );
-
-			$permalink = preg_replace( "/^http(s)?/", $home_protocol, $permalink );
-		}
-
-		return $permalink;
-	}
-
-	/**
-	 * 6B. Update the permalink in the Yoast SEO indexable table when the permalink is changed
-	 *
-	 * @param int $element_id The ID of the post/term element that was updated.
-	 * @param string $new_uri The new URI of the element.
-	 * @param string $old_uri The old URI of the element.
-	 */
-	function yoast_update_indexable_permalink( $element_id, $new_uri, $old_uri ) {
-		global $wpdb;
-
-		if ( ! empty( $new_uri ) && ! empty( $old_uri ) && $new_uri !== $old_uri ) {
-			if ( current_filter() == 'permalink_manager_updated_term_uri' ) {
-				$permalink   = get_term_link( (int) $element_id );
-				$object_type = 'term';
-			} else {
-				$permalink   = get_permalink( $element_id );
-				$object_type = 'post';
-			}
-
-			if ( ! empty( $permalink ) ) {
-				$permalink_hash = strlen( $permalink ) . ':' . md5( $permalink );
-				$wpdb->update( "{$wpdb->prefix}yoast_indexable", array( 'permalink' => $permalink, 'permalink_hash' => $permalink_hash ), array( 'object_id' => $element_id, 'object_type' => $object_type ), array( '%s', '%s' ), array( '%d', '%s' ) );
-			}
-		}
-	}
-
-	/**
-	 * 6C. Filter the canonical permalink used by SEO using 'wpseo_canonical' & 'wpseo_opengraph_url' hooks
-	 *
-	 * @param string $url The canonical URL that Yoast SEO has generated.
-	 *
-	 * @return string the URL.
-	 */
-	function yoast_fix_canonical( $url ) {
-		global $pm_query, $wp_rewrite;
-
-		if ( ! empty( $pm_query['id'] ) ) {
-			$element = get_queried_object();
-
-			if ( ! empty( $element->ID ) && ! empty( $element->post_type ) ) {
-				$new_url = get_permalink( $element->ID );
-
-				// Do not filter if custom canonical URL is set
-				$yoast_canonical_url = get_post_meta( $element->ID, '_yoast_wpseo_canonical', true );
-				if ( ! empty( $yoast_canonical_url ) ) {
-					return $url;
-				}
-
-				if ( is_home() ) {
-					$paged   = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
-					$new_url = ( $paged > 1 ) ? sprintf( '%s/%s/%d', trim( $new_url, '/' ), $wp_rewrite->pagination_base, $paged ) : $new_url;
-				} else {
-					$paged   = ( get_query_var( 'page' ) ) ? get_query_var( 'page' ) : 1;
-					$new_url = ( $paged > 1 ) ? sprintf( '%s/%d', trim( $new_url, '/' ), $paged ) : $new_url;
-				}
-			} else if ( ! empty( $element->taxonomy ) && ! empty( $element->term_id ) ) {
-				$new_url = get_term_link( $element, $element->taxonomy );
-
-				// Do not filter if custom canonical URL is set
-				if ( class_exists( 'WPSEO_Taxonomy_Meta' ) ) {
-					$yoast_canonical_url = WPSEO_Taxonomy_Meta::get_term_meta( $element, $element->taxonomy, 'canonical' );
-					if ( ! empty( $yoast_canonical_url ) ) {
-						return $url;
-					}
-				}
-
-				$paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
-				if ( $paged > 1 ) {
-					$new_url = sprintf( '%s/%s/%d', trim( $new_url, '/' ), $wp_rewrite->pagination_base, $paged );
-				}
-			}
-
-			$url = ( ! empty( $new_url ) ) ? $new_url : $url;
-			$url = Permalink_Manager_Core_Functions::control_trailing_slashes( $url );
-		}
-
-		return $url;
-	}
-
-	/**
-	 * 7. Filter the breadcrumbs array to match the structure of currently requested URL
-	 *
-	 * @param array $links The current breadcrumb links.
-	 *
-	 * @return array The $links array.
-	 */
-	function filter_breadcrumbs( $links ) {
-		// Get post type permastructure settings
-		global $permalink_manager_uris, $permalink_manager_options, $post, $wpdb, $wp, $wp_current_filter;
-
-		// Check if the filter should be activated
-		if ( empty( $permalink_manager_options['general']['yoast_breadcrumbs'] ) || empty( $permalink_manager_uris ) ) {
-			return $links;
-		}
-
-		// Get current post/page/term (if available)
-		$queried_element = get_queried_object();
-		if ( ! empty( $queried_element->ID ) ) {
-			$element_id = $queried_element->ID;
-		} else if ( ! empty( $queried_element->term_id ) ) {
-			$element_id = "tax-{$queried_element->term_id}";
-		} else if ( defined( 'REST_REQUEST' ) && ! empty( $post->ID ) ) {
-			$element_id = $post->ID;
-		}
-
-		// Get the custom permalink (if available) or the current request URL (if unavailable)
-		if ( ! empty( $element_id ) && ! empty( $permalink_manager_uris[ $element_id ] ) ) {
-			$custom_uri = preg_replace( "/([^\/]+)$/", '', $permalink_manager_uris[ $element_id ] );
-		} else {
-			$custom_uri = trim( preg_replace( "/([^\/]+)$/", '', $wp->request ), "/" );
-		}
-
-		$all_uris                     = array_flip( $permalink_manager_uris );
-		$custom_uri_parts             = explode( '/', trim( $custom_uri ) );
-		$breadcrumbs                  = array();
-		$snowball                     = '';
-		$available_taxonomies         = Permalink_Manager_Helper_Functions::get_taxonomies_array( null, null, true );
-		$available_post_types         = Permalink_Manager_Helper_Functions::get_post_types_array( null, null, true );
-		$available_post_types_archive = Permalink_Manager_Helper_Functions::get_post_types_array( 'archive_slug', null, true );
-		$current_filter               = end( $wp_current_filter );
-
-		// Get Yoast Meta (the breadcrumbs titles can be changed in Yoast metabox)
-		$yoast_meta_terms = get_option( 'wpseo_taxonomy_meta' );
-
-		// Check what array keys should be used for breadcrumbs ("All In One SEO" uses a more complicated schema)
-		if ( $current_filter == 'aioseo_breadcrumbs_trail' ) {
-			$breadcrumb_key_text = 'label';
-			$breadcrumb_key_url  = 'link';
-			$is_aioseo           = true;
-		} else if ( in_array( $current_filter, array( 'wpseo_breadcrumb_links', 'slim_seo_breadcrumbs_links' ) ) ) {
-			$breadcrumb_key_text = 'text';
-			$breadcrumb_key_url  = 'url';
-			$is_aioseo           = false;
-		} else {
-			$breadcrumb_key_text = 0;
-			$breadcrumb_key_url  = 1;
-			$is_aioseo           = false;
-		}
-
-		// Get internal breadcrumb elements
-		foreach ( $custom_uri_parts as $slug ) {
-			if ( empty( $slug ) ) {
-				continue;
-			}
-
-			$snowball = ( empty( $snowball ) ) ? $slug : "{$snowball}/{$slug}";
-
-			// 1A. Try to match any custom URI
-			$uri     = trim( $snowball, "/" );
-			$element = ( ! empty( $all_uris[ $uri ] ) ) ? $all_uris[ $uri ] : false;
-
-			if ( ! empty( $element ) && strpos( $element, 'tax-' ) !== false ) {
-				$element_id = intval( preg_replace( "/[^0-9]/", "", $element ) );
-				$element    = get_term( $element_id );
-			} else if ( is_numeric( $element ) ) {
-				$element = get_post( $element );
-			}
-
-			// 1B. Try to get term
-			if ( empty( $element ) && ! empty( $available_taxonomies ) ) {
-				$sql = sprintf( "SELECT t.term_id, t.name, tt.taxonomy FROM {$wpdb->terms} AS t LEFT JOIN {$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id WHERE slug = '%s' AND tt.taxonomy IN ('%s') LIMIT 1", esc_sql( $slug ), implode( "','", array_keys( $available_taxonomies ) ) );
-
-				$element = $wpdb->get_row( $sql );
-			}
-
-			// 1C. Try to get page/post
-			if ( empty( $element ) && ! empty( $available_post_types ) ) {
-				$sql = sprintf( "SELECT ID, post_title, post_type FROM {$wpdb->posts} WHERE post_name = '%s' AND post_status = 'publish' AND post_type IN ('%s') AND post_type != 'attachment' LIMIT 1", esc_sql( $slug ), implode( "','", array_keys( $available_post_types ) ) );
-
-				$element = $wpdb->get_row( $sql );
-			}
-
-			// 1D. Try to get post type archive
-			if ( empty( $element ) && ! empty( $available_post_types_archive ) && in_array( $snowball, $available_post_types_archive ) ) {
-				$post_type_slug = array_search( $snowball, $available_post_types_archive );
-				$element        = get_post_type_object( $post_type_slug );
-			}
-
-			// 2A. When the term is found, we can add it to the breadcrumbs
-			if ( ! empty( $element->term_id ) ) {
-				$term_id = apply_filters( 'wpml_object_id', $element->term_id, $element->taxonomy, true );
-				$term    = ( ( $element->term_id !== $term_id ) || $is_aioseo ) ? get_term( $term_id ) : $element;
-
-				// Alternative title
-				if ( $current_filter == 'wpseo_breadcrumb_links' ) {
-					$alt_title = ( ! empty( $yoast_meta_terms[ $term->taxonomy ][ $term->term_id ]['wpseo_bctitle'] ) ) ? $yoast_meta_terms[ $term->taxonomy ][ $term->term_id ]['wpseo_bctitle'] : '';
-				} else if ( $current_filter == 'seopress_pro_breadcrumbs_crumbs' ) {
-					$alt_title = get_term_meta( $term->term_id, '_seopress_robots_breadcrumbs', true );
-				} else if ( $current_filter == 'rank_math/frontend/breadcrumb/items' ) {
-					$alt_title = get_term_meta( $term->term_id, 'rank_math_breadcrumb_title', true );
-				}
-
-				$title = ( ! empty( $alt_title ) ) ? $alt_title : $term->name;
-
-				if ( $is_aioseo ) {
-					$breadcrumbs[] = array(
-						$breadcrumb_key_text => wp_strip_all_tags( $title ),
-						$breadcrumb_key_url  => get_term_link( (int) $term->term_id, $term->taxonomy ),
-						'type'               => 'taxonomy',
-						'subType'            => 'parent',
-						'reference'          => $term,
-					);
-				} else {
-					$breadcrumbs[] = array(
-						$breadcrumb_key_text => wp_strip_all_tags( $title ),
-						$breadcrumb_key_url  => get_term_link( (int) $term->term_id, $term->taxonomy )
-					);
-				}
-			} // 2B. When the post/page is found, we can add it to the breadcrumbs
-			else if ( ! empty( $element->ID ) ) {
-				$page_id = apply_filters( 'wpml_object_id', $element->ID, $element->post_type, true );
-				$page    = ( ( $element->ID !== $page_id ) || $is_aioseo ) ? get_post( $page_id ) : $element;
-
-				// Alternative title
-				if ( $current_filter == 'wpseo_breadcrumb_links' ) {
-					$alt_title = get_post_meta( $page->ID, '_yoast_wpseo_bctitle', true );
-				} else if ( $current_filter == 'seopress_pro_breadcrumbs_crumbs' ) {
-					$alt_title = get_post_meta( $page->ID, '_seopress_robots_breadcrumbs', true );
-				} else if ( $current_filter == 'rank_math/frontend/breadcrumb/items' ) {
-					$alt_title = get_post_meta( $page->ID, 'rank_math_breadcrumb_title', true );
-				}
-
-				$title = ( ! empty( $alt_title ) ) ? $alt_title : $page->post_title;
-
-				if ( $is_aioseo ) {
-					$breadcrumbs[] = array(
-						$breadcrumb_key_text => wp_strip_all_tags( $title ),
-						$breadcrumb_key_url  => get_permalink( $page->ID ),
-						'type'               => 'single',
-						'subType'            => '',
-						'reference'          => $page
-					);
-				} else {
-					$breadcrumbs[] = array(
-						$breadcrumb_key_text => wp_strip_all_tags( $title ),
-						$breadcrumb_key_url  => get_permalink( $page->ID )
-					);
-				}
-			} // 2C. When the post archive is found, we can add it to the breadcrumbs
-			else if ( ! empty( $element->rewrite ) && ( ! empty( $element->labels->name ) ) ) {
-				if ( $is_aioseo ) {
-					$breadcrumbs[] = array(
-						$breadcrumb_key_text => apply_filters( 'post_type_archive_title', $element->labels->name, $element->name ),
-						$breadcrumb_key_url  => get_post_type_archive_link( $element->name ),
-						'type'               => 'postTypeArchive',
-						'subType'            => '',
-						'reference'          => $element
-					);
-				} else {
-					$breadcrumbs[] = array(
-						$breadcrumb_key_text => apply_filters( 'post_type_archive_title', $element->labels->name, $element->name ),
-						$breadcrumb_key_url  => get_post_type_archive_link( $element->name )
-					);
-				}
-			}
-		}
-
-		// Add new links to current breadcrumbs array
-		if ( ! empty( $links ) && is_array( $links ) ) {
-			$first_element  = reset( $links );
-			$last_element   = end( $links );
-			$b_last_element = prev( $links );
-			$breadcrumbs    = ( ! empty( $breadcrumbs ) ) ? $breadcrumbs : array();
-
-			// Support RankMath/SEOPress/WooCommerce/Slim SEO/AIOSEO breadcrumbs
-			if ( in_array( $current_filter, array( 'wpseo_breadcrumb_links', 'rank_math/frontend/breadcrumb/items', 'seopress_pro_breadcrumbs_crumbs', 'woocommerce_get_breadcrumb', 'slim_seo_breadcrumbs_links', 'aioseo_breadcrumbs_trail' ) ) ) {
-				if ( $current_filter == 'slim_seo_breadcrumbs_links' ) {
-					$links = array_merge( array( $first_element ), $breadcrumbs );
-				} // Append the element before the last element if the last breadcrumb does not have a URL set (e.g. if the /page/ endpoint is used)
-				else if ( ! in_array( $current_filter, array( 'aioseo_breadcrumbs_trail', 'slim_seo_breadcrumbs_links' ) ) && ! empty( $wp->query_vars['paged'] ) && $wp->query_vars['paged'] > 1 && ! empty( $b_last_element[ $breadcrumb_key_url ] ) ) {
-					$links = array_merge( array( $first_element ), $breadcrumbs, array( $b_last_element ), array( $last_element ) );
-				} else {
-					$links = array_merge( array( $first_element ), $breadcrumbs, array( $last_element ) );
-				}
-			} // Support Avia/Enfold breadcrumbs
-			else if ( $current_filter == 'avia_breadcrumbs_trail' ) {
-				foreach ( $breadcrumbs as &$breadcrumb ) {
-					if ( isset( $breadcrumb[ $breadcrumb_key_text ] ) ) {
-						$breadcrumb = sprintf( '<a href="%s" title="%2$s">%2$s</a>', esc_attr( $breadcrumb[ $breadcrumb_key_url ] ), esc_attr( $breadcrumb[ $breadcrumb_key_text ] ) );
-					}
-				}
-
-				$links = array_merge( array( $first_element ), $breadcrumbs, array( 'trail_end' => $last_element ) );
-			}
-		}
-
-		return array_filter( $links );
-	}
-
-	/**
-	 * 8. Extracts the Wishlist ID from the URI and add it to the $uri_parts array (WooCommerce Wishlist Plugin)
-	 *
-	 * @param array $uri_parts An array of the URI parts.
-	 * @param string $request_url The URL that was requested.
-	 * @param array $endpoints An array of all the endpoints that are currently registered.
-	 *
-	 * @return array The URI parts.
-	 */
-	function ti_woocommerce_wishlist_uris( $uri_parts, $request_url, $endpoints ) {
-		global $permalink_manager_uris;
-
-		$wishlist_pid = tinv_get_option( 'general', 'page_wishlist' );
-
-		// Find the Wishlist page URI
-		if ( is_numeric( $wishlist_pid ) && ! empty( $permalink_manager_uris[ $wishlist_pid ] ) ) {
-			$wishlist_uri = preg_quote( $permalink_manager_uris[ $wishlist_pid ], '/' );
-
-			// Extract the Wishlist ID
-			preg_match( "/^({$wishlist_uri})\/([^\/]+)\/?$/", $uri_parts['uri'], $output_array );
-
-			if ( ! empty( $output_array[2] ) ) {
-				$uri_parts['uri']            = $output_array[1];
-				$uri_parts['endpoint']       = 'tinvwlID';
-				$uri_parts['endpoint_value'] = $output_array[2];
-			}
-		}
-
-		return $uri_parts;
-	}
-
-	/**
-	 * 9A. Copy the custom URI from original post and apply it to the new temp. revision post (Revisionize)
+	 * Copy the custom URI from original post and apply it to the new temp. revision post (Revisionize)
 	 *
 	 * @param int $old_id
 	 * @param int $new_id
@@ -991,7 +354,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 9B. Copy the custom URI from revision post and apply it to the original post
+	 * Copy the custom URI from revision post and apply it to the original post
 	 *
 	 * @param int $old_id
 	 * @param int $new_id
@@ -1008,7 +371,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 10A. Add a new section to the WP All Import interface
+	 * Add a new section to the WP All Import interface
 	 *
 	 * @param string $content_type The type of content being imported
 	 * @param array $current_values An array of the current values for the post
@@ -1028,7 +391,7 @@ class Permalink_Manager_Third_Parties {
 		$html .= '<div class="wpallimport-collapsed-content">';
 
 		$html .= '<div class="template_input">';
-		$html .= Permalink_Manager_Admin_Functions::generate_option_field( 'custom_uri', array( 'extra_atts' => 'style="width:100%; line-height: 25px;"', 'placeholder' => __( 'Custom URI', 'permalink-manager' ), 'value' => $custom_uri ) );
+		$html .= Permalink_Manager_UI_Elements::generate_option_field( 'custom_uri', array( 'extra_atts' => 'style="width:100%; line-height: 25px;"', 'placeholder' => __( 'Custom URI', 'permalink-manager' ), 'value' => $custom_uri ) );
 		$html .= wpautop( sprintf( __( 'If empty, a default permalink based on your current <a href="%s" target="_blank">permastructure settings</a> will be used.', 'permalink-manager' ), Permalink_Manager_Admin_Functions::get_admin_url( '&section=permastructs' ) ) );
 		$html .= '</div>';
 
@@ -1040,7 +403,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 10BA. Add a new field to the list of WP All Import options
+	 * Add a new field to the list of WP All Import options
 	 *
 	 * @param array $all_options The array of all options that are currently set
 	 *
@@ -1051,7 +414,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 10BB. Add Permalink Manager plugin to the WP All Import API
+	 * Add Permalink Manager plugin to the WP All Import API
 	 *
 	 * @param array $addons
 	 *
@@ -1066,7 +429,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 10BC. Register function that parses Permalink Manager plugin data in WP All Import API data feed
+	 * Register function that parses Permalink Manager plugin data in WP All Import API data feed
 	 *
 	 * @param array $functions
 	 *
@@ -1079,7 +442,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 10BD. Register function that saves Permalink Manager plugin data extracted from WP All Import API data feed
+	 * Register function that saves Permalink Manager plugin data extracted from WP All Import API data feed
 	 *
 	 * @param array $functions
 	 *
@@ -1092,7 +455,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 10C. Parse Permalink Manager plugin data in WP All Import API data feed
+	 * Parse Permalink Manager plugin data in WP All Import API data feed
 	 *
 	 * @param array $data
 	 *
@@ -1129,7 +492,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 10D. Save the Permalink Manager plugin data extracted from WP All Import API data feed
+	 * Save the Permalink Manager plugin data extracted from WP All Import API data feed
 	 *
 	 * @param array $importData
 	 * @param array $parsedData
@@ -1181,7 +544,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 10E. Copy the external redirect from the "external_redirect" custom field to the data model used by Permalink Manager Pro
+	 * Copy the external redirect from the "external_redirect" custom field to the data model used by Permalink Manager Pro
 	 *
 	 * @param int $pid The post ID of the post being imported.
 	 */
@@ -1195,7 +558,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 10FA. Use the import ID to extract all the post IDs that were imported, then splits them into chunks and schedule a single regenerate permalink event for each chunk
+	 * Use the import ID to extract all the post IDs that were imported, then splits them into chunks and schedule a single regenerate permalink event for each chunk
 	 *
 	 * @param int $import_id The ID of the import.
 	 */
@@ -1212,7 +575,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 10FB. Regenerate the custom permalinks for all imported posts
+	 * Regenerate the custom permalinks for all imported posts
 	 *
 	 * @param array $post_ids An array of post IDs that were just imported.
 	 */
@@ -1243,7 +606,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 11A. Add a new section to the WP All Export interface
+	 * Add a new section to the WP All Export interface
 	 *
 	 * @param array $sections
 	 *
@@ -1261,7 +624,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 11B. Add a new field to the "Permalink Manager" section of the WP All Export interface
+	 * Add a new field to the "Permalink Manager" section of the WP All Export interface
 	 *
 	 * @param array $fields The fields to be displayed in the section.
 	 *
@@ -1282,7 +645,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 11C. Add a new column to the export file with the custom permalink for each post/term
+	 * Add a new column to the export file with the custom permalink for each post/term
 	 *
 	 * @param array $articles The array of articles to be exported.
 	 * @param array $options an array of options for the export.
@@ -1318,7 +681,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 12. Check if the "custom_uri" is not blacklisted in the "duplicate_post_blacklist" option and if it's not, clone the custom permalink of the original post to the new one
+	 * Check if the "custom_uri" is not blacklisted in the "duplicate_post_blacklist" option and if it's not, clone the custom permalink of the original post to the new one
 	 *
 	 * @param int $new_post_id The ID of the newly created post.
 	 * @param WP_Post $old_post The post object of the original post.
@@ -1344,7 +707,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 13A. Replace in the default permalink format the unique permastructure tags available for My Listing theme
+	 * Replace in the default permalink format the unique permastructure tags available for My Listing theme
 	 *
 	 * @param string $default_uri The default permalink for the element.
 	 * @param string $native_slug The native slug of the post type.
@@ -1432,7 +795,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 13B. Set the default custom permalink for the listing item when it is created
+	 * Set the default custom permalink for the listing item when it is created
 	 *
 	 * @param int $post_id
 	 */
@@ -1450,7 +813,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 13C. If the user is on a MyListing archive page submitting a job, redirect the user to the Explore Listings page
+	 * If the user is on a MyListing archive page submitting a job, redirect the user to the Explore Listings page
 	 *
 	 * @param array $query The query object.
 	 * @param array $old_query The original query array.
@@ -1464,12 +827,12 @@ class Permalink_Manager_Third_Parties {
 				return $query;
 			}
 
-			// 1. Set-up new query array variable
+			// Set-up new query array variable
 			$new_query = array(
 				"page_id" => $explore_page_id
 			);
 
-			// 2A. Check if any custom MyListing taxonomy was detected
+			// Check if any custom MyListing taxonomy was detected
 			$ml_taxonomies = mylisting_custom_taxonomies();
 
 			if ( ! empty( $ml_taxonomies ) && is_array( $ml_taxonomies ) ) {
@@ -1483,7 +846,7 @@ class Permalink_Manager_Third_Parties {
 				}
 			}
 
-			// 2b. Check if any MyListing query var was detected
+			// Check if any MyListing query var was detected
 			$ml_query_vars = array(
 				'explore_tag'      => 'tags',
 				'explore_region'   => 'regions',
@@ -1502,7 +865,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 14A. Add the bbPress endpoints to the list of endpoints that are supported by the plugin
+	 * Add the bbPress endpoints to the list of endpoints that are supported by the plugin
 	 *
 	 * @param string $endpoints
 	 * @param bool $all Whether to return all endpoints or just the bbPress ones
@@ -1517,7 +880,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 14B. If the query contains the edit endpoint, then set the appropriate bbPress query variable
+	 * If the query contains the edit endpoint, then set the appropriate bbPress query variable
 	 */
 	function bbpress_detect_endpoints() {
 		global $wp_query;
@@ -1538,7 +901,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 15A. Add the endpoint "edit" used by Dokan to the endpoints array supported by Permalink Manager
+	 * Add the endpoint "edit" used by Dokan to the endpoints array supported by Permalink Manager
 	 *
 	 * @param string $endpoints
 	 *
@@ -1549,7 +912,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 15B. Check if the current page is a Dokan page, and if so, adjust the query variables to disable the canonical redirect
+	 * Check if the current page is a Dokan page, and if so, adjust the query variables to disable the canonical redirect
 	 */
 	function dokan_detect_endpoints() {
 		global $post, $wp_query, $wp, $pm_query;
@@ -1574,7 +937,7 @@ class Permalink_Manager_Third_Parties {
 			}
 		}
 
-		// 2. Support "Edit Product" pages
+		// Support "Edit Product" pages
 		if ( isset( $wp_query->query_vars['edit'] ) ) {
 			$wp_query->query_vars['edit']            = 1;
 			$wp_query->query_vars['do_not_redirect'] = 1;
@@ -1582,7 +945,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 16. Replace in the default permalink format the unique permastructure tags available for GeoDirectory plugin
+	 * Replace in the default permalink format the unique permastructure tags available for GeoDirectory plugin
 	 *
 	 * @param string $default_uri The default permalink for the element.
 	 * @param string $native_slug The native slug of the post type.
@@ -1636,7 +999,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 17. Adjust the query if BasePress page is detected
+	 * Adjust the query if BasePress page is detected
 	 *
 	 * @param array $query The query object.
 	 * @param array $old_query The original query array.
@@ -1672,7 +1035,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 18. Detect the extra pages created by Ultimate Member plugin
+	 * Detect the extra pages created by Ultimate Member plugin
 	 *
 	 * @param array $uri_parts
 	 *
@@ -1680,6 +1043,10 @@ class Permalink_Manager_Third_Parties {
 	 */
 	public function um_detect_extra_pages( $uri_parts ) {
 		global $permalink_manager_uris;
+
+		if ( ! function_exists( 'UM' ) ) {
+			return $uri_parts;
+		}
 
 		$request_url = trim( "{$uri_parts['uri']}/{$uri_parts['endpoint_value']}", "/" );
 		$um_pages    = array(
@@ -1709,25 +1076,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 19. Keep the query strings appended to the product permalinks by WooCommerce Subscriptions
-	 *
-	 * @param string $permalink
-	 * @param WP_Post $post
-	 * @param string $old_permalink
-	 *
-	 * @return string
-	 */
-	function wcs_fix_subscription_links( $permalink, $post, $old_permalink ) {
-		if ( ! empty( $post->post_type ) && $post->post_type == 'product' && strpos( $old_permalink, 'switch-subscription=' ) !== false ) {
-			$query_arg = parse_url( $old_permalink, PHP_URL_QUERY );
-			$permalink = "{$permalink}?{$query_arg}";
-		}
-
-		return $permalink;
-	}
-
-	/**
-	 * 20. Excluding the LearnPress pages from Permalink Manager
+	 * Excluding the LearnPress pages from Permalink Manager
 	 *
 	 * @param array $excluded_ids
 	 *
@@ -1752,7 +1101,7 @@ class Permalink_Manager_Third_Parties {
 	}
 
 	/**
-	 * 21. Regenerate the default permalink for the post after the custom permalink is imported by Store Locator - CSV Manager
+	 * Regenerate the default permalink for the post after the custom permalink is imported by Store Locator - CSV Manager
 	 *
 	 * @param int $meta_id The ID of the metadata entry.
 	 * @param int $post_id The ID of the post that the metadata is for.
