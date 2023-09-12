@@ -8,7 +8,7 @@ https://permalinkmanager.pro/
 https://wordpress.org/plugins/permalink-manager/
 
 ## List of helpful plugin articles
-* [What is a permalink?](https://permalinkmanager.pro/docs/basics/wordpress-permalinks-guide/)
+* [What is a permalink?](https://permalinkmanager.pro/docs/basics/change-permalinks/)
 * [How to add category slugs to post permalinks?](https://permalinkmanager.pro/docs/tutorials/add-category-slug-wordpress-permalinks/)
 * [How to add custom fields to WordPress permalinks?](https://permalinkmanager.pro/docs/tutorials/how-to-use-custom-fields-inside-wordpress-permalinks/)
-* [How to remove parent slugs from children permalinks](https://permalinkmanager.pro/docs/basics/bulk-edit-wordpress-permalinks/#remove-parent-slugs)
+* [How to remove parent slugs from children permalinks](https://permalinkmanager.pro/docs/tutorials/wordpress-permalinks-structure/)
