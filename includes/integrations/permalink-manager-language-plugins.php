@@ -584,11 +584,8 @@ class Permalink_Manager_Language_Plugins {
 	 * @return bool
 	 */
 	function wpml_is_front_page( $bool, $page_id, $front_page_id ) {
-		if ( $bool === false ) {
-			$default_language_code = self::get_default_language();
-			$page_id               = apply_filters( 'wpml_object_id', $page_id, 'page', true, $default_language_code );
-			$front_page_id         = apply_filters( 'wpml_object_id', $front_page_id, 'page', true, $default_language_code );
-		}
+		$default_language_code = self::get_default_language();
+		$page_id               = apply_filters( 'wpml_object_id', $page_id, 'page', true, $default_language_code );
 
 		return ( ! empty( $page_id ) && $page_id == $front_page_id ) ? true : $bool;
 	}
