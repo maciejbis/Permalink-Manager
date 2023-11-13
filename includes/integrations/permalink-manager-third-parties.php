@@ -107,14 +107,14 @@ class Permalink_Manager_Third_Parties {
 			add_filter( 'permalink_manager_excluded_post_ids', array( $this, 'learnpress_exclude_pages' ) );
 		}
 
-		// Google Site Kit
-		if ( class_exists( '\Google\Site_Kit\Plugin' ) ) {
-			add_filter( 'request', array( $this, 'googlesitekit_fix_request' ), 10, 1 );
-		}
-
 		// Bricks
 		if ( class_exists( '\Bricks\Theme' ) ) {
 			add_filter( 'permalink_manager_filter_query', array( $this, 'bricks_fix_template' ), 10, 5 );
+		}
+
+		// Google Site Kit
+		if ( class_exists( '\Google\Site_Kit\Plugin' ) ) {
+			add_filter( 'request', array( $this, 'googlesitekit_fix_request' ), 10, 1 );
 		}
 	}
 
@@ -1163,7 +1163,7 @@ class Permalink_Manager_Third_Parties {
 			global $pm_query;
 
 			$old_url   = trim( esc_url_raw( $_GET['permaLink'] ), '/' );
-			$new_query = Permalink_Manager_Core_Functions::detect_post( null, $old_url );
+			$new_query = Permalink_Manager_Core_Functions::detect_post( array(), $old_url );
 
 			if ( ! empty( $new_query ) && ! empty( $pm_query['id'] ) ) {
 				$request = $new_query;
