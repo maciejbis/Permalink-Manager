@@ -558,9 +558,9 @@ class Permalink_Manager_Actions {
 
 		// Get the name of the function
 		if ( isset( $_POST['regenerate'] ) && wp_verify_nonce( $_POST['regenerate'], 'permalink-manager' ) ) {
-			$function_name = 'regenerate_all_permalinks';
+			$operation = 'regenerate';
 		} else if ( isset( $_POST['find_and_replace'] ) && wp_verify_nonce( $_POST['find_and_replace'], 'permalink-manager' ) && ! empty( $_POST['old_string'] ) && ! empty( $_POST['new_string'] ) ) {
-			$function_name = 'find_and_replace';
+			$operation = 'find_and_replace';
 		}
 
 		// Get the session ID
@@ -590,9 +590,7 @@ class Permalink_Manager_Actions {
 			}
 		}
 
-		// Check if both strings are set for "Find and replace" tool
-		if ( ! empty( $function_name ) && empty( $error ) ) {
-
+		if ( ! empty( $operation ) && empty( $error ) ) {
 			// Hotfix for WPML (start)
 			if ( $sitepress ) {
 				remove_filter( 'get_terms_args', array( $sitepress, 'get_terms_args_filter' ), 10 );
@@ -602,14 +600,8 @@ class Permalink_Manager_Actions {
 			}
 
 			// Get the mode
-			$mode = isset( $_POST['mode'] ) ? $_POST['mode'] : 'custom_uris';
-
-			// Get the content type
-			if ( $content_type == 'taxonomies' ) {
-				$class_name = 'Permalink_Manager_URI_Functions_Tax';
-			} else {
-				$class_name = 'Permalink_Manager_URI_Functions_Post';
-			}
+			$mode         = ( isset( $_POST['mode'] ) ) ? $_POST['mode'] : 'custom_uris';
+			$preview_mode = ( ! empty( $_POST['preview_mode'] ) ) ? true : false;
 
 			// Get items (try to get them from transient)
 			$items = get_transient( "pm_{$uniq_id}" );
@@ -619,7 +611,11 @@ class Permalink_Manager_Actions {
 			$chunk_size = apply_filters( 'permalink_manager_chunk_size', 50 );
 
 			if ( empty( $items ) && ! empty ( $chunk_size ) ) {
-				$items = $class_name::get_items();
+				if ( $content_type == 'taxonomies' ) {
+					$items = Permalink_Manager_URI_Functions_Tax::get_items();
+				} else {
+					$items = Permalink_Manager_URI_Functions_Post::get_items();
+				}
 
 				if ( ! empty( $items ) ) {
 					// Count how many items need to be processed
@@ -644,7 +640,7 @@ class Permalink_Manager_Actions {
 
 			// Process the variables from $_POST object
 			$old_string = ( ! empty( $_POST['old_string'] ) ) ? str_replace( $home_url, '', esc_sql( $_POST['old_string'] ) ) : '';
-			$new_string = ( ! empty( $_POST['old_string'] ) ) ? str_replace( $home_url, '', esc_sql( $_POST['new_string'] ) ) : '';
+			$new_string = ( ! empty( $_POST['new_string'] ) ) ? str_replace( $home_url, '', esc_sql( $_POST['new_string'] ) ) : '';
 
 			// Process only one subarray
 			if ( ! empty( $items[ $iteration - 1 ] ) ) {
@@ -653,15 +649,14 @@ class Permalink_Manager_Actions {
 				// Check how many iterations are needed
 				$total_iterations = count( $items );
 
-				// Check if posts or terms should be updated
-				if ( $function_name == 'find_and_replace' ) {
-					$output = $class_name::find_and_replace( $chunk, $mode, $old_string, $new_string );
+				if ( $content_type == 'taxonomies' ) {
+					$output = Permalink_Manager_URI_Functions_Tax::bulk_process_items( $chunk, $mode, $operation, $old_string, $new_string, $preview_mode );
 				} else {
-					$output = $class_name::regenerate_all_permalinks( $chunk, $mode );
+					$output = Permalink_Manager_URI_Functions_Post::bulk_process_items( $chunk, $mode, $operation, $old_string, $new_string, $preview_mode );
 				}
 
 				if ( ! empty( $output['updated_count'] ) ) {
-					$return                  = array_merge( $return, (array) Permalink_Manager_UI_Elements::display_updated_slugs( $output['updated'], true ) );
+					$return                  = array_merge( $return, (array) Permalink_Manager_UI_Elements::display_updated_slugs( $output['updated'], true, true, $preview_mode ) );
 					$return['updated_count'] = $output['updated_count'];
 				}
 

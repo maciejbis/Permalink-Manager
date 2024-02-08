@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager Lite
  * Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
  * Description:       Advanced plugin that allows to set up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
- * Version:           2.4.2
+ * Version:           2.4.3
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -12,7 +12,7 @@
  * Text Domain:       permalink-manager
  * Domain Path:       /languages
  * WC requires at least: 3.0.0
- * WC tested up to:      8.4.0
+ * WC tested up to:      8.5.2
  */
 
 // If this file is called directly or plugin is already defined, abort
@@ -25,7 +25,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 	// Define the directories used to load plugin files.
 	define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 	define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-	define( 'PERMALINK_MANAGER_VERSION', '2.4.2' );
+	define( 'PERMALINK_MANAGER_VERSION', '2.4.3' );
 	define( 'PERMALINK_MANAGER_FILE', __FILE__ );
 	define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 	define( 'PERMALINK_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
@@ -149,7 +149,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 			$permalink_manager_redirects          = (array) apply_filters( 'permalink_manager_redirects', get_option( 'permalink-manager-redirects', array() ) );
 			$permalink_manager_external_redirects = (array) apply_filters( 'permalink_manager_external_redirects', get_option( 'permalink-manager-external-redirects', array() ) );
 
-			// 2. Globals used to display additional content (eg. alerts)
+			// 2. Globals used to display additional content (e.g. alerts)
 			global $permalink_manager_alerts, $permalink_manager_before_sections_html, $permalink_manager_after_sections_html;
 
 			$permalink_manager_alerts               = apply_filters( 'permalink_manager_alerts', array() );
@@ -256,31 +256,12 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 				update_option( 'permalink-manager-permastructs', $new_options );
 			}
 
-			// Adjust options structure
-			if ( ! empty( $permalink_manager_options['miscellaneous'] ) ) {
-				$permalink_manager_unfiltered_options = $permalink_manager_options;
-
-				// Combine general & miscellaneous options
-				$permalink_manager_unfiltered_options['general'] = array_merge( $permalink_manager_unfiltered_options['general'], $permalink_manager_unfiltered_options['miscellaneous'] );
-
-				// Move licence key to different section
-				$permalink_manager_unfiltered_options['licence']['licence_key'] = ( ! empty( $permalink_manager_unfiltered_options['miscellaneous']['license_key'] ) ) ? $permalink_manager_unfiltered_options['miscellaneous']['license_key'] : "";
-			}
-
 			// Separate "Trailing slashes" & "Trailing slashes redirect" setting fields
 			if ( ! empty( $permalink_manager_options['general']['trailing_slashes'] ) && $permalink_manager_options['general']['trailing_slashes'] >= 10 ) {
 				$permalink_manager_unfiltered_options = ( ! empty( $permalink_manager_unfiltered_options ) ) ? $permalink_manager_unfiltered_options : $permalink_manager_options;
 
 				$permalink_manager_unfiltered_options['general']['trailing_slashes_redirect'] = 1;
 				$permalink_manager_unfiltered_options['general']['trailing_slashes']          = ( $permalink_manager_options['general']['trailing_slashes'] == 10 ) ? 1 : 2;
-			}
-
-			// Adjust WP All Import support mode
-			if ( isset( $permalink_manager_options['general']['pmxi_import_support'] ) ) {
-				$permalink_manager_unfiltered_options = ( ! empty( $permalink_manager_unfiltered_options ) ) ? $permalink_manager_unfiltered_options : $permalink_manager_options;
-
-				$permalink_manager_unfiltered_options['general']['pmxi_support'] = ( empty( $permalink_manager_options['general']['pmxi_import_support'] ) ) ? 1 : 0;
-				unset( $permalink_manager_unfiltered_options['general']['pmxi_import_support'] );
 			}
 
 			// Save the settings in database
@@ -365,6 +346,8 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 
 			if ( isset( $deprecated_filters[ $filter ] ) ) {
 				if ( has_filter( $deprecated_filters[ $filter ] ) ) {
+					do_action( 'deprecated_function_run', $deprecated_filters[ $filter ], $filter, '2.4.3' );
+
 					$args = func_get_args();
 					$data = apply_filters_ref_array( $deprecated_filters[ $filter ], $args );
 				}
@@ -391,7 +374,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 		global $permalink_manager;
 
 		// Do not run when Elementor is opened
-		if ( ( ! empty( $_REQUEST['action'] ) && is_string( $_REQUEST['action'] ) && strpos( $_REQUEST['action'], 'elementor' ) !== false ) || isset( $_REQUEST['elementor-preview'] ) ) {
+		if ( ( ! empty( $_REQUEST['action'] ) && is_string( $_REQUEST['action'] ) && strpos( $_REQUEST['action'], 'elementor' ) !== false ) || isset( $_REQUEST['elementor-preview'] ) || isset( $_REQUEST['disable-pm'] ) ) {
 			return;
 		}
 

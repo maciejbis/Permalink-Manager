@@ -515,10 +515,11 @@ class Permalink_Manager_UI_Elements {
 	 * @param array $updated_array
 	 * @param bool $return_array
 	 * @param bool $display_full_table
+	 * @param bool $preview_mode
 	 *
 	 * @return array|string
 	 */
-	static function display_updated_slugs( $updated_array, $return_array = false, $display_full_table = true ) {
+	static function display_updated_slugs( $updated_array, $return_array = false, $display_full_table = true, $preview_mode = false ) {
 		global $permalink_manager_before_sections_html, $adjust_id_url_filter_off;
 
 		$updated_slugs_count = 0;
@@ -588,13 +589,16 @@ class Permalink_Manager_UI_Elements {
 
 		// 3. Display the alert
 		if ( isset( $updated_slugs_count ) ) {
-			if ( $updated_slugs_count > 0 ) {
-				$alert_content = sprintf( _n( '<strong class="updated_count">%d</strong> slug was updated!', '<strong class="updated_count">%d</strong> slugs were updated!', $updated_slugs_count, 'permalink-manager' ), $updated_slugs_count ) . ' ';
-				$alert_content .= sprintf( __( '<a %s>Click here</a> to go to the list of updated slugs', 'permalink-manager' ), "href=\"#updated-list\"" );
+			if ( $updated_slugs_count > 0 && ! $preview_mode ) {
+				$alert_content = sprintf( _n( '<strong class="updated_count">%d</strong> item was updated!', '<strong class="updated_count">%d</strong> items were updated!', $updated_slugs_count, 'permalink-manager' ), $updated_slugs_count ) . ' ';
+				$alert_content .= sprintf( __( '<a %s>Click here</a> to go to the list of affected items', 'permalink-manager' ), "href=\"#updated-list\"" );
 
 				$alert = self::get_alert_message( $alert_content, 'updated updated_slugs' );
 			} else {
-				$alert = self::get_alert_message( __( '<strong>No slugs</strong> were updated!', 'permalink-manager' ), 'error updated_slugs' );
+				$alert_content = ( $preview_mode ) ? sprintf( '[%s] ', __( 'Preview mode', 'permalink-manager' ) ) : '';
+				$alert_content .= __( '<strong>No items</strong> were affected!', 'permalink-manager' );
+
+				$alert = self::get_alert_message( $alert_content, 'error updated_slugs' );
 			}
 		}
 

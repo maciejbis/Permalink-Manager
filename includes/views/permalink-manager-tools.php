@@ -217,6 +217,12 @@ class Permalink_Manager_Tools {
 				'description' => __( 'To narrow the above filters you can type the post IDs (or ranges) here. Eg. <strong>1-8, 10, 25</strong>.', 'permalink-manager' ),
 				//'pro' => true,
 				'input_class' => 'widefat'
+			),
+			'preview_mode' => array(
+				'label'       => __( 'Preview mode', 'permalink-manager' ),
+				'type'        => 'single_checkbox',
+				'container'   => 'row',
+				'description' => __( 'Enable this option if you want to review the changes in "read mode" before saving them in the database.', 'permalink-manager' )
 			)
 		), 'find_and_replace' );
 
@@ -297,6 +303,12 @@ class Permalink_Manager_Tools {
 				'description' => __( 'To narrow the above filters you can type the post IDs (or ranges) here. Eg. <strong>1-8, 10, 25</strong>.', 'permalink-manager' ),
 				//'pro' => true,
 				'input_class' => 'widefat'
+			),
+			'preview_mode'  => array(
+				'label'       => __( 'Preview mode', 'permalink-manager' ),
+				'type'        => 'single_checkbox',
+				'container'   => 'row',
+				'description' => __( 'Enable this option if you want to review the changes in "read mode" before saving them in the database.', 'permalink-manager' )
 			)
 		), 'regenerate' );
 

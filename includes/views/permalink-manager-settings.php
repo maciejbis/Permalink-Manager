@@ -239,9 +239,10 @@ class Permalink_Manager_Settings {
 						'type'  => 'single_checkbox',
 						'label' => __( 'Show "Native slug" field in URI Editor', 'permalink-manager' )
 					),
-					'pagination_redirect'       => array(
-						'type'        => 'single_checkbox',
+					'pagination_redirect' => array(
+						'type'        => 'select',
 						'label'       => __( 'Force 404 on non-existing pagination pages', 'permalink-manager' ),
+						'choices'     => array( 0 => __( 'No', 'permalink-manager' ), 1 => __( 'Yes, sent "404" status code and stop canonical redirect', 'permalink-manager' ), 2 => __( 'Yes, sent "404" status code but allow canonical redirect', 'permalink-manager' ) ),
 						'description' => __( 'If enabled, the non-existing pagination pages (for single posts) will return 404 ("Not Found") error.<br /><strong>Please disable it, if you encounter any problems with pagination pages or use custom pagination system.</strong>', 'permalink-manager' )
 					),
 					'disable_slug_sanitization' => array(

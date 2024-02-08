@@ -141,6 +141,8 @@ class Permalink_Manager_URI_Functions_Post {
 		$new_slug = wp_unique_post_slug( $slug, $id, get_post_status( $id ), get_post_type( $id ), 0 );
 		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->posts} SET post_name = %s WHERE ID = %d", $new_slug, $id ) );
 
+		clean_post_cache( $id );
+
 		return $new_slug;
 	}
 
@@ -322,9 +324,9 @@ class Permalink_Manager_URI_Functions_Post {
 				// 2. Sort the terms
 				if ( ! empty( $terms ) ) {
 					$terms = wp_list_sort( $terms, array(
-							'parent'  => 'DESC',
-							'term_id' => 'ASC',
-						) );
+						'parent'  => 'DESC',
+						'term_id' => 'ASC',
+					) );
 				}
 
 				// 3A. Try to use Yoast SEO Primary Term
@@ -482,24 +484,28 @@ class Permalink_Manager_URI_Functions_Post {
 	}
 
 	/**
-	 * Process the custom permalinks or (native slugs) in "Find & replace" tool
+	 * Process the permalinks/slugs "Find & replace" & "Regenerate/rest" tool
 	 *
 	 * @param array $chunk
 	 * @param string $mode
+	 * @param string $operation
 	 * @param string $old_string
 	 * @param string $new_string
+	 * @param bool $preview_mode
 	 *
 	 * @return array|false
 	 */
-	public static function find_and_replace( $chunk = null, $mode = '', $old_string = '', $new_string = '' ) {
-		global $permalink_manager_uris;
-
+	public static function bulk_process_items( $chunk = null, $mode = '', $operation = '', $old_string = '', $new_string = '', $preview_mode = false ) {
 		// Reset variables
 		$updated_slugs_count = 0;
 		$updated_array       = array();
 
 		// Get the rows before they are altered
-		$posts_to_update = ( $chunk ) ? $chunk : self::get_items();
+		$posts_to_update = ( ! empty( $chunk ) ) ? $chunk : self::get_items();
+
+		if ( empty( $operation ) ) {
+			return false;
+		}
 
 		// Now if the array is not empty use IDs from each subarray as a key
 		if ( $posts_to_update ) {
@@ -507,112 +513,57 @@ class Permalink_Manager_URI_Functions_Post {
 				// Get default & native URL
 				$native_uri  = self::get_default_post_uri( $row['ID'], true );
 				$default_uri = self::get_default_post_uri( $row['ID'] );
+				$old_uri     = Permalink_Manager_URI_Functions::get_single_uri( $row['ID'], true, false );
 
-				$old_post_name = $old_slug = $row['post_name'];
-				$old_uri       = ( isset( $permalink_manager_uris[ $row['ID'] ] ) ) ? $permalink_manager_uris[ $row['ID'] ] : $native_uri;
-
-				// Do replacement on slugs (non-REGEX)
-				if ( preg_match( "/^\/.+\/[a-z]*$/i", $old_string ) ) {
-					$regex   = stripslashes( trim( sanitize_text_field( $_POST['old_string'] ), "/" ) );
-					$regex   = preg_quote( $regex, '~' );
-					$pattern = "~{$regex}~";
-
-					$new_post_name = ( $mode == 'slugs' ) ? preg_replace( $pattern, $new_string, $old_post_name ) : $old_post_name;
-					$new_uri       = ( $mode != 'slugs' ) ? preg_replace( $pattern, $new_string, $old_uri ) : $old_uri;
-				} else {
-					$new_post_name = ( $mode == 'slugs' ) ? str_replace( $old_string, $new_string, $old_post_name ) : $old_post_name; // Post name is changed only in first mode
-					$new_uri       = ( $mode != 'slugs' ) ? str_replace( $old_string, $new_string, $old_uri ) : $old_uri;
-				}
-
-				// Check if native slug should be changed
-				if ( ( $mode == 'slugs' ) && ( $old_post_name != $new_post_name ) ) {
-					$new_slug = self::update_slug_by_id( $new_post_name, $row['ID'] );
-				} else {
-					$new_slug = $new_post_name;
-				}
-
-				if ( ( $old_uri != $new_uri ) || ( $old_post_name != $new_post_name ) && ! ( empty( $new_uri ) ) ) {
-					$permalink_manager_uris[ $row['ID'] ] = trim( $new_uri, '/' );
-					$updated_array[]                      = array( 'item_title' => $row['post_title'], 'ID' => $row['ID'], 'old_uri' => $old_uri, 'new_uri' => $new_uri, 'old_slug' => $old_slug, 'new_slug' => $new_slug );
-					$updated_slugs_count ++;
-				}
-
-				do_action( 'permalink_manager_updated_post_uri', $row['ID'], $new_uri, $old_uri, $native_uri, $default_uri );
-			}
-
-			// Filter array before saving
-			if ( is_array( $permalink_manager_uris ) ) {
-				$permalink_manager_uris = array_filter( $permalink_manager_uris );
-				update_option( 'permalink-manager-uris', $permalink_manager_uris );
-			}
-
-			$output = array( 'updated' => $updated_array, 'updated_count' => $updated_slugs_count );
-			wp_reset_postdata();
-		}
-
-		return ( ! empty( $output ) ) ? $output : false;
-	}
-
-	/**
-	 * Process the custom permalinks or (native slugs) in "Regenerate/reset" tool
-	 *
-	 * @param array $chunk
-	 * @param string $mode
-	 *
-	 * @return array|bool
-	 */
-	static function regenerate_all_permalinks( $chunk = null, $mode = '' ) {
-		global $permalink_manager_uris;
-
-		// Reset variables
-		$updated_slugs_count = 0;
-		$updated_array       = array();
-
-		// Get the rows before they are altered
-		$posts_to_update = ( $chunk ) ? $chunk : self::get_items();
-
-		// Now if the array is not empty use IDs from each subarray as a key
-		if ( $posts_to_update ) {
-			foreach ( $posts_to_update as $row ) {
-				// Get default & native URL
-				$native_uri    = self::get_default_post_uri( $row['ID'], true );
-				$default_uri   = self::get_default_post_uri( $row['ID'] );
 				$old_post_name = $row['post_name'];
-				$old_uri       = isset( $permalink_manager_uris[ $row['ID'] ] ) ? trim( $permalink_manager_uris[ $row['ID'] ], "/" ) : '';
-				$correct_slug  = ( $mode == 'slugs' ) ? sanitize_title( $row['post_title'] ) : Permalink_Manager_Helper_Functions::sanitize_title( $row['post_title'] );
 
-				// Process URI & slug
-				$new_slug      = wp_unique_post_slug( $correct_slug, $row['ID'], get_post_status( $row['ID'] ), get_post_type( $row['ID'] ), 0 );
-				$new_post_name = ( $mode == 'slugs' ) ? $new_slug : $old_post_name; // Post name is changed only in first mode
-
-				// Prepare the new URI
-				if ( $mode == 'slugs' ) {
-					$new_uri = ( $old_uri ) ? $old_uri : $native_uri;
-				} else if ( $mode == 'native' ) {
-					$new_uri = $native_uri;
+				if ( $operation == 'regenerate' ) {
+					if ( $mode == 'slugs' ) {
+						$new_uri       = $old_uri;
+						$new_post_name = Permalink_Manager_Helper_Functions::sanitize_title( $row['post_title'] );
+					} else if ( $mode == 'native' ) {
+						$new_uri       = $native_uri;
+						$new_post_name = $old_post_name;
+					} else {
+						$new_uri       = $default_uri;
+						$new_post_name = $old_post_name;
+					}
 				} else {
-					$new_uri = $default_uri;
+					// Do replacement on slugs (non-REGEX)
+					if ( preg_match( "/^\/.+\/[a-z]*$/i", $old_string ) ) {
+						$regex   = stripslashes( trim( sanitize_text_field( $_POST['old_string'] ), "/" ) );
+						$regex   = preg_quote( $regex, '~' );
+						$pattern = "~{$regex}~";
+
+						$new_post_name = ( $mode == 'slugs' ) ? preg_replace( $pattern, $new_string, $old_post_name ) : $old_post_name;
+						$new_uri       = ( $mode != 'slugs' ) ? preg_replace( $pattern, $new_string, $old_uri ) : $old_uri;
+					} else {
+						$new_post_name = ( $mode == 'slugs' ) ? str_replace( $old_string, $new_string, $old_post_name ) : $old_post_name; // Post name is changed only in first mode
+						$new_uri       = ( $mode != 'slugs' ) ? str_replace( $old_string, $new_string, $old_uri ) : $old_uri;
+					}
 				}
 
 				// Check if native slug should be changed
-				if ( ( $mode == 'slugs' ) && ( $old_post_name != $new_post_name ) ) {
-					self::update_slug_by_id( $new_post_name, $row['ID'] );
-					clean_post_cache( $row['ID'] );
+				if ( ( $mode == 'slugs' ) && ( $old_post_name !== $new_post_name ) && ! $preview_mode ) {
+					$new_post_name = self::update_slug_by_id( $new_post_name, $row['ID'] );
 				}
 
-				if ( ( $old_uri != $new_uri ) || ( $old_post_name != $new_post_name ) ) {
-					$permalink_manager_uris[ $row['ID'] ] = $new_uri;
-					$updated_array[]                      = array( 'item_title' => $row['post_title'], 'ID' => $row['ID'], 'old_uri' => $old_uri, 'new_uri' => $new_uri, 'old_slug' => $old_post_name, 'new_slug' => $new_post_name );
+				$new_uri = apply_filters( 'permalink_manager_pre_update_post_uri', $new_uri, $row['ID'], $old_uri, $native_uri, $default_uri );
+
+				if ( ! ( empty( $new_uri ) ) && ( $old_uri !== $new_uri ) || ( $old_post_name !== $new_post_name ) ) {
+					if ( ! $preview_mode && ( $old_uri !== $new_uri ) ) {
+						Permalink_Manager_URI_Functions::save_single_uri( $row['ID'], $new_uri, false, false );
+						do_action( 'permalink_manager_updated_post_uri', $row['ID'], $new_uri, $old_uri, $native_uri, $default_uri );
+					}
+
+					$updated_array[] = array( 'item_title' => $row['post_title'], 'ID' => $row['ID'], 'old_uri' => $old_uri, 'new_uri' => $new_uri, 'old_slug' => $old_post_name, 'new_slug' => $new_post_name );
 					$updated_slugs_count ++;
 				}
-
-				do_action( 'permalink_manager_updated_post_uri', $row['ID'], $new_uri, $old_uri, $native_uri, $default_uri );
 			}
 
-			// Filter array before saving
-			if ( is_array( $permalink_manager_uris ) ) {
-				$permalink_manager_uris = array_filter( $permalink_manager_uris );
-				update_option( 'permalink-manager-uris', $permalink_manager_uris );
+			// Save all custom permalinks
+			if ( ! $preview_mode ) {
+				Permalink_Manager_URI_Functions::save_all_uris();
 			}
 
 			$output = array( 'updated' => $updated_array, 'updated_count' => $updated_slugs_count );
@@ -628,13 +579,10 @@ class Permalink_Manager_URI_Functions_Post {
 	 * @return array|false
 	 */
 	static public function update_all_permalinks() {
-		global $permalink_manager_uris;
-
 		// Setup needed variables
 		$updated_slugs_count = 0;
 		$updated_array       = array();
 
-		$old_uris = $permalink_manager_uris;
 		$new_uris = isset( $_POST['uri'] ) ? $_POST['uri'] : array();
 
 		// Double check if the slugs and ids are stored in arrays
@@ -651,14 +599,14 @@ class Permalink_Manager_URI_Functions_Post {
 				// Get default & native URL
 				$native_uri  = self::get_default_post_uri( $this_post, true );
 				$default_uri = ( $is_draft ) ? '' : self::get_default_post_uri( $this_post );
-				$old_uri     = isset( $old_uris[ $id ] ) ? trim( $old_uris[ $id ], '/' ) : '';
+				$old_uri     = Permalink_Manager_URI_Functions::get_single_uri( $id, false, true );
 
 				// Process new values - empty entries will be treated as default values
 				$new_uri = Permalink_Manager_Helper_Functions::sanitize_title( $new_uri );
 				$new_uri = ( ! empty( $new_uri ) ) ? trim( $new_uri, "/" ) : $default_uri;
 
 				if ( $new_uri != $old_uri ) {
-					$old_uris[ $id ] = $new_uri;
+					Permalink_Manager_URI_Functions::save_single_uri( $id, $new_uri, false, false );
 					$updated_array[] = array( 'item_title' => get_the_title( $id ), 'ID' => $id, 'old_uri' => $old_uri, 'new_uri' => $new_uri );
 					$updated_slugs_count ++;
 
@@ -666,11 +614,8 @@ class Permalink_Manager_URI_Functions_Post {
 				}
 			}
 
-			// Filter array before saving & append the global
-			if ( is_array( $permalink_manager_uris ) ) {
-				$permalink_manager_uris = array_filter( $old_uris );
-				update_option( 'permalink-manager-uris', $permalink_manager_uris );
-			}
+			// Save all custom permalinks
+			Permalink_Manager_URI_Functions::save_all_uris();
 
 			$output = array( 'updated' => $updated_array, 'updated_count' => $updated_slugs_count );
 		}
@@ -731,9 +676,9 @@ class Permalink_Manager_URI_Functions_Post {
 
 		// 1. Overwrite the sample permalink
 		if ( preg_match( '/(<span id="sample-permalink"><a.*<\/a><\/span>)/m', $html ) ) {
-			$new_html = preg_replace('/(<span id="sample-permalink"><a.*<\/a><\/span>)/m', $sample_permalink_html, $html);
+			$new_html = preg_replace( '/(<span id="sample-permalink"><a.*<\/a><\/span>)/m', $sample_permalink_html, $html );
 		} else if ( preg_match( '/(<a id="sample-permalink"[^<]*>.*<\/a>)/m', $html ) ) {
-			$new_html = preg_replace('/(<a id="sample-permalink"[^<]*>.*<\/a>)/m', $sample_permalink_html, $html);
+			$new_html = preg_replace( '/(<a id="sample-permalink"[^<]*>.*<\/a>)/m', $sample_permalink_html, $html );
 		} else {
 			$new_html = $html;
 		}
@@ -742,7 +687,7 @@ class Permalink_Manager_URI_Functions_Post {
 		$new_html .= ( ! $autosave ) ? Permalink_Manager_UI_Elements::display_uri_box( $post ) : "";
 
 		// 3. Hide the "Edit" slug button
-		$new_html = str_replace('edit-slug button', 'edit-slug button hidden', $new_html );
+		$new_html = str_replace( 'edit-slug button', 'edit-slug button hidden', $new_html );
 
 		// 4. Append hidden field with native slug
 		$new_html .= ( ! empty( $post->post_name ) && strpos( $new_html, 'editable-post-name-full' ) === false ) ? "<span id=\"editable-post-name-full\">{$post->post_name}</span>" : "";
@@ -854,6 +799,8 @@ class Permalink_Manager_URI_Functions_Post {
 			$allow_save = apply_filters( 'permalink_manager_allow_update_post_uri', true, $post_object );
 		}
 
+		$new_uri = apply_filters( 'permalink_manager_pre_update_post_uri', $new_uri, $post_object->ID, $old_uri, $native_uri, $default_uri );
+
 		if ( ! $allow_save || ( ! empty( $auto_update_uri ) && $auto_update_uri == 2 ) ) {
 			$uri_saved = false;
 		} else if ( ! empty( $new_uri ) ) {
@@ -896,11 +843,6 @@ class Permalink_Manager_URI_Functions_Post {
 			return;
 		}
 
-		// Do not do anything on in "Quick Edit" & "Bulk Edit"
-		if ( ( isset( $_POST['permalink-manager-quick-edit'] ) || ! empty( $_REQUEST['bulk_edit'] ) ) ) {
-			return;
-		}
-
 		self::save_uri( $post_id, '', true, 0 );
 	}
 
@@ -917,11 +859,6 @@ class Permalink_Manager_URI_Functions_Post {
 
 		// Do not do anything if the field with URI or element ID are not present or different from the provided post ID
 		if ( ! isset( $_POST['custom_uri'] ) || empty( $_POST['permalink-manager-edit-uri-element-id'] ) || $_POST['permalink-manager-edit-uri-element-id'] != $post_id ) {
-			return;
-		}
-
-		// Do not do anything on in "Bulk Edit" or when the post is imported via WP All Import
-		if ( ! empty( $_REQUEST['bulk_edit'] ) || ( ! empty( $_REQUEST['page'] ) && $_REQUEST['page'] == 'pmxi-admin-import' ) ) {
 			return;
 		}
 
@@ -947,7 +884,6 @@ class Permalink_Manager_URI_Functions_Post {
 			}
 
 			self::update_slug_by_id( $_POST['native_slug'], $post_id );
-			clean_post_cache( $post_id );
 		}
 
 		self::save_uri( $post_id, $_POST['custom_uri'], false, $auto_update_mode );

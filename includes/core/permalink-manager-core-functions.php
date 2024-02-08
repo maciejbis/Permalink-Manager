@@ -220,12 +220,9 @@ class Permalink_Manager_Core_Functions {
 					$uri = strtolower( urldecode( $uri ) );
 
 					foreach ( $all_uris as $raw_uri => $uri_id ) {
-						$raw_uri              = urldecode( $raw_uri );
+						$raw_uri              = strtolower( urldecode( $raw_uri ) );
 						$all_uris[ $raw_uri ] = $uri_id;
 					}
-
-					// Convert array keys lowercase
-					$all_uris = array_change_key_case( $all_uris );
 
 					$element_id = isset( $all_uris[ $uri ] ) ? $all_uris[ $uri ] : $element_id;
 				}
@@ -534,8 +531,8 @@ class Permalink_Manager_Core_Functions {
 	static function control_trailing_slashes( $permalink ) {
 		global $permalink_manager_options;
 
-		// Ignore empty permalinks
-		if ( empty( $permalink ) ) {
+		// Ignore empty & numeric permalinks
+		if ( empty( $permalink ) || is_numeric( $permalink ) ) {
 			return $permalink;
 		}
 
@@ -578,15 +575,28 @@ class Permalink_Manager_Core_Functions {
 	 * Display 404 if requested page does not exist in pagination or the pagination format is incorrect
 	 */
 	function fix_pagination_pages() {
-		global $wp_query, $wp, $pm_query;
+		global $wp_query, $pm_query, $permalink_manager_options;
 
-		// 1. Get the queried object
-		$post = get_queried_object();
-		$post = ( empty( $post ) && ! empty( $wp_query->post ) ) ? $wp_query->post : $post;
+		// 1. Check if the custom permalink was detected
+		if ( empty( $pm_query['id'] ) ) {
+			return;
+		}
 
-		// 2. Check if post object is defined
-		if ( ( ! empty( $post->post_type ) && isset( $post->post_content ) ) || ( ! empty( $wp_query->max_num_pages ) ) ) {
-			// 2.1A. Check if pagination is detected
+		// 2. Get the queried object
+		$object = get_queried_object();
+
+		if ( ! empty( $object ) && ! empty( $object->taxonomy ) ) {
+			$term = $object;
+		} else if ( ! empty( $object->post_type ) ) {
+			$post = $object;
+		} else if ( empty( $object ) && ! empty( $wp_query->post ) ) {
+			$post = $wp_query->post;
+		} else {
+			return;
+		}
+
+		// 3.1. Validate the pages count
+		if ( ( ! empty( $post->post_type ) && isset( $post->post_content ) ) || ( isset( $wp_query->max_num_pages ) && ! empty( $term->taxonomy ) ) ) {
 			$current_page = ( ! empty( $wp_query->query_vars['page'] ) ) ? $wp_query->query_vars['page'] : 1;
 			$current_page = ( empty( $wp_query->query_vars['page'] ) && ! empty( $wp_query->query_vars['paged'] ) ) ? $wp_query->query_vars['paged'] : $current_page;
 
@@ -594,30 +604,34 @@ class Permalink_Manager_Core_Functions {
 			$post_content = ( ! empty( $post->post_content ) ) ? $post->post_content : '';
 			$num_pages    = ( is_home() || is_archive() || is_search() ) ? $wp_query->max_num_pages : substr_count( strtolower( $post_content ), '<!--nextpage-->' ) + 1;
 
-			// 2.1C. Remove 'do_not_redirect' parameter if the first page of content is requested to force canonical redirect
-			if ( ! empty( $pm_query['id'] ) && is_numeric( $pm_query['id'] ) && ! empty( $wp->query_vars['do_not_redirect'] ) && empty( $pm_query['endpoint'] ) && $pm_query['endpoint_value'] == 1 ) {
-				$is_404                            = true;
-				$wp->query_vars['do_not_redirect'] = 0;
-				set_query_var( 'p', $pm_query['id'] );
-			} else {
-				$is_404 = ( $current_page > 1 && ( $current_page > $num_pages ) ) ? true : false;
-			}
-		} // 2.2. Force 404 if no posts are loaded
+			$is_404 = ( $current_page > 1 && ( $current_page > $num_pages ) ) ? true : false;
+		} // 3.2. Force 404 if no posts are loaded
 		else if ( ! empty( $wp_query->query['paged'] ) && $wp_query->post_count == 0 ) {
 			$is_404 = true;
 		}
 
-		// 2.3. Force 404 if endpoint value is not set or not numeric
+		// 3.4. Force 404 if endpoint value is not set or not numeric
 		if ( ! empty( $pm_query['endpoint'] ) && $pm_query['endpoint'] == 'page' && ( empty( $pm_query['endpoint_value'] ) || ! is_numeric( $pm_query['endpoint_value'] ) ) ) {
 			$is_404 = true;
 		}
 
-		// 3. Block non-existent pages (Force 404 error)
+		// 4. Block non-existent pages (Force 404 error or allow canonical redirect)
 		if ( ! empty( $is_404 ) ) {
+			$pagination_mode = ( ! empty( $permalink_manager_options['general']['pagination_redirect'] ) ) ? $permalink_manager_options['general']['pagination_redirect'] : false;
+
 			$wp_query->query = $wp_query->queried_object = $wp_query->queried_object_id = null;
+			wp_reset_query();
+			wp_reset_postdata();
+
+			// Make sure that canonical redirect is not disabled in adjust_canonical_redirect() method
+			if ( $pagination_mode == 2 ) {
+				$wp_query->query_vars['do_not_redirect'] = 0;
+			}
+
 			$wp_query->set_404();
 			status_header( 404 );
 			nocache_headers();
+
 			$pm_query = '';
 		}
 	}
@@ -636,7 +650,6 @@ class Permalink_Manager_Core_Functions {
 		$canonical_redirect        = ( ! empty( $permalink_manager_options['general']['canonical_redirect'] ) ) ? $permalink_manager_options['general']['canonical_redirect'] : false;
 		$old_slug_redirect         = ( ! empty( $permalink_manager_options['general']['old_slug_redirect'] ) ) ? $permalink_manager_options['general']['old_slug_redirect'] : false;
 		$endpoint_redirect         = ( ! empty( $permalink_manager_options['general']['endpoint_redirect'] ) ) ? $permalink_manager_options['general']['endpoint_redirect'] : false;
-		$pagination_redirect       = ( ! empty( $permalink_manager_options['general']['pagination_redirect'] ) ) ? $permalink_manager_options['general']['pagination_redirect'] : false;
 		$copy_query_redirect       = ( ! empty( $permalink_manager_options['general']['copy_query_redirect'] ) ) ? $permalink_manager_options['general']['copy_query_redirect'] : false;
 		$redirect_type             = '-';
 
@@ -739,7 +752,7 @@ class Permalink_Manager_Core_Functions {
 			/**
 			 * 1C. Pagination redirect
 			 */
-			if ( $pagination_redirect && ( ( isset( $wp_query->query_vars['paged'] ) && $wp_query->query_vars['paged'] == 1 ) || ( isset( $wp_query->query_vars['page'] ) && $wp_query->query_vars['page'] == 1 && ! empty( $pm_query['endpoint_value'] ) ) ) ) {
+			if ( ( isset( $wp_query->query_vars['paged'] ) && $wp_query->query_vars['paged'] == 1 ) || ( isset( $wp_query->query_vars['page'] ) && $wp_query->query_vars['page'] == 1 && ! empty( $pm_query['endpoint_value'] ) ) ) {
 				$pm_query['endpoint']                    = $pm_query['endpoint_value'] = '';
 				$wp_query->query_vars['do_not_redirect'] = 0;
 			}
@@ -824,7 +837,7 @@ class Permalink_Manager_Core_Functions {
 		/**
 		 * 4. Check trailing & duplicated slashes (ignore links with query parameters)
 		 */
-		if ( ( ( $trailing_slashes_mode && $trailing_slashes_redirect ) || preg_match( '/\/{2,}/', $old_uri ) ) && empty( $correct_permalink ) && empty( $query_string ) && ! empty( $old_uri ) && $old_uri !== "/" ) {
+		if ( ( ( $trailing_slashes_mode && $trailing_slashes_redirect ) || preg_match( '/\/{2,}/', $old_uri ) ) && empty( $correct_permalink ) && ! empty( $old_uri ) && $old_uri !== "/" ) {
 			$trailing_slash = ( substr( $old_uri, - 1 ) == "/" ) ? true : false;
 			$obsolete_slash = ( preg_match( '/\/{2,}/', $old_uri ) || preg_match( "/.*\.([a-zA-Z]{3,4})\/$/", $old_uri ) );
 
@@ -887,7 +900,7 @@ class Permalink_Manager_Core_Functions {
 	 * Control how the canonical redirect function in WordPress and other popular plugins works
 	 */
 	function adjust_canonical_redirect() {
-		global $permalink_manager_options, $wp, $wp_rewrite;
+		global $permalink_manager_options, $wp, $wp_query, $wp_rewrite, $pm_query;
 
 		// Adjust rewrite settings for trailing slashes
 		$trailing_slash_setting = ( ! empty( $permalink_manager_options['general']['trailing_slashes'] ) ) ? $permalink_manager_options['general']['trailing_slashes'] : "";
@@ -904,7 +917,7 @@ class Permalink_Manager_Core_Functions {
 		// Check if any endpoint is called (fix for endpoints)
 		foreach ( $endpoints_array as $endpoint ) {
 			if ( ! empty( $wp->query_vars[ $endpoint ] ) && ! in_array( $endpoint, array( 'attachment', 'page', 'paged', 'feed' ) ) ) {
-				$wp->query_vars['do_not_redirect'] = 1;
+				$wp_query->query_vars['do_not_redirect'] = 1;
 				break;
 			}
 		}
@@ -917,12 +930,12 @@ class Permalink_Manager_Core_Functions {
 			remove_action( 'template_redirect', 'wp_old_slug_redirect' );
 		}
 
-		if ( ! empty( $wp->query_vars['do_not_redirect'] ) ) {
+		if ( ! empty( $wp_query->query_vars['do_not_redirect'] ) ) {
 			if ( function_exists( 'rank_math' ) && ! empty( $permalink_manager_options['general']['rankmath_redirect'] ) ) {
 				$rank_math_instance = rank_math();
 
-				if ( property_exists( $rank_math_instance, 'container' ) && is_array( $rank_math_instance->container ) && is_object( $rank_math_instance->container['manager'] ) && method_exists( $rank_math_instance->container['manager'], 'get_module' ) ) {
-					$rank_math_redirections_module = $rank_math_instance->container['manager']->get_module( 'redirections' );
+				if ( ! empty( $rank_math_instance->manager ) && is_object( $rank_math_instance->manager ) && method_exists( $rank_math_instance->manager, 'get_module' ) ) {
+					$rank_math_redirections_module = $rank_math_instance->manager->get_module( 'redirections' );
 
 					if ( ! empty( $rank_math_redirections_module ) ) {
 						remove_action( 'template_redirect', array( $rank_math_redirections_module, 'do_redirection' ), 11 );
