@@ -7,7 +7,7 @@ Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, url edit
 Requires at least: 4.4.0
 Requires PHP: 5.4
 Tested up to: 6.5.0
-Stable tag: 2.4.3
+Stable tag: 2.4.3.1
 
 Permalink Manager lets you customize the complete URL addresses of your posts, pages, custom post types, terms, and WooCommerce links with ease without touching any core files.
 
@@ -96,6 +96,10 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 8.	Permalink Manager settings.
 
 == Changelog ==
+
+= 2.4.3.1 (February 12, 2024) =
+* Fix - Security fix for Permalink_Manager_Actions->ajax_detect_duplicates() function
+* Dev - Minor code improvements
 
 = 2.4.3 (February 6, 2024) =
 * Fix - Code refactoring and optimization

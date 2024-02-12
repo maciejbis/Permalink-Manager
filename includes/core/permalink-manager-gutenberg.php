@@ -40,7 +40,9 @@ class Permalink_Manager_Gutenberg {
 		}
 
 		add_meta_box( 'permalink-manager', __( 'Permalink Manager', 'permalink-manager' ), array( $this, 'get_uri_editor' ), '', 'side', 'high' );
-		// wp_enqueue_script('permalink-manager-gutenberg', PERMALINK_MANAGER_URL . '/out/permalink-manager-gutenberg.js', array('wp-plugins', 'wp-edit-post', 'wp-i18n', 'wp-element'));
+
+		// wp_enqueue_script( 'permalink-manager-gutenberg', PERMALINK_MANAGER_URL . '/out/permalink-manager-gutenberg.js', array( 'wp-plugins', 'wp-edit-post', 'wp-i18n', 'wp-element' ) );
+		// wp_enqueue_style( 'permalink-manager-gutenberg', PERMALINK_MANAGER_URL . '/out/permalink-manager-gutenberg.css', array(), PERMALINK_MANAGER_VERSION );
 	}
 
 	/**

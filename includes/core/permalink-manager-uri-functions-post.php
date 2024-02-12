@@ -824,7 +824,7 @@ class Permalink_Manager_URI_Functions_Post {
 		global $permalink_manager_uris;
 
 		// Do not trigger if post is a revision or imported via WP All Import (URI should be set after the post meta is added)
-		if ( wp_is_post_revision( $post_id ) || ( ! empty( $_REQUEST['page'] ) && $_REQUEST['page'] == 'pmxi-admin-import' ) ) {
+		if ( empty( $post_id ) || wp_is_post_revision( $post_id ) || ( ! empty( $_REQUEST['page'] ) && $_REQUEST['page'] == 'pmxi-admin-import' ) ) {
 			return;
 		}
 
@@ -834,7 +834,7 @@ class Permalink_Manager_URI_Functions_Post {
 		}
 
 		// Do not process REST API requests originating from Gutenberg JS functions
-		if ( defined( 'REST_REQUEST' ) && REST_REQUEST && ! empty( $_SERVER['HTTP_REFERER'] ) && ( strpos( $_SERVER['HTTP_REFERER'], 'wp-admin/post' ) !== false ) ) {
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST && ! empty( $_SERVER['HTTP_X_WP_NONCE'] ) ) {
 			return;
 		}
 

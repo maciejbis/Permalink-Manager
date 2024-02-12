@@ -707,32 +707,24 @@ class Permalink_Manager_Actions {
 
 	/**
 	 * Check if URI was used before
-	 *
-	 * @param string $uri
-	 * @param string $element_id
 	 */
-	function ajax_detect_duplicates( $uri = null, $element_id = null ) {
+	function ajax_detect_duplicates() {
 		$duplicate_alert = __( "Permalink is already in use, please select another one!", "permalink-manager" );
+		$duplicates_data = array();
 
 		if ( ! empty( $_REQUEST['custom_uris'] ) ) {
-			// Sanitize the array
-			$custom_uris      = Permalink_Manager_Helper_Functions::sanitize_array( $_REQUEST['custom_uris'] );
-			$duplicates_array = array();
+			$custom_uris = Permalink_Manager_Helper_Functions::sanitize_array( $_REQUEST['custom_uris'] );
 
 			// Check each URI
-			foreach ( $custom_uris as $element_id => $uri ) {
-				$duplicates_array[ $element_id ] = Permalink_Manager_Admin_Functions::is_uri_duplicated( $uri, $element_id ) ? $duplicate_alert : 0;
+			foreach ( $custom_uris as $raw_element_id => $element_uri ) {
+				$element_id                     = sanitize_key( $raw_element_id );
+				$duplicates_data[ $element_id ] = Permalink_Manager_Admin_Functions::is_uri_duplicated( $element_uri, $element_id ) ? $duplicate_alert : 0;
 			}
-
-			// Convert the output to JSON and stop the function
-			echo json_encode( $duplicates_array );
 		} else if ( ! empty( $_REQUEST['custom_uri'] ) && ! empty( $_REQUEST['element_id'] ) ) {
-			$is_duplicated = Permalink_Manager_Admin_Functions::is_uri_duplicated( $uri, $element_id );
-
-			echo ( $is_duplicated ) ? $duplicate_alert : 0;
+			$duplicates_data = Permalink_Manager_Admin_Functions::is_uri_duplicated( $_REQUEST['custom_uri'], sanitize_key( $_REQUEST['element_id'] ) );
 		}
 
-		die();
+		wp_send_json( $duplicates_data );
 	}
 
 	/**
