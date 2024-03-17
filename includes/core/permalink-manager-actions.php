@@ -696,7 +696,7 @@ class Permalink_Manager_Actions {
 	public function ajax_save_permalink() {
 		$element_id = ( ! empty( $_POST['permalink-manager-edit-uri-element-id'] ) ) ? sanitize_text_field( $_POST['permalink-manager-edit-uri-element-id'] ) : '';
 
-		if ( ! empty( $element_id ) && is_numeric( $element_id ) ) {
+		if ( ! empty( $element_id ) && is_numeric( $element_id ) && current_user_can( 'edit_post', $element_id ) ) {
 			Permalink_Manager_URI_Functions_Post::update_post_hook( $element_id );
 
 			// Reload URI Editor & clean post cache

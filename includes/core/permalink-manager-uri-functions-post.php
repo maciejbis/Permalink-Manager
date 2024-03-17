@@ -128,10 +128,11 @@ class Permalink_Manager_URI_Functions_Post {
 	 *
 	 * @param string $slug
 	 * @param int $id
+	 * @param bool $preview_mode
 	 *
 	 * @return string
 	 */
-	static function update_slug_by_id( $slug, $id ) {
+	static function update_slug_by_id( $slug, $id, $preview_mode = false ) {
 		global $wpdb;
 
 		// Update slug and make it unique
@@ -139,9 +140,11 @@ class Permalink_Manager_URI_Functions_Post {
 		$slug = sanitize_title( $slug );
 
 		$new_slug = wp_unique_post_slug( $slug, $id, get_post_status( $id ), get_post_type( $id ), 0 );
-		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->posts} SET post_name = %s WHERE ID = %d", $new_slug, $id ) );
 
-		clean_post_cache( $id );
+		if ( ! $preview_mode ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->posts} SET post_name = %s WHERE ID = %d", $new_slug, $id ) );
+			clean_post_cache( $id );
+		}
 
 		return $new_slug;
 	}
@@ -544,8 +547,8 @@ class Permalink_Manager_URI_Functions_Post {
 				}
 
 				// Check if native slug should be changed
-				if ( ( $mode == 'slugs' ) && ( $old_post_name !== $new_post_name ) && ! $preview_mode ) {
-					$new_post_name = self::update_slug_by_id( $new_post_name, $row['ID'] );
+				if ( $mode == 'slugs' && $old_post_name !== $new_post_name ) {
+					$new_post_name = self::update_slug_by_id( $new_post_name, $row['ID'], $preview_mode );
 				}
 
 				$new_uri = apply_filters( 'permalink_manager_pre_update_post_uri', $new_uri, $row['ID'], $old_uri, $native_uri, $default_uri );
@@ -859,6 +862,11 @@ class Permalink_Manager_URI_Functions_Post {
 
 		// Do not do anything if the field with URI or element ID are not present or different from the provided post ID
 		if ( ! isset( $_POST['custom_uri'] ) || empty( $_POST['permalink-manager-edit-uri-element-id'] ) || $_POST['permalink-manager-edit-uri-element-id'] != $post_id ) {
+			return;
+		}
+
+		// Check if the user can edit this post
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
 		}
 
