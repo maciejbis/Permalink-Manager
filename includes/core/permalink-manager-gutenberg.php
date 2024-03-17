@@ -57,8 +57,10 @@ class Permalink_Manager_Gutenberg {
 			$post = get_post( $_REQUEST['post_id'] );
 		}
 
-		// Display URI Editor
-		echo ( $post ) ? Permalink_Manager_UI_Elements::display_uri_box( $post, true ) : '';
+		// Check if the user can edit this post
+		if ( ! empty( $post->ID ) && current_user_can( 'edit_post', $post->ID ) ) {
+			echo ( $post ) ? Permalink_Manager_UI_Elements::display_uri_box( $post, true ) : '';
+		}
 
 		if ( wp_doing_ajax() ) {
 			die();

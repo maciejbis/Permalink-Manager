@@ -174,15 +174,15 @@ class Permalink_Manager_UI_Elements {
 				break;
 
 			case 'textarea' :
-				$fields .= "<textarea {$input_atts} name='{$input_name}' {$rows}>{$value}</textarea>";
+				$fields .= sprintf( "<textarea %s name='%s' %s>%s</textarea>", $input_atts, $input_name, $rows, esc_textarea( $value ) );
 				break;
 
 			case 'pre' :
-				$fields .= "<pre {$input_atts}>{$value}</pre>";
+				$fields .= sprintf( "<pre %s>%s</pre>", $input_atts, esc_textarea( $value ) );
 				break;
 
 			case 'info' :
-				$fields .= "<div {$input_atts}>{$value}</div>";
+				$fields .= sprintf( "<div %s>%s</div>", $input_atts, $value );
 				break;
 
 			case 'clearfix' :

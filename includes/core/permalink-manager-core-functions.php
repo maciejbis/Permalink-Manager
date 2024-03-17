@@ -752,7 +752,7 @@ class Permalink_Manager_Core_Functions {
 			/**
 			 * 1C. Pagination redirect
 			 */
-			if ( ( isset( $wp_query->query_vars['paged'] ) && $wp_query->query_vars['paged'] == 1 ) || ( isset( $wp_query->query_vars['page'] ) && $wp_query->query_vars['page'] == 1 && ! empty( $pm_query['endpoint_value'] ) ) ) {
+			if ( ( ( isset( $wp_query->query_vars['paged'] ) && $wp_query->query_vars['paged'] == 1 ) || ( isset( $wp_query->query_vars['page'] ) && $wp_query->query_vars['page'] == 1 ) ) && ! empty( $pm_query['endpoint_value'] ) ) {
 				$pm_query['endpoint']                    = $pm_query['endpoint_value'] = '';
 				$wp_query->query_vars['do_not_redirect'] = 0;
 			}

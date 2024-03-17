@@ -7,7 +7,7 @@ Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, url edit
 Requires at least: 4.4.0
 Requires PHP: 5.4
 Tested up to: 6.5.0
-Stable tag: 2.4.3.1
+Stable tag: 2.4.3.2
 
 Permalink Manager lets you customize the complete URL addresses of your posts, pages, custom post types, terms, and WooCommerce links with ease without touching any core files.
 
@@ -27,7 +27,7 @@ The plugin works with all custom post types and taxonomies, as well as many popu
 * **Edit URLs in bulk using permalink formats**<br/>In order to speed up the process of bulk URL modification, the plugin allows you to choose the default format for custom URLs using "Permastructures" settings. The new format will be applied automatically when a new post/term is added or once the old permalinks are regenerated.
 * **Custom post types support**<br/>You may easily remove post type rewrite (base) slugs from your WordPress permalinks, for example. The plugin may be configured to filter just specified post types and taxonomies permalinks, excluding the rest of your content types.
 * **Translate permalinks**<br/>If you have the WPML or Polylang plugins installed on your website, Permalink Manager allows you to translate the slug and specify different permalink format/structure for each language.
-* **Remove parent slugs**<br/>Looking for a simple solution to shorten lengthy, hierarchical URL addresses? The plugin may be used to <a href="https://permalinkmanager.pro/docs/basics/bulk-edit-custom-permalinks/#remove-parent-slugs/">remove parent slugs from WordPress permalinks</a>.
+* **Remove parent slugs**<br/>Looking for a simple solution to shorten lengthy, hierarchical URL addresses? The plugin may be used to <a href="https://permalinkmanager.pro/docs/tutorials/wordpress-permalinks-structure/#remove-parent-slugs">remove parent slugs from WordPress permalinks</a>.
 * **Add category slug to post permalinks**<br/>Do you want to <a href="https://permalinkmanager.pro/docs/tutorials/add-category-slug-wordpress-permalinks/">add category slugs in your post permalinks</a>? Permalink Manager is the most convenient way to create a silo structure for your URL addresses.
 * **Auto-redirect old URLs**<br/>An old (original) URL is automatically forwarded to an updated URL to avoid the 404 error and to improve the user experience.
 
@@ -96,6 +96,10 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 8.	Permalink Manager settings.
 
 == Changelog ==
+
+= 2.4.3.2 (March 18, 2024) =
+* Fix - Further security improvements for AJAX functions and "Bulk Tools"
+* Dev - Minor code improvements
 
 = 2.4.3.1 (February 12, 2024) =
 * Fix - Security fix for Permalink_Manager_Actions->ajax_detect_duplicates() function
