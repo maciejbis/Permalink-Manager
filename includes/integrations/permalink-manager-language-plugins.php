@@ -788,7 +788,7 @@ class Permalink_Manager_Language_Plugins {
 	 * @param stdClass $job
 	 */
 	function wpml_save_uri_after_wpml_translation_completed( $post_id, $postdata, $job ) {
-		global $permalink_manager_uris;
+		global $permalink_manager_uris, $permalink_manager_options;
 
 		$post_object = get_post( $post_id );
 
@@ -802,14 +802,22 @@ class Permalink_Manager_Language_Plugins {
 		// A. Use the translated custom permalink (if available)
 		if ( ! empty( $postdata['Custom URI'] ) ) {
 			$new_uri = ( ! empty( $postdata['Custom URI']['data'] ) && ! in_array( $postdata['Custom URI']['data'], array( '-', 'auto' ) ) ) ? Permalink_Manager_Helper_Functions::sanitize_title( $postdata['Custom URI']['data'] ) : $default_uri;
-		} // B. Generate the new custom permalink
+		} // B. Generate the new custom permalink (if not set earlier)
 		else if ( empty( $permalink_manager_uris[ $post_id ] ) ) {
 			$new_uri = $default_uri;
+		} // C. Auto-update custom permalink
+		else if ( ! empty( $job->original_doc_id ) ) {
+			$auto_update_uri = get_post_meta( $job->original_doc_id, 'auto_update_uri', true );
+			$auto_update_uri = ( ! empty( $auto_update_uri ) ) ? $auto_update_uri : $permalink_manager_options['general']['auto_update_uris'];
+
+			if ( $auto_update_uri == 1 ) {
+				$new_uri = $default_uri;
+			}
 		}
 
 		// Save the custom permalink
 		if ( ! empty( $new_uri ) ) {
-			Permalink_Manager_URI_Functions::save_single_uri( $post_id, $new_uri, false, true );
+			Permalink_Manager_URI_Functions_Post::save_uri( $post_object, $new_uri, false );
 		}
 	}
 
@@ -877,7 +885,7 @@ class Permalink_Manager_Language_Plugins {
 			$translation_id = $in;
 		}
 
-		if ( isset( $data['pm-custom_uri'] ) && isset( $data['pm-custom_uri']['data'] ) && ! empty( $translation_id ) ) {
+		if ( isset( $data['pm-custom_uri']['data'] ) && ! empty( $translation_id ) ) {
 			$pre_custom_uri = trim( $data['pm-custom_uri']['data'] );
 			$custom_uri     = ( ! empty( $pre_custom_uri ) && $pre_custom_uri !== '-' ) ? Permalink_Manager_Helper_Functions::sanitize_title( $pre_custom_uri, true ) : Permalink_Manager_URI_Functions_Post::get_default_post_uri( $translation_id );
 

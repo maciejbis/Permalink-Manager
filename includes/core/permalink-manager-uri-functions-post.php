@@ -115,12 +115,7 @@ class Permalink_Manager_URI_Functions_Post {
 			$permalink = "{$home_url}/{$permalink_manager_uris[$post->post_parent]}/attachment/{$post->post_name}";
 		}
 
-		// 5. Allow to filter (do not filter in Customizer)
-		if ( ! ( function_exists( 'is_customize_preview' ) && is_customize_preview() ) ) {
-			return apply_filters( 'permalink_manager_filter_final_post_permalink', $permalink, $post, $old_permalink );
-		} else {
-			return $old_permalink;
-		}
+		return apply_filters( 'permalink_manager_filter_final_post_permalink', $permalink, $post, $old_permalink );
 	}
 
 	/**
@@ -882,7 +877,7 @@ class Permalink_Manager_URI_Functions_Post {
 		}
 
 		// Update the slug (if changed)
-		if ( ! empty( $post->post_name ) && isset( $_POST['native_slug'] ) && ( $_POST['native_slug'] !== $post->post_name ) ) {
+		if ( isset( $_POST['permalink-manager-edit-uri-element-slug'] ) && isset( $_POST['native_slug'] ) && ( $_POST['native_slug'] !== $post->post_name ) ) {
 			// Make sure that '_wp_old_slug' is saved
 			if ( ! empty( $_POST['post_name'] ) || ( isset( $_POST['action'] ) && in_array( $_POST['action'], array( 'pm_save_permalink', 'editpost' ) ) ) ) {
 				$post_after            = clone $post;

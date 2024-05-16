@@ -107,11 +107,6 @@ class Permalink_Manager_Third_Parties {
 			add_filter( 'permalink_manager_excluded_post_ids', array( $this, 'learnpress_exclude_pages' ) );
 		}
 
-		// Bricks
-		if ( class_exists( '\Bricks\Theme' ) ) {
-			add_filter( 'permalink_manager_filter_query', array( $this, 'bricks_fix_template' ), 10, 5 );
-		}
-
 		// Google Site Kit
 		if ( class_exists( '\Google\Site_Kit\Plugin' ) ) {
 			add_filter( 'request', array( $this, 'googlesitekit_fix_request' ), 10, 1 );
@@ -1100,31 +1095,6 @@ class Permalink_Manager_Third_Parties {
 		}
 
 		return $excluded_ids;
-	}
-
-	/**
-	 * Remove the obsolete 'term' and 'taxonomy' query parameters if Bricks theme is detected
-	 *
-	 * @param array $query The query object.
-	 * @param array $old_query The original query array.
-	 * @param array $uri_parts An array of the URI parts.
-	 * @param array $pm_query
-	 * @param string $content_type
-	 *
-	 * @return array
-	 */
-	function bricks_fix_template( $query, $old_query, $uri_parts, $pm_query, $content_type ) {
-		if ( ! empty( $pm_query ) && ! empty( $query['term'] ) && ! empty( $query['taxonomy'] ) ) {
-			$taxonomy = get_taxonomy( $query['taxonomy'] );
-
-			// Check if the taxonomy has a 'query_var'
-			if ( ! empty( $taxonomy->query_var ) ) {
-				unset( $query['taxonomy'] );
-				unset( $query['term'] );
-			}
-		}
-
-		return $query;
 	}
 
 	/**

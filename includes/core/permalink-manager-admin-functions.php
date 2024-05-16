@@ -45,8 +45,10 @@ class Permalink_Manager_Admin_Functions {
 		}
 
 		$permalink_manager_ignore_permalink_filters = true;
-		if ( ! empty( $object->ID ) ) {
+		if ( ! empty( $object->ID ) && is_a( $object, 'WP_Post' ) ) {
 			$new_url = get_permalink( $object->ID );
+		} else if ( ! empty( $object->taxonomy ) && is_a( $object, 'WP_Term' ) ) {
+			$new_url = get_term_link( $object, $object->taxonomy );
 		}
 		$permalink_manager_ignore_permalink_filters = false;
 

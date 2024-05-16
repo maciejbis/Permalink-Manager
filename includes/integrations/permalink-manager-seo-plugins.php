@@ -29,7 +29,7 @@ class Permalink_Manager_SEO_Plugins {
 		add_filter( 'seopress_pro_breadcrumbs_crumbs', array( $this, 'filter_breadcrumbs' ), 9 );
 		add_filter( 'woocommerce_get_breadcrumb', array( $this, 'filter_breadcrumbs' ), 9 );
 		add_filter( 'slim_seo_breadcrumbs_links', array( $this, 'filter_breadcrumbs' ), 9 );
-		// add_filter( 'aioseo_breadcrumbs_trail', array( $this, 'filter_breadcrumbs' ), 9 );
+		add_filter( 'aioseo_breadcrumbs_trail', array( $this, 'filter_breadcrumbs' ), 9 );
 		add_filter( 'avia_breadcrumbs_trail', array( $this, 'filter_breadcrumbs' ), 100 );
 	}
 

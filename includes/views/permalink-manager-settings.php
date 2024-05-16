@@ -241,9 +241,9 @@ class Permalink_Manager_Settings {
 					),
 					'pagination_redirect' => array(
 						'type'        => 'select',
-						'label'       => __( 'Force 404 on non-existing pagination pages', 'permalink-manager' ),
-						'choices'     => array( 0 => __( 'No', 'permalink-manager' ), 1 => __( 'Yes, sent "404" status code and stop canonical redirect', 'permalink-manager' ), 2 => __( 'Yes, sent "404" status code but allow canonical redirect', 'permalink-manager' ) ),
-						'description' => __( 'If enabled, the non-existing pagination pages (for single posts) will return 404 ("Not Found") error.<br /><strong>Please disable it, if you encounter any problems with pagination pages or use custom pagination system.</strong>', 'permalink-manager' )
+						'label'       => __( 'Handling non-existent pagination pages', 'permalink-manager' ),
+						'choices'     => array( 0 => __( 'Stop canonical redirect without forcing "404" status code', 'permalink-manager' ), 1 => __( 'Stop canonical redirect and force "404" status code', 'permalink-manager' ), 2 => __( 'Allow canonical redirect without forcing "404" status code', 'permalink-manager' ) ),
+						'description' => __( 'Decide if you would like the plugin to force a "404" error or allow canonical redirect for pagination pages that do not exist.<br /><strong>If you experience any issues with pagination pages, please select the first option.</strong>', 'permalink-manager' )
 					),
 					'disable_slug_sanitization' => array(
 						'type'        => 'select',

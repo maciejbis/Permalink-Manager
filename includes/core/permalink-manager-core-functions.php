@@ -91,7 +91,7 @@ class Permalink_Manager_Core_Functions {
 		$raw_home_url = trim( get_option( 'home' ) );
 		$home_url     = preg_replace( "/http(s)?:\/\/(www\.)?(.+?)\/?$/", "http://$3", $raw_home_url );
 
-		if ( filter_var( $request_url, FILTER_VALIDATE_URL ) ) {
+		if ( parse_url( $request_url, PHP_URL_HOST ) ) {
 			// Check if "Deep Detect" is enabled
 			$deep_detect_enabled = apply_filters( 'permalink_manager_deep_uri_detect', true );
 
@@ -261,23 +261,15 @@ class Permalink_Manager_Core_Functions {
 					$term_element_id = apply_filters( 'permalink_manager_detected_term_id', $term_element_id, $uri_parts, true );
 
 					// Get the variables to filter wp_query and double-check if taxonomy exists
-					$term = $element_object = ( ! empty( $term_element_id ) && is_numeric( $term_element_id ) ) ? get_term( $term_element_id ) : false;
-					$term_taxonomy  = ( ! empty( $term->taxonomy ) ) ? $term->taxonomy : false;
+					$term                 = $element_object = ( ! empty( $term_element_id ) && is_numeric( $term_element_id ) ) ? get_term( $term_element_id ) : false;
+					$term_taxonomy        = ( ! empty( $term->taxonomy ) ) ? $term->taxonomy : false;
+					$term_taxonomy_object = ( ! empty( $term_taxonomy ) ) ? get_taxonomy( $term_taxonomy ) : '';
 
 					// Check if term is allowed
-					$disabled = ( $term_taxonomy && Permalink_Manager_Helper_Functions::is_term_excluded( $term ) ) ? true : false;
+					$disabled = ( $term_taxonomy_object && Permalink_Manager_Helper_Functions::is_term_excluded( $term ) ) ? true : false;
 
 					// Proceed only if the term is not removed and its taxonomy is not disabled
-					if ( ! $disabled && $term_taxonomy ) {
-						// Get some term data
-						if ( $term_taxonomy == 'category' ) {
-							$query_parameter = 'category_name';
-						} else if ( $term_taxonomy == 'post_tag' ) {
-							$query_parameter = 'tag';
-						} else {
-							$query["taxonomy"] = $term_taxonomy;
-							$query_parameter   = $term_taxonomy;
-						}
+					if ( ! $disabled && $term_taxonomy_object ) {
 						$term_ancestors = get_ancestors( $element_id, $term_taxonomy );
 						$final_uri      = $term->slug;
 
@@ -291,8 +283,12 @@ class Permalink_Manager_Core_Functions {
 							}
 						}
 
-						$query["term"]             = $term->slug;
-						$query[ $query_parameter ] = $term->slug;
+						if ( empty( $term_taxonomy_object->query_var ) ) {
+							$query["taxonomy"] = $term_taxonomy;
+							$query["term"]     = $term->slug;
+						} else {
+							$query[ $term_taxonomy_object->query_var ] = $term->slug;
+						}
 					} else if ( $disabled ) {
 						$broken_uri = true;
 						$query      = $old_query;
@@ -321,7 +317,7 @@ class Permalink_Manager_Core_Functions {
 					$post_type    = ( ! empty( $post_to_load->post_type ) ) ? $post_to_load->post_type : false;
 
 					// Check if post is allowed
-					$disabled = ( $post_type && Permalink_Manager_Helper_Functions::is_post_excluded( $post_to_load ) ) ? true : false;
+					$disabled = ( $post_type && Permalink_Manager_Helper_Functions::is_post_excluded( $post_to_load, true ) ) ? true : false;
 
 					// Proceed only if the term is not removed and its taxonomy is not disabled
 					if ( ! $disabled && $post_type ) {
@@ -575,7 +571,7 @@ class Permalink_Manager_Core_Functions {
 	 * Display 404 if requested page does not exist in pagination or the pagination format is incorrect
 	 */
 	function fix_pagination_pages() {
-		global $wp_query, $pm_query, $permalink_manager_options;
+		global $wp_query, $pm_query, $post, $permalink_manager_options;
 
 		// 1. Check if the custom permalink was detected
 		if ( empty( $pm_query['id'] ) ) {
@@ -619,18 +615,15 @@ class Permalink_Manager_Core_Functions {
 		if ( ! empty( $is_404 ) ) {
 			$pagination_mode = ( ! empty( $permalink_manager_options['general']['pagination_redirect'] ) ) ? $permalink_manager_options['general']['pagination_redirect'] : false;
 
-			$wp_query->query = $wp_query->queried_object = $wp_query->queried_object_id = null;
-			wp_reset_query();
-			wp_reset_postdata();
-
 			// Make sure that canonical redirect is not disabled in adjust_canonical_redirect() method
 			if ( $pagination_mode == 2 ) {
 				$wp_query->query_vars['do_not_redirect'] = 0;
+			} else {
+				$wp_query->query = $wp_query->queried_object = $wp_query->queried_object_id = $pm_query = $post = null;
+				$wp_query->set_404();
+				status_header( 404 );
+				nocache_headers();
 			}
-
-			$wp_query->set_404();
-			status_header( 404 );
-			nocache_headers();
 
 			$pm_query = '';
 		}
@@ -667,7 +660,7 @@ class Permalink_Manager_Core_Functions {
 
 		$query_string = ( $copy_query_redirect && ! empty( $_SERVER['QUERY_STRING'] ) ) ? $_SERVER['QUERY_STRING'] : '';
 		$old_uri      = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
-		$old_uri      = ( empty( $old_uri ) ) ? strtok( $_SERVER["REQUEST_URI"], '?' ) : $old_uri;
+		$old_uri      = $old_uri_abs = ( empty( $old_uri ) ) ? strtok( $_SERVER["REQUEST_URI"], '?' ) : $old_uri;
 
 		// Fix for WP installed in directories (remove the directory name from the URI)
 		if ( ! empty( $home_dir ) ) {
@@ -750,15 +743,7 @@ class Permalink_Manager_Core_Functions {
 			}
 
 			/**
-			 * 1C. Pagination redirect
-			 */
-			if ( ( ( isset( $wp_query->query_vars['paged'] ) && $wp_query->query_vars['paged'] == 1 ) || ( isset( $wp_query->query_vars['page'] ) && $wp_query->query_vars['page'] == 1 ) ) && ! empty( $pm_query['endpoint_value'] ) ) {
-				$pm_query['endpoint']                    = $pm_query['endpoint_value'] = '';
-				$wp_query->query_vars['do_not_redirect'] = 0;
-			}
-
-			/**
-			 * 1D. Enhance native redirect
+			 * 1C. Enhance native redirect
 			 */
 			if ( $canonical_redirect && empty( $wp_query->query_vars['do_not_redirect'] ) && ! empty( $queried_object ) && empty( $correct_permalink ) ) {
 				// Affect only posts with custom URI and old URIs
@@ -790,7 +775,7 @@ class Permalink_Manager_Core_Functions {
 			}
 
 			/**
-			 * 1E. Old slug redirect
+			 * 1D. Old slug redirect
 			 */
 			if ( $old_slug_redirect && ! empty( $pm_query['uri'] ) && empty( $wp_query->query_vars['do_not_redirect'] ) && is_404() && empty( $correct_permalink ) ) {
 				$slug = basename( $pm_query['uri'] );
@@ -837,7 +822,7 @@ class Permalink_Manager_Core_Functions {
 		/**
 		 * 4. Check trailing & duplicated slashes (ignore links with query parameters)
 		 */
-		if ( ( ( $trailing_slashes_mode && $trailing_slashes_redirect ) || preg_match( '/\/{2,}/', $old_uri ) ) && empty( $correct_permalink ) && ! empty( $old_uri ) && $old_uri !== "/" ) {
+		if ( ( ( $trailing_slashes_mode && $trailing_slashes_redirect ) || preg_match( '/\/{2,}/', $old_uri ) ) && empty( $_POST ) && empty( $correct_permalink ) && empty( $query_string ) && ! empty( $old_uri ) && $old_uri !== "/" ) {
 			$trailing_slash = ( substr( $old_uri, - 1 ) == "/" ) ? true : false;
 			$obsolete_slash = ( preg_match( '/\/{2,}/', $old_uri ) || preg_match( "/.*\.([a-zA-Z]{3,4})\/$/", $old_uri ) );
 
@@ -886,7 +871,7 @@ class Permalink_Manager_Core_Functions {
 			$correct_permalink = self::control_trailing_slashes( $correct_permalink );
 
 			// Prevent redirect loop
-			$rel_old_uri = wp_make_link_relative( $old_uri );
+			$rel_old_uri = wp_make_link_relative( $old_uri_abs );
 			$rel_new_uri = wp_make_link_relative( $correct_permalink );
 
 			if ( $redirect_type === 'www_redirect' || $rel_old_uri !== $rel_new_uri ) {
@@ -900,7 +885,7 @@ class Permalink_Manager_Core_Functions {
 	 * Control how the canonical redirect function in WordPress and other popular plugins works
 	 */
 	function adjust_canonical_redirect() {
-		global $permalink_manager_options, $wp, $wp_query, $wp_rewrite, $pm_query;
+		global $permalink_manager_options, $wp, $wp_query, $wp_rewrite;
 
 		// Adjust rewrite settings for trailing slashes
 		$trailing_slash_setting = ( ! empty( $permalink_manager_options['general']['trailing_slashes'] ) ) ? $permalink_manager_options['general']['trailing_slashes'] : "";
@@ -920,6 +905,14 @@ class Permalink_Manager_Core_Functions {
 				$wp_query->query_vars['do_not_redirect'] = 1;
 				break;
 			}
+		}
+
+		// Allow canonical redirect for ../1/ and ../page/1/
+		if ( ( ! empty( $wp->query_vars['paged'] ) && $wp->query_vars['paged'] == 1 ) || ( ! empty( $wp->query_vars['page'] ) && $wp->query_vars['page'] == 1 ) ) {
+			$wp_query->query_vars['do_not_redirect'] = 0;
+		} // Allow canonical redirect for URL with specific query parameters
+		else if ( ( is_single() && ( ! empty( $_GET['p'] ) || ! empty( $_GET['name'] ) ) ) || ( is_page() && ! empty( $_GET['page_id'] ) ) ) {
+			$wp_query->query_vars['do_not_redirect'] = 0;
 		}
 
 		if ( empty( $permalink_manager_options['general']['canonical_redirect'] ) ) {
