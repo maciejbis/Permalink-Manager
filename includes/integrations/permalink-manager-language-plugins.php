@@ -427,7 +427,7 @@ class Permalink_Manager_Language_Plugins {
 		} elseif ( function_exists( 'pll_languages_list' ) ) {
 			$languages_array = pll_languages_list();
 			$languages_list  = ( is_array( $languages_array ) ) ? $languages_array : "";
-		} elseif ( !empty($translate_press_settings['url-slugs']) ) {
+		} elseif ( ! empty( $translate_press_settings['url-slugs'] ) ) {
 			$languages_list = $translate_press_settings['url-slugs'];
 		}
 

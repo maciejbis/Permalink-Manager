@@ -347,19 +347,19 @@ class Permalink_Manager_UI_Elements {
 		// 4. Display settings tabs
 		if ( $container == 'tabs' ) {
 			// Get active section
-			$active_tab = ( ! empty( $_POST['pm_active_tab'] ) ) ? $_POST['pm_active_tab'] : key( array_slice( $fields, 0, 1, true ) );
+			$active_tab = ( ! empty( $_POST['pm_active_tab'] ) ) ? esc_attr( $_POST['pm_active_tab'] ) : key( array_slice( $fields, 0, 1, true ) );
 
 			$html .= "<ul class=\"subsubsub\">";
 			foreach ( $fields as $tab_name => $tab ) {
 				$active_class = ( $active_tab === $tab_name ) ? 'current' : '';
-				$html         .= sprintf( "<li><a href=\"%s\" class=\"%s\" data-tab=\"%s\">%s</a></li>", "#{$tab_name}", $active_class, $tab_name, $tab['section_name'] );
+				$html         .= sprintf( "<li><a href=\"#%s\" class=\"%s\" data-tab=\"%s\">%s</a></li>", $tab_name, $active_class, $tab_name, $tab['section_name'] );
 			}
 			$html .= "</ul>";
 		}
 
 		// 5. Display some notes
 		if ( $sidebar_class && $sidebar ) {
-			$html .= "<div class=\"{$sidebar_class}\">";
+			$html .= sprintf( "<div class=\"%s\">", $sidebar_class );
 			$html .= "<div class=\"section-notes\">";
 			$html .= $sidebar;
 			$html .= "</div>";
@@ -367,8 +367,8 @@ class Permalink_Manager_UI_Elements {
 		}
 
 		// 6. Start fields' section
-		$html .= ( $form_column_class ) ? "<div class=\"{$form_column_class}\">" : "";
-		$html .= "<form method=\"POST\" class=\"{$form_classes}\">";
+		$html .= ( $form_column_class ) ? sprintf( "<div class=\"%s\">", $form_column_class ) : "";
+		$html .= sprintf( "<form method=\"POST\" class=\"%s\">", $form_classes );
 		$html .= ( $wrap ) ? "<table class=\"form-table\">" : "";
 
 		// 7. Loop through all fields assigned to this section
@@ -396,13 +396,13 @@ class Permalink_Manager_UI_Elements {
 					if ( $container == 'tabs' ) {
 						$is_active_tab = ( ! empty( $active_tab ) && $active_tab == $tab_name ) ? 'class="active-tab"' : '';
 
-						$html .= "<div id=\"pm_{$tab_name}\" data-tab=\"{$tab_name}\" {$is_active_tab}>";
+						$html .= sprintf( "<div id=\"pm_%s\" data-tab=\"%s\" %s>", $tab_name, $tab_name, $is_active_tab );
 					}
 
 					$html .= "<h3>{$field['section_name']}</h3>";
 					$html .= ( isset( $field['append_content'] ) ) ? $field['append_content'] : "";
-					$html .= ( isset( $field['description'] ) ) ? "<p class=\"description\">{$field['description']}</p>" : "";
-					$html .= "<table class=\"form-table\" data-field=\"{$field_name}\">{$row_output}</table>";
+					$html .= ( isset( $field['description'] ) ) ? sprintf( "<p class=\"description\">%s</p>", $field['description'] ) : "";
+					$html .= sprintf( "<table class=\"form-table\" data-field=\"%s\">%s</table>", $field_name, $row_output );
 					$html .= ( $container == 'tabs' ) ? "</div>" : "";
 				} else {
 					$html .= $row_output;
