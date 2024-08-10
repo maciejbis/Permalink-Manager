@@ -16,9 +16,6 @@ class Permalink_Manager_Actions {
 			add_action( 'wp_ajax_pm_detect_duplicates', array( $this, 'ajax_detect_duplicates' ) );
 			add_action( 'wp_ajax_pm_dismissed_notice_handler', array( $this, 'ajax_hide_global_notice' ) );
 		}
-
-		add_action( 'clean_permalinks_event', array( $this, 'clean_permalinks_hook' ) );
-		add_action( 'init', array( $this, 'clean_permalinks_cronjob' ) );
 	}
 
 	/**
@@ -104,10 +101,14 @@ class Permalink_Manager_Actions {
 	 * Bulk remove obsolete custom permalinks and redirects
 	 */
 	public static function clear_all_uris() {
-		global $permalink_manager_uris, $permalink_manager_redirects, $permalink_manager_before_sections_html;
+		global $permalink_manager_redirects, $permalink_manager_before_sections_html;
+
+		// Get all custom permalinks & redirects
+		$custom_permalinks = Permalink_Manager_URI_Functions::get_all_uris();
+		$custom_redirects  = (array) $permalink_manager_redirects;
 
 		// Check if array with custom URIs exists
-		if ( empty( $permalink_manager_uris ) ) {
+		if ( empty( $custom_permalinks ) ) {
 			return;
 		}
 
@@ -116,7 +117,7 @@ class Permalink_Manager_Actions {
 		$removed_redirects = 0;
 
 		// Get all element IDs
-		$element_ids = array_merge( array_keys( (array) $permalink_manager_uris ), array_keys( (array) $permalink_manager_redirects ) );
+		$element_ids = array_merge( array_keys( $custom_permalinks ), array_keys( $custom_redirects ) );
 
 		// 1. Remove unused custom URI & redirects for deleted post or term
 		foreach ( $element_ids as $element_id ) {
@@ -126,18 +127,13 @@ class Permalink_Manager_Actions {
 			$removed_redirects = ( ! empty( $count[1] ) ) ? $count[1] + $removed_redirects : $removed_redirects;
 		}
 
-		// 2. Keep only a single redirect (make it unique)
+		// 2. Keep only a single redirect
 		$removed_redirects += self::clear_redirects_array();
 
-		// 3. Optional method to keep the permalinks unique
-		if ( apply_filters( 'permalink_manager_fix_uri_duplicates', false ) ) {
-			self::fix_uri_duplicates();
-		}
-
-		// Save cleared URIs & Redirects
+		// 3. Save cleared URIs & Redirects
 		if ( $removed_uris > 0 || $removed_redirects > 0 ) {
-			update_option( 'permalink-manager-uris', array_filter( $permalink_manager_uris ) );
-			update_option( 'permalink-manager-redirects', array_filter( $permalink_manager_redirects ) );
+			Permalink_Manager_URI_Functions::save_all_uris();
+			update_option( 'permalink-manager-redirects', array_filter( $permalink_manager_redirects ), true );
 
 			$permalink_manager_before_sections_html .= Permalink_Manager_UI_Elements::get_alert_message( sprintf( __( '%d Custom URIs and %d Custom Redirects were removed!', 'permalink-manager' ), $removed_uris, $removed_redirects ), 'updated updated_slugs' );
 		} else {
@@ -154,7 +150,7 @@ class Permalink_Manager_Actions {
 	 * @return array
 	 */
 	public static function clear_single_element_uris_and_redirects( $element_id, $count_removed = false ) {
-		global $wpdb, $permalink_manager_uris, $permalink_manager_redirects, $permalink_manager_options;
+		global $wpdb, $permalink_manager_redirects, $permalink_manager_options;
 
 		// Count removed URIs & redirects
 		$removed_uris      = 0;
@@ -213,10 +209,12 @@ class Permalink_Manager_Actions {
 
 		// 2A. Remove ALL unused custom permalinks & redirects
 		if ( ! empty( $remove ) ) {
+			$current_uri = Permalink_Manager_URI_Functions::get_single_uri( $element_id, false, true, null );
+
 			// Remove URI
-			if ( ! empty( $permalink_manager_uris[ $element_id ] ) ) {
+			if ( ! empty( $current_uri ) ) {
 				$removed_uris = 1;
-				unset( $permalink_manager_uris[ $element_id ] );
+				Permalink_Manager_URI_Functions::remove_single_uri( $element_id, null, false );
 			}
 
 			// Remove all custom redirects
@@ -234,8 +232,8 @@ class Permalink_Manager_Actions {
 		if ( $count_removed ) {
 			return array( $removed_uris, $removed_redirects );
 		} else if ( ! empty( $removed_uris ) || ! empty( $removed_redirects ) ) {
-			update_option( 'permalink-manager-uris', array_filter( $permalink_manager_uris ) );
-			update_option( 'permalink-manager-redirects', array_filter( $permalink_manager_redirects ) );
+			Permalink_Manager_URI_Functions::save_all_uris();
+			update_option( 'permalink-manager-redirects', array_filter( $permalink_manager_redirects ), true );
 		}
 
 		return array();
@@ -251,12 +249,17 @@ class Permalink_Manager_Actions {
 	 * @return int
 	 */
 	public static function clear_single_element_duplicated_redirect( $element_id, $save_redirects = true, $uri = null ) {
-		global $permalink_manager_uris, $permalink_manager_redirects;
+		global $permalink_manager_redirects;
 
-		$custom_uri = ( empty( $uri ) && ! empty( $permalink_manager_uris[ $element_id ] ) ) ? $permalink_manager_uris[ $element_id ] : $uri;
+		// If the custom permalink is not changed ($uri) use the one that is currently used
+		if( ! empty( $uri ) ) {
+			$current_uri = $uri;
+		} else {
+			$current_uri = Permalink_Manager_URI_Functions::get_single_uri( $element_id, false, true, null );
+		}
 
-		if ( $custom_uri && ! empty( $permalink_manager_redirects[ $element_id ] ) && in_array( $custom_uri, $permalink_manager_redirects[ $element_id ] ) ) {
-			$duplicated_redirect_id = array_search( $custom_uri, $permalink_manager_redirects[ $element_id ] );
+		if ( ! empty( $current_uri ) && ! empty( $permalink_manager_redirects[ $element_id ] ) && in_array( $current_uri, $permalink_manager_redirects[ $element_id ] ) ) {
+			$duplicated_redirect_id = array_search( $current_uri, $permalink_manager_redirects[ $element_id ] );
 			unset( $permalink_manager_redirects[ $element_id ][ $duplicated_redirect_id ] );
 		}
 
@@ -308,30 +311,6 @@ class Permalink_Manager_Actions {
 	}
 
 	/**
-	 * If the custom permalink is duplicated, append the index (-2, -3, etc.)
-	 */
-	public static function fix_uri_duplicates() {
-		global $permalink_manager_uris;
-
-		$duplicates = array_count_values( $permalink_manager_uris );
-
-		foreach ( $duplicates as $uri => $count ) {
-			if ( $count == 1 ) {
-				continue;
-			}
-
-			$ids = array_keys( $permalink_manager_uris, $uri );
-			foreach ( $ids as $index => $id ) {
-				if ( $index > 0 ) {
-					$permalink_manager_uris[ $id ] = preg_replace( '/(.+?)(\.[^.]+$|$)/', '$1-' . $index . '$2', $uri );
-				}
-			}
-		}
-
-		update_option( 'permalink-manager-uris', $permalink_manager_uris );
-	}
-
-	/**
 	 * Remove custom permalinks & custom redirects for requested post or term
 	 *
 	 * @param $uri_key
@@ -339,31 +318,27 @@ class Permalink_Manager_Actions {
 	 * @return bool
 	 */
 	public static function force_clear_single_element_uris_and_redirects( $uri_key ) {
-		global $permalink_manager_uris, $permalink_manager_redirects, $permalink_manager_before_sections_html;
+		global $permalink_manager_redirects, $permalink_manager_before_sections_html;
+
+		$custom_uri = Permalink_Manager_URI_Functions::get_single_uri( $uri_key, false, true, null );
 
 		// Check if custom URI is set
-		if ( isset( $permalink_manager_uris[ $uri_key ] ) ) {
-			$uri = $permalink_manager_uris[ $uri_key ];
-
-			unset( $permalink_manager_uris[ $uri_key ] );
-			update_option( 'permalink-manager-uris', $permalink_manager_uris );
-
-			$updated = Permalink_Manager_UI_Elements::get_alert_message( sprintf( __( 'URI "%s" was removed successfully!', 'permalink-manager' ), $uri ), 'updated' );
+		if ( ! empty( $custom_uri ) ) {
+			Permalink_Manager_URI_Functions::remove_single_uri( $uri_key, null, true );
+			$updated = Permalink_Manager_UI_Elements::get_alert_message( sprintf( __( 'URI "%s" was removed successfully!', 'permalink-manager' ), $custom_uri ), 'updated' );
 		}
 
 		// Check if custom redirects are set
 		if ( isset( $permalink_manager_redirects[ $uri_key ] ) ) {
 			unset( $permalink_manager_redirects[ $uri_key ] );
-			update_option( 'permalink-manager-redirects', $permalink_manager_redirects );
-
-			$updated = Permalink_Manager_UI_Elements::get_alert_message( __( 'Broken redirects were removed successfully!', 'permalink-manager' ), 'updated' );
+			update_option( 'permalink-manager-redirects', $permalink_manager_redirects, true );
 		}
 
 		if ( empty( $updated ) ) {
 			$permalink_manager_before_sections_html .= Permalink_Manager_UI_Elements::get_alert_message( __( 'URI and/or custom redirects does not exist or were already removed!', 'permalink-manager' ), 'error' );
 		} else {
 			// Display the alert in admin panel
-			if ( ! empty( $permalink_manager_before_sections_html ) && is_admin() ) {
+			if ( isset( $permalink_manager_before_sections_html ) && is_admin() ) {
 				$permalink_manager_before_sections_html .= $updated;
 			}
 		}
@@ -718,10 +693,10 @@ class Permalink_Manager_Actions {
 			// Check each URI
 			foreach ( $custom_uris as $raw_element_id => $element_uri ) {
 				$element_id                     = sanitize_key( $raw_element_id );
-				$duplicates_data[ $element_id ] = Permalink_Manager_Admin_Functions::is_uri_duplicated( $element_uri, $element_id ) ? $duplicate_alert : 0;
+				$duplicates_data[ $element_id ] = Permalink_Manager_URI_Functions::is_uri_duplicated( $element_uri, $element_id ) ? $duplicate_alert : 0;
 			}
 		} else if ( ! empty( $_REQUEST['custom_uri'] ) && ! empty( $_REQUEST['element_id'] ) ) {
-			$duplicates_data = Permalink_Manager_Admin_Functions::is_uri_duplicated( $_REQUEST['custom_uri'], sanitize_key( $_REQUEST['element_id'] ) );
+			$duplicates_data = Permalink_Manager_URI_Functions::is_uri_duplicated( $_REQUEST['custom_uri'], sanitize_key( $_REQUEST['element_id'] ) );
 		}
 
 		wp_send_json( $duplicates_data );
@@ -748,43 +723,6 @@ class Permalink_Manager_Actions {
 	 */
 	function import_custom_permalinks_uris() {
 		Permalink_Manager_Third_Parties::import_custom_permalinks_uris();
-	}
-
-	/**
-	 * Remove the duplicated custom permalinks & redirects automatically in the background
-	 */
-	function clean_permalinks_hook() {
-		global $permalink_manager_uris, $permalink_manager_redirects;
-
-		// Backup the custom URIs
-		if ( is_array( $permalink_manager_uris ) ) {
-			update_option( 'permalink-manager-uris_backup', $permalink_manager_uris, false );
-		}
-		// Backup the custom redirects
-		if ( is_array( $permalink_manager_redirects ) ) {
-			update_option( 'permalink-manager-redirects_backup', $permalink_manager_redirects, false );
-		}
-
-		self::clear_all_uris();
-	}
-
-	/**
-	 * Schedule the function that automatically removes the custom permalinks & redirects duplicates
-	 */
-	function clean_permalinks_cronjob() {
-		global $permalink_manager_options;
-
-		$event_name = 'clean_permalinks_event';
-
-		// Set up the "Automatically remove duplicates" function that runs in background once a day
-		if ( ! empty( $permalink_manager_options['general']['auto_remove_duplicates'] ) && $permalink_manager_options['general']['auto_remove_duplicates'] == 2 ) {
-			if ( ! wp_next_scheduled( $event_name ) ) {
-				wp_schedule_event( time(), 'daily', $event_name );
-			}
-		} else if ( wp_next_scheduled( $event_name ) ) {
-			$event_timestamp = wp_next_scheduled( $event_name );
-			wp_unschedule_event( $event_timestamp, $event_name );
-		}
 	}
 
 }

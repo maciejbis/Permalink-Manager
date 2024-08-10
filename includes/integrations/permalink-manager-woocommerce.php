@@ -268,8 +268,6 @@ class Permalink_Manager_WooCommerce {
 	 * @param array $data The data array for the current row being imported.
 	 */
 	function woocommerce_csv_import_custom_uri( $product, $data ) {
-		global $permalink_manager_uris;
-
 		if ( ! empty( $product ) ) {
 			$product_id = $product->get_id();
 
@@ -278,8 +276,10 @@ class Permalink_Manager_WooCommerce {
 				return;
 			}
 
+			$current_uri = Permalink_Manager_URI_Functions::get_single_uri( $product_id, false, true );
+
 			// A. Use default permalink if "Custom URI" is not set and did not exist before
-			if ( empty( $permalink_manager_uris[ $product_id ] ) && empty( $data['custom_uri'] ) ) {
+			if ( empty( $current_uri ) && empty( $data['custom_uri'] ) ) {
 				$custom_uri = Permalink_Manager_URI_Functions_Post::get_default_post_uri( $product_id, false, true );
 			} else if ( ! empty( $data['custom_uri'] ) ) {
 				$custom_uri = Permalink_Manager_Helper_Functions::sanitize_title( $data['custom_uri'] );
@@ -316,21 +316,23 @@ class Permalink_Manager_WooCommerce {
 	 * @return array The URI parts.
 	 */
 	function ti_woocommerce_wishlist_uris( $uri_parts, $request_url, $endpoints ) {
-		global $permalink_manager_uris;
-
 		$wishlist_pid = function_exists( 'tinv_get_option' ) ? tinv_get_option( 'general', 'page_wishlist' ) : '';
 
 		// Find the Wishlist page URI
-		if ( is_numeric( $wishlist_pid ) && ! empty( $permalink_manager_uris[ $wishlist_pid ] ) ) {
-			$wishlist_uri = preg_quote( $permalink_manager_uris[ $wishlist_pid ], '/' );
+		if ( is_numeric( $wishlist_pid )) {
+			$current_uri = Permalink_Manager_URI_Functions::get_single_uri( $wishlist_pid, false, true );
 
-			// Extract the Wishlist ID
-			preg_match( "/^({$wishlist_uri})\/([^\/]+)\/?$/", $uri_parts['uri'], $output_array );
+			if ( ! empty( $current_uri ) ) {
+				$wishlist_uri = preg_quote( $current_uri, '/' );
 
-			if ( ! empty( $output_array[2] ) ) {
-				$uri_parts['uri']            = $output_array[1];
-				$uri_parts['endpoint']       = 'tinvwlID';
-				$uri_parts['endpoint_value'] = $output_array[2];
+				// Extract the Wishlist ID
+				preg_match( "/^({$wishlist_uri})\/([^\/]+)\/?$/", $uri_parts['uri'], $output_array );
+
+				if ( ! empty( $output_array[2] ) ) {
+					$uri_parts['uri']            = $output_array[1];
+					$uri_parts['endpoint']       = 'tinvwlID';
+					$uri_parts['endpoint_value'] = $output_array[2];
+				}
 			}
 		}
 

@@ -775,6 +775,7 @@ class Permalink_Manager_UI_Elements {
 		}
 
 		// 11. Append nonce field, element ID & native slug
+		$html .= self::generate_option_field( "permalink-manager-edit-uri-element-slug", array( "type" => "hidden", "value" => $native_slug ) );
 		$html .= self::generate_option_field( "permalink-manager-edit-uri-element-id", array( "type" => "hidden", "value" => $element_id ) );
 		$html .= wp_nonce_field( 'permalink-manager-edit-uri-box', 'permalink-manager-nonce', true, false );
 

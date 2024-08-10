@@ -139,10 +139,10 @@ class Permalink_Manager_SEO_Plugins {
 	 */
 	function filter_breadcrumbs( $links ) {
 		// Get post type permastructure settings
-		global $permalink_manager_uris, $permalink_manager_options, $post, $wpdb, $wp, $wp_current_filter;
+		global $permalink_manager_options, $post, $wpdb, $wp, $wp_current_filter;
 
 		// Check if the filter should be activated
-		if ( empty( $permalink_manager_options['general']['yoast_breadcrumbs'] ) || empty( $permalink_manager_uris ) ) {
+		if ( empty( $permalink_manager_options['general']['yoast_breadcrumbs'] ) ) {
 			return $links;
 		}
 
@@ -157,14 +157,14 @@ class Permalink_Manager_SEO_Plugins {
 		}
 
 		// Get the custom permalink (if available) or the current request URL (if unavailable)
-		if ( ! empty( $element_id ) && ! empty( $permalink_manager_uris[ $element_id ] ) ) {
-			$custom_uri = preg_replace( "/([^\/]+)$/", '', $permalink_manager_uris[ $element_id ] );
+		$custom_uri = ( ! empty( $element_id ) ) ? Permalink_Manager_URI_Functions::get_single_uri( $element_id, false, true, null ) : '';
+
+		if ( ! empty( $custom_uri ) ) {
+			$custom_uri = preg_replace( "/([^\/]+)$/", '', $custom_uri );
 		} else {
-			// $custom_uri = trim( preg_replace( "/([^\/]+)$/", '', $wp->request ), "/" );
 			return $links;
 		}
 
-		$all_uris                     = array_flip( $permalink_manager_uris );
 		$custom_uri_parts             = explode( '/', trim( $custom_uri ) );
 		$breadcrumbs                  = array();
 		$snowball                     = '';
@@ -201,7 +201,7 @@ class Permalink_Manager_SEO_Plugins {
 
 			// 1A. Try to match any custom URI
 			$uri     = trim( $snowball, "/" );
-			$element = ( ! empty( $all_uris[ $uri ] ) ) ? $all_uris[ $uri ] : false;
+			$element = Permalink_Manager_URI_Functions::find_uri( $uri, true );
 
 			if ( ! empty( $element ) && strpos( $element, 'tax-' ) !== false ) {
 				$element_id = intval( preg_replace( "/[^0-9]/", "", $element ) );
@@ -313,7 +313,7 @@ class Permalink_Manager_SEO_Plugins {
 		if ( ! empty( $links ) && is_array( $links ) ) {
 			$first_element  = reset( $links );
 			$last_element   = end( $links );
-			$b_last_element = ( count( $links ) > 2 ) ? prev( $links ) : "";
+			$b_last_element = ( count( $links ) > 2 && ( ! is_singular() || is_home() ) ) ? prev( $links ) : "";
 			$breadcrumbs    = ( ! empty( $breadcrumbs ) ) ? $breadcrumbs : array();
 
 			// Support RankMath/SEOPress/WooCommerce/Slim SEO/AIOSEO breadcrumbs

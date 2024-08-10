@@ -16,7 +16,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		) );
 
 		$this->displayed_post_statuses = ( isset( $permalink_manager_options['screen-options']['post_statuses'] ) ) ? "'" . implode( "', '", $permalink_manager_options['screen-options']['post_statuses'] ) . "'" : "'no-post-status'";
-		$this->displayed_post_types    = ( $active_subsection && $active_subsection == 'all' ) ? "'" . implode( "', '", $permalink_manager_options['screen-options']['post_types'] ) . "'" : "'{$active_subsection}'";
+		$this->displayed_post_types    = ( $active_subsection == 'all' ) ? "'" . implode( "', '", $permalink_manager_options['screen-options']['post_types'] ) . "'" : "'{$active_subsection}'";
 	}
 
 	/**
@@ -263,7 +263,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 			$sql_parts['where'] = "WHERE (LOWER(post_title) LIKE LOWER('%{$search_query}%') ";
 
 			// Search in array with custom URIs
-			$found = Permalink_Manager_Admin_Functions::search_uri( $search_query, 'posts' );
+			$found = Permalink_Manager_URI_Functions::find_uri( $search_query, false, 'posts' );
 			if ( $found ) {
 				$sql_parts['where'] .= sprintf( "OR ID IN (%s)", implode( ',', $found ) );
 			}

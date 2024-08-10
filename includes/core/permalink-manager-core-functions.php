@@ -29,7 +29,7 @@ class Permalink_Manager_Core_Functions {
 		 * Detect & canonical URL/redirect functions
 		 */
 		// Do not trigger in back-end
-		if ( is_admin() ) {
+		if ( is_admin() && ! wp_doing_ajax() ) {
 			return false;
 		}
 
@@ -454,6 +454,9 @@ class Permalink_Manager_Core_Functions {
 				// Fix for attachments
 				if ( ! empty( $query['attachment'] ) ) {
 					$query = array( 'attachment' => $query['attachment'], 'do_not_redirect' => 1 );
+				} else if ( isset( $query['attachment'] ) ) {
+					$query = $old_query;
+					$element_id = false;
 				}
 			}
 

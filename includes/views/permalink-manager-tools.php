@@ -63,7 +63,6 @@ class Permalink_Manager_Tools {
 	public function duplicates_output() {
 		// Get the duplicates & another variables
 		$all_duplicates = Permalink_Manager_Admin_Functions::get_all_duplicates();
-		$home_url       = trim( get_option( 'home' ), "/" );
 
 		$button_url = add_query_arg( array(
 			'section'                      => 'tools',
@@ -78,7 +77,7 @@ class Permalink_Manager_Tools {
 		if ( ! empty( $all_duplicates ) ) {
 			foreach ( $all_duplicates as $uri => $duplicates ) {
 				$html .= "<div class=\"permalink-manager postbox permalink-manager-duplicate-box\">";
-				$html .= "<h4 class=\"heading\"><a href=\"{$home_url}/{$uri}\" target=\"_blank\">{$home_url}/{$uri} <span class=\"dashicons dashicons-external\"></span></a></h4>";
+				$html .= sprintf( '<h4 class="heading"><a href="%1$s" target="_blank">%1$s <span class="dashicons dashicons-external"></span></a></h4>', Permalink_Manager_Core_Functions::control_trailing_slashes( home_url( $uri ) ) );
 				$html .= "<table>";
 
 				foreach ( $duplicates as $item_id ) {
@@ -214,7 +213,7 @@ class Permalink_Manager_Tools {
 				'type'        => 'text',
 				'container'   => 'row',
 				//'disabled' => true,
-				'description' => __( 'To narrow the above filters you can type the post IDs (or ranges) here. Eg. <strong>1-8, 10, 25</strong>.', 'permalink-manager' ),
+				'description' => __( 'To narrow the above filters you can type the post IDs (or ranges) here. E.g. <strong>1-8, 10, 25</strong>.', 'permalink-manager' ),
 				//'pro' => true,
 				'input_class' => 'widefat'
 			),
@@ -300,7 +299,7 @@ class Permalink_Manager_Tools {
 				'type'        => 'text',
 				'container'   => 'row',
 				//'disabled' => true,
-				'description' => __( 'To narrow the above filters you can type the post IDs (or ranges) here. Eg. <strong>1-8, 10, 25</strong>.', 'permalink-manager' ),
+				'description' => __( 'To narrow the above filters you can type the post IDs (or ranges) here. E.g. <strong>1-8, 10, 25</strong>.', 'permalink-manager' ),
 				//'pro' => true,
 				'input_class' => 'widefat'
 			),

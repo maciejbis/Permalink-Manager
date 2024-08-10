@@ -65,7 +65,6 @@ class Permalink_Manager_Language_Plugins {
 			} else if ( $mode === 'append' ) {
 				add_filter( 'permalink_manager_filter_final_post_permalink', array( $this, 'append_lang_prefix' ), 5, 2 );
 				add_filter( 'permalink_manager_filter_final_term_permalink', array( $this, 'append_lang_prefix' ), 5, 2 );
-				add_filter( 'permalink_manager_detect_uri', array( $this, 'wpml_ignore_lang_query_parameter' ), 9 );
 			}
 
 			// Translate permastructures
@@ -79,6 +78,7 @@ class Permalink_Manager_Language_Plugins {
 			// Translate post type slug
 			if ( class_exists( 'WPML_Slug_Translation' ) ) {
 				add_filter( 'permalink_manager_filter_post_type_slug', array( $this, 'wpml_translate_post_type_slug' ), 9, 3 );
+				add_filter( 'permalink_manager_filter_taxonomy_slug', array( $this, 'wpml_translate_taxonomy_slug' ), 9, 3 );
 			}
 
 			// Translate "page" endpoint
@@ -600,23 +600,6 @@ class Permalink_Manager_Language_Plugins {
 	}
 
 	/**
-	 * Ignore ?lang query parameters added to the custom permalink's array
-	 *
-	 * @param array $uri_parts
-	 *
-	 * @return array
-	 */
-	function wpml_ignore_lang_query_parameter( $uri_parts ) {
-		global $permalink_manager_uris;
-
-		foreach ( $permalink_manager_uris as &$uri ) {
-			$uri = trim( strtok( $uri, '?' ), "/" );
-		}
-
-		return $uri_parts;
-	}
-
-	/**
 	 * Reapply WPML URL hooks and use them for custom permalinks filtered with Permalink Manager
 	 *
 	 * @param string $permalink
@@ -685,6 +668,22 @@ class Permalink_Manager_Language_Plugins {
 		$language_code = self::get_language_code( $post );
 
 		return apply_filters( 'wpml_get_translated_slug', $post_type_slug, $post_type, $language_code );
+	}
+
+	/**
+	 * Translate %taxonomy% tag in custom permastructures
+	 *
+	 * @param string $taxonomy_slug
+	 * @param int|WP_Term $element
+	 * @param string $taxonomy
+	 *
+	 * @return string
+	 */
+	function wpml_translate_taxonomy_slug( $taxonomy_slug, $element, $taxonomy ) {
+		$term          = ( is_integer( $element ) ) ? get_term( $element ) : $element;
+		$language_code = self::get_language_code( $term );
+
+		return apply_filters( 'wpml_get_translated_slug', $taxonomy_slug, $taxonomy, $language_code, 'taxonomy' );
 	}
 
 	/**
@@ -788,7 +787,7 @@ class Permalink_Manager_Language_Plugins {
 	 * @param stdClass $job
 	 */
 	function wpml_save_uri_after_wpml_translation_completed( $post_id, $postdata, $job ) {
-		global $permalink_manager_uris, $permalink_manager_options;
+		global $permalink_manager_options;
 
 		$post_object = get_post( $post_id );
 
@@ -798,12 +797,13 @@ class Permalink_Manager_Language_Plugins {
 		}
 
 		$default_uri = Permalink_Manager_URI_Functions_Post::get_default_post_uri( $post_id );
+		$current_uri = Permalink_Manager_URI_Functions::get_single_uri( $post_id, false, true, null );
 
 		// A. Use the translated custom permalink (if available)
 		if ( ! empty( $postdata['Custom URI'] ) ) {
 			$new_uri = ( ! empty( $postdata['Custom URI']['data'] ) && ! in_array( $postdata['Custom URI']['data'], array( '-', 'auto' ) ) ) ? Permalink_Manager_Helper_Functions::sanitize_title( $postdata['Custom URI']['data'] ) : $default_uri;
 		} // B. Generate the new custom permalink (if not set earlier)
-		else if ( empty( $permalink_manager_uris[ $post_id ] ) ) {
+		else if ( empty( $current_uri ) ) {
 			$new_uri = $default_uri;
 		} // C. Auto-update custom permalink
 		else if ( ! empty( $job->original_doc_id ) ) {
@@ -830,8 +830,6 @@ class Permalink_Manager_Language_Plugins {
 	 * @return array
 	 */
 	function wpml_cte_edit_uri_field( $fields, $job ) {
-		global $permalink_manager_uris;
-
 		$element_type = ( ! empty( $job->original_post_type ) && strpos( $job->original_post_type, 'post_' ) !== false ) ? preg_replace( '/^(post_)/', '', $job->original_post_type ) : '';
 
 		if ( ! empty( $element_type ) ) {
@@ -841,8 +839,10 @@ class Permalink_Manager_Language_Plugins {
 			$original_custom_uri = Permalink_Manager_URI_Functions_Post::get_post_uri( $original_id, true );
 
 			if ( ! empty( $translation_id ) ) {
-				$translation_custom_uri   = Permalink_Manager_URI_Functions_Post::get_post_uri( $translation_id, true );
-				$uri_translation_complete = ( ! empty( $permalink_manager_uris[ $translation_id ] ) ) ? '1' : '0';
+				$translation_custom_uri = Permalink_Manager_URI_Functions_Post::get_post_uri( $translation_id, true );
+				$translation_saved_uri  = Permalink_Manager_URI_Functions::get_single_uri( $translation_id, false, true, null );
+
+				$uri_translation_complete = ( ! empty( $translation_saved_uri ) ) ? '1' : '0';
 			} else {
 				$translation_custom_uri   = $original_custom_uri;
 				$uri_translation_complete = '0';
@@ -904,8 +904,6 @@ class Permalink_Manager_Language_Plugins {
 	 * @param int $id
 	 */
 	function wpml_duplicate_uri( $master_post_id, $lang, $post_array, $id ) {
-		global $permalink_manager_uris;
-
 		// Trigger the function only if duplicate is created in the metabox
 		if ( empty( $_POST['action'] ) || $_POST['action'] !== 'make_duplicates' ) {
 			return;

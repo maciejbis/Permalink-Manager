@@ -53,7 +53,8 @@ class Permalink_Manager_Admin_Functions {
 		$permalink_manager_ignore_permalink_filters = false;
 
 		if ( ! empty( $new_url ) ) {
-			$new_url       = urlencode_deep( $new_url );
+			// The original permalink should be already encoded via "utf8_uri_encode()" in "sanitize_title_with_dashes()" function, so there is no need to encode them once again
+			$new_url       = filter_var( $new_url, FILTER_SANITIZE_URL );
 			$customize_url = preg_replace( '/url=([^&]+)/', "url={$new_url}", $customize->href );
 
 			$wp_admin_bar->add_node( array(
@@ -262,13 +263,13 @@ class Permalink_Manager_Admin_Functions {
 	 * @return array
 	 */
 	public static function get_all_duplicates( $include_custom_uris = true ) {
-		global $permalink_manager_uris, $permalink_manager_redirects;
+		global $permalink_manager_redirects;
 
 		// Make sure that both variables are arrays
-		$all_uris                    = ( $include_custom_uris && is_array( $permalink_manager_uris ) ) ? $permalink_manager_uris : array();
+		$all_uris                    = ( $include_custom_uris ) ? Permalink_Manager_URI_Functions::get_all_uris() : array();
 		$permalink_manager_redirects = ( is_array( $permalink_manager_redirects ) ) ? $permalink_manager_redirects : array();
 
-		// Convert redirects list, so it can be merged with $permalink_manager_uris
+		// Convert redirects list, so it can be merged with custom permalinks array
 		foreach ( $permalink_manager_redirects as $element_id => $redirects ) {
 			if ( is_array( $redirects ) ) {
 				foreach ( $redirects as $index => $uri ) {
@@ -290,95 +291,13 @@ class Permalink_Manager_Admin_Functions {
 				$duplicated_ids = array_keys( $all_uris, $duplicated_uri );
 
 				// Ignore duplicates in different langauges
-				if ( self::is_uri_duplicated( $duplicated_uri, $duplicated_ids[0], $duplicated_ids ) ) {
+				if ( Permalink_Manager_URI_Functions::is_uri_duplicated( $duplicated_uri, $duplicated_ids[0], $duplicated_ids ) ) {
 					$duplicates_groups[ $duplicated_uri ] = $duplicated_ids;
 				}
 			}
 		}
 
 		return $duplicates_groups;
-	}
-
-	/**
-	 * Check if a single URI is duplicated
-	 *
-	 * @param string $uri
-	 * @param int $element_id
-	 * @param array $duplicated_ids
-	 *
-	 * @return bool
-	 */
-	public static function is_uri_duplicated( $uri, $element_id, $duplicated_ids = array() ) {
-		global $permalink_manager_uris;
-
-		if ( empty( $uri ) || empty( $element_id ) || empty( $permalink_manager_uris ) ) {
-			return false;
-		}
-
-		$uri        = trim( trim( sanitize_text_field( $uri ) ), "/" );
-		$element_id = sanitize_text_field( $element_id );
-
-		// Keep the URIs in a separate array just here
-		if ( ! empty( $duplicated_ids ) ) {
-			$all_duplicates = $duplicated_ids;
-		} else if ( in_array( $uri, $permalink_manager_uris ) ) {
-			$all_duplicates = array_keys( $permalink_manager_uris, $uri );
-		}
-
-		if ( ! empty( $all_duplicates ) ) {
-			// Get the language code of current element
-			$this_uri_lang = apply_filters( 'permalink_manager_get_language_code', '', $element_id );
-
-			foreach ( $all_duplicates as $key => $duplicated_id ) {
-				// Ignore custom redirects
-				if ( strpos( $key, 'redirect-' ) !== false ) {
-					unset( $all_duplicates[ $key ] );
-					continue;
-				}
-
-				if ( $this_uri_lang ) {
-					$duplicated_uri_lang = apply_filters( 'permalink_manager_get_language_code', '', $duplicated_id );
-				}
-
-				// Ignore the URI for requested element and other elements in other languages to prevent the false alert
-				if ( ( ! empty( $duplicated_uri_lang ) && $duplicated_uri_lang !== $this_uri_lang ) || $element_id == $duplicated_id ) {
-					unset( $all_duplicates[ $key ] );
-				}
-			}
-
-			return ( count( $all_duplicates ) > 0 ) ? true : false;
-		} else {
-			return false;
-		}
-	}
-
-	/**
-	 * Allow to use custom permalinks in search queries in Bulk URI Editor
-	 *
-	 * @param string $search_query
-	 * @param string $content_type
-	 *
-	 * @return array
-	 */
-	public static function search_uri( $search_query, $content_type = null ) {
-		global $permalink_manager_uris;
-
-		$found        = array();
-		$search_query = preg_quote( $search_query, '/' );
-
-		foreach ( $permalink_manager_uris as $id => $uri ) {
-			if ( preg_match( "/\b$search_query\b/i", $uri ) ) {
-				if ( $content_type == 'taxonomies' && ( strpos( $id, 'tax-' ) !== false ) ) {
-					$found[] = (int) abs( filter_var( $id, FILTER_SANITIZE_NUMBER_INT ) );
-				} else if ( $content_type == 'posts' && is_numeric( $id ) ) {
-					$found[] = (int) filter_var( $id, FILTER_SANITIZE_NUMBER_INT );
-				} else {
-					$found[] = $id;
-				}
-			}
-		}
-
-		return $found;
 	}
 
 	/**
