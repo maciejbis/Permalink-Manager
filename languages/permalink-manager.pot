@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-23 21:06+0000\n"
+"POT-Creation-Date: 2024-08-27 19:59+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -20,7 +20,7 @@ msgid ""
 "contact@permalinkmanager.pro</a>."
 msgstr ""
 
-#: includes/integrations/permalink-manager-third-parties.php:324
+#: includes/integrations/permalink-manager-third-parties.php:320
 msgid "\"Custom Permalinks\" URIs were imported!"
 msgstr ""
 
@@ -303,7 +303,7 @@ msgstr ""
 #: includes/views/permalink-manager-ui-elements.php:729
 #: includes/views/permalink-manager-ui-elements.php:840
 #: includes/views/permalink-manager-uri-editor-post.php:63
-#: includes/core/permalink-manager-uri-functions-post.php:714
+#: includes/core/permalink-manager-uri-functions-post.php:718
 #: includes/core/permalink-manager-uri-functions-tax.php:536
 msgid "Custom permalink"
 msgstr ""
@@ -336,7 +336,7 @@ msgstr ""
 msgid "Custom redirects"
 msgstr ""
 
-#: includes/integrations/permalink-manager-third-parties.php:397
+#: includes/integrations/permalink-manager-third-parties.php:395
 #: includes/integrations/permalink-manager-woocommerce.php:232
 #: includes/views/permalink-manager-tools.php:90
 #: includes/core/permalink-manager-uri-functions-tax.php:502
@@ -361,6 +361,10 @@ msgstr ""
 
 #: includes/views/permalink-manager-debug.php:64
 msgid "Debug data"
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:275
+msgid "Debug mode"
 msgstr ""
 
 #: includes/views/permalink-manager-settings.php:246
@@ -614,7 +618,7 @@ msgid ""
 "the posts imported with WP All Import plugin."
 msgstr ""
 
-#: includes/integrations/permalink-manager-third-parties.php:398
+#: includes/integrations/permalink-manager-third-parties.php:396
 #, php-format
 msgid ""
 "If empty, a default permalink based on your current <a href=\"%s\" "
@@ -850,7 +854,7 @@ msgstr ""
 msgid "New URI"
 msgstr ""
 
-#: includes/integrations/permalink-manager-third-parties.php:327
+#: includes/integrations/permalink-manager-third-parties.php:323
 msgid "No \"Custom Permalinks\" URIs were imported!"
 msgstr ""
 
@@ -916,8 +920,8 @@ msgstr ""
 msgid "Permalink is already in use, please select another one!"
 msgstr ""
 
-#: includes/integrations/permalink-manager-third-parties.php:393
-#: includes/integrations/permalink-manager-third-parties.php:622
+#: includes/integrations/permalink-manager-third-parties.php:391
+#: includes/integrations/permalink-manager-third-parties.php:624
 #: includes/views/permalink-manager-ui-elements.php:706
 #: includes/views/permalink-manager-ui-elements.php:711
 #: includes/views/permalink-manager-ui-elements.php:712
@@ -1183,7 +1187,7 @@ msgstr ""
 msgid "Save permastructures"
 msgstr ""
 
-#: includes/views/permalink-manager-settings.php:277
+#: includes/views/permalink-manager-settings.php:282
 msgid "Save settings"
 msgstr ""
 
@@ -1389,6 +1393,13 @@ msgstr ""
 msgid ""
 "This functionality is available only in <a href=\"%s\" target=\"_blank\">"
 "Permalink Manager Pro</a>."
+msgstr ""
+
+#: includes/views/permalink-manager-settings.php:276
+msgid ""
+"This option activates permalink detection and redirect debug functions. To "
+"access them add \"<em>?debug_url=1</em>\" and \"<em>?debug_redirect=1</em>\" "
+"to the checked URLs."
 msgstr ""
 
 #: includes/views/permalink-manager-settings.php:64

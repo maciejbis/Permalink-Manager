@@ -68,9 +68,9 @@ class Permalink_Manager_URI_Functions_Post {
 		}
 
 		// Do not run when metaboxes are loaded with Gutenberg
-		if ( ! empty( $_REQUEST['meta-box-loader'] ) && empty( $_POST['custom_uri'] ) ) {
+		/* if ( ! empty( $_REQUEST['meta-box-loader'] ) && empty( $_POST['custom_uri'] ) ) {
 			return $permalink;
-		}
+		}*/
 
 		// Do not filter if $permalink_manager_ignore_permalink_filters global is set
 		if ( ! empty( $permalink_manager_ignore_permalink_filters ) ) {
@@ -597,7 +597,7 @@ class Permalink_Manager_URI_Functions_Post {
 				// Get default & native URL
 				$native_uri  = self::get_default_post_uri( $this_post, true );
 				$default_uri = ( $is_draft ) ? '' : self::get_default_post_uri( $this_post );
-				$old_uri     = Permalink_Manager_URI_Functions::get_single_uri( $id, false, true );
+				$old_uri     = Permalink_Manager_URI_Functions::get_single_uri( $this_post, false, true );
 
 				// Process new values - empty entries will be treated as default values
 				$new_uri = Permalink_Manager_Helper_Functions::sanitize_title( $new_uri );
@@ -658,9 +658,13 @@ class Permalink_Manager_URI_Functions_Post {
 			// B. Do not change anything if post is not saved yet (display sample permalink instead)
 			if ( $autosave || empty( $post->post_status ) ) {
 				$sample_permalink_uri = self::get_default_post_uri( $id );
-			} // C. Display custom URI if set
+			} // C. Display custom URI (if set) or default custom URI
 			else {
-				$sample_permalink_uri = Permalink_Manager_URI_Functions::get_single_uri( $post, true );
+				$sample_permalink_uri = Permalink_Manager_URI_Functions::get_single_uri( $post, false, false );
+			}
+
+			if ( empty( $sample_permalink_uri ) && $post->post_type !== 'attachment' ) {
+				return $html;
 			}
 
 			// Decode URI & allow to filter it

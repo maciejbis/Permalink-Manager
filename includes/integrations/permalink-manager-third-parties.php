@@ -111,6 +111,11 @@ class Permalink_Manager_Third_Parties {
 		if ( class_exists( '\Google\Site_Kit\Plugin' ) ) {
 			add_filter( 'request', array( $this, 'googlesitekit_fix_request' ), 10, 1 );
 		}
+
+		// WPForo
+		if ( class_exists( 'wpforo\wpforo' ) ) {
+			add_filter( 'permalink_manager_filter_query', array( $this, 'wpforo_adjust_query' ), 5, 6 );
+		}
 	}
 
 	/**
@@ -179,15 +184,6 @@ class Permalink_Manager_Third_Parties {
 
 			// LearnPress
 			if ( ! empty( $query_vars['view'] ) && ! empty( $query_vars['page_id'] ) ) {
-				$wp_query->query_vars['do_not_redirect'] = 1;
-			}
-		}
-
-		// WPForo
-		if ( defined( 'WPFORO_VERSION' ) ) {
-			$forum_page_id = get_option( 'wpforo_pageid' );
-
-			if ( ! empty( $forum_page_id ) && ! empty( $post->ID ) && $forum_page_id == $post->ID ) {
 				$wp_query->query_vars['do_not_redirect'] = 1;
 			}
 		}
@@ -383,6 +379,8 @@ class Permalink_Manager_Third_Parties {
 		// Check if post type is supported
 		if ( $content_type !== 'taxonomies' && Permalink_Manager_Helper_Functions::is_post_type_disabled( $content_type ) ) {
 			return;
+		} else if ( $content_type == 'taxonomies' && ( ! class_exists( 'Permalink_Manager_URI_Functions_Tax' ) || empty( $current_values['taxonomy_type'] ) || Permalink_Manager_Helper_Functions::is_taxonomy_disabled( $current_values['taxonomy_type'] ) ) ) {
+			return;
 		}
 
 		// Get custom URI format
@@ -510,6 +508,10 @@ class Permalink_Manager_Third_Parties {
 		// Check if the imported elements are terms
 		if ( $importData['post_type'] == 'taxonomies' ) {
 			$is_term = true;
+
+			if ( ! class_exists( 'Permalink_Manager_URI_Functions_Tax' ) ) {
+				return;
+			}
 		} else if ( Permalink_Manager_Helper_Functions::is_post_type_disabled( $importData['post_type'] ) ) {
 			return;
 		}
@@ -1133,6 +1135,39 @@ class Permalink_Manager_Third_Parties {
 		}
 
 		return $request;
+	}
+
+	/**
+	 * Adjust the query if WPForo page is detected
+	 *
+	 * @param array $query The query object.
+	 * @param array $old_query The original query array.
+	 * @param array $uri_parts An array of the URI parts.
+	 * @param array $pm_query
+	 * @param string $content_type
+	 * @param null|WP_Post|WP_Term $element_object
+	 *
+	 * @return array
+	 */
+	function wpforo_adjust_query( $query, $old_query, $uri_parts, $pm_query, $content_type, $element_object ) {
+		if ( ! function_exists( 'wpforo_get_option' ) || ! function_exists( 'WPF' ) ) {
+			return $query;
+		}
+
+		$boards = WPF()->board->get_boards_pageids();
+		$boards[] = wpforo_get_option( 'wpforo_pageid2', 0 );
+
+		if ( ! empty( $element_object->ID ) ) {
+			$detected_page_id = $element_object->ID;
+		} else if ( ! empty( $old_query['page_id'] ) ) {
+			$detected_page_id = $old_query['page_id'];
+		}
+
+		if ( ! empty( $boards ) && ! empty( $detected_page_id ) && in_array( $detected_page_id, $boards ) ) {
+			$query['do_not_redirect'] = 1;
+		}
+
+		return $query;
 	}
 
 }

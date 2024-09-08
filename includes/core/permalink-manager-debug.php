@@ -13,9 +13,13 @@ class Permalink_Manager_Debug_Functions {
 	 * Map the debug functions to specific hooks
 	 */
 	public function debug_data() {
-		add_filter( 'permalink_manager_filter_query', array( $this, 'debug_query' ), 9, 5 );
-		add_filter( 'permalink_manager_filter_redirect', array( $this, 'debug_redirect' ), 9, 3 );
-		add_filter( 'wp_redirect', array( $this, 'debug_wp_redirect' ), 9, 2 );
+		global $permalink_manager_options;
+
+		if ( ! empty( $permalink_manager_options["general"]["debug_mode"] ) ) {
+			add_filter( 'permalink_manager_filter_query', array( $this, 'debug_query' ), 9, 5 );
+			add_filter( 'permalink_manager_filter_redirect', array( $this, 'debug_redirect' ), 9, 3 );
+			add_filter( 'wp_redirect', array( $this, 'debug_wp_redirect' ), 9, 2 );
+		}
 
 		self::debug_custom_fields();
 	}
@@ -68,13 +72,9 @@ class Permalink_Manager_Debug_Functions {
 	 * @return string
 	 */
 	public function debug_redirect( $correct_permalink, $redirect_type, $queried_object ) {
-		global $wp_query;
-
 		if ( isset( $_REQUEST['debug_redirect'] ) ) {
-			$debug_info['query_vars']     = $wp_query->query_vars;
-			$debug_info['redirect_url']   = ( ! empty( $correct_permalink ) ) ? $correct_permalink : '-';
-			$debug_info['redirect_type']  = ( ! empty( $redirect_type ) ) ? $redirect_type : "-";
-			$debug_info['queried_object'] = ( ! empty( $queried_object ) ) ? $queried_object : "-";
+			$debug_info['redirect_url']  = ( ! empty( $correct_permalink ) ) ? $correct_permalink : '-';
+			$debug_info['redirect_type'] = ( ! empty( $redirect_type ) ) ? $redirect_type : "-";
 
 			self::display_debug_data( $debug_info );
 		}

@@ -867,15 +867,15 @@ class Permalink_Manager_Core_Functions {
 			// Allow redirect
 			$wp_query->query_vars['do_not_redirect'] = 0;
 
-			// Append query string
-			$correct_permalink = ( ! empty( $query_string ) ) ? sprintf( "%s?%s", strtok( $correct_permalink, "?" ), $query_string ) : $correct_permalink;
-
 			// Adjust trailing slashes
 			$correct_permalink = self::control_trailing_slashes( $correct_permalink );
 
 			// Prevent redirect loop
 			$rel_old_uri = wp_make_link_relative( $old_uri_abs );
 			$rel_new_uri = wp_make_link_relative( $correct_permalink );
+
+			// Append query string
+			$correct_permalink = ( ! empty( $query_string ) ) ? sprintf( "%s?%s", strtok( $correct_permalink, "?" ), $query_string ) : $correct_permalink;
 
 			if ( $redirect_type === 'www_redirect' || $rel_old_uri !== $rel_new_uri ) {
 				wp_safe_redirect( $correct_permalink, $redirect_mode, PERMALINK_MANAGER_PLUGIN_NAME );

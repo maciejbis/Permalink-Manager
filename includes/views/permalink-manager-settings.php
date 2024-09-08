@@ -269,6 +269,11 @@ class Permalink_Manager_Settings {
 						'type'        => 'single_checkbox',
 						'label'       => __( 'Automatically fix broken URIs', 'permalink-manager' ),
 						'description' => sprintf( '%s', __( 'Enable this option if you would like to automatically remove redundant permalinks & duplicated redirects during page load.', 'permalink-manager' ) )
+					),
+					'debug_mode'       => array(
+						'type'        => 'single_checkbox',
+						'label'       => __( 'Debug mode', 'permalink-manager' ),
+						'description' => sprintf( '%s', __( 'This option activates permalink detection and redirect debug functions. To access them add "<em>?debug_url=1</em>" and "<em>?debug_redirect=1</em>" to the checked URLs.', 'permalink-manager' ) )
 					)
 				)
 			)
