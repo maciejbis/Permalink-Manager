@@ -13,13 +13,9 @@ class Permalink_Manager_Debug_Functions {
 	 * Map the debug functions to specific hooks
 	 */
 	public function debug_data() {
-		global $permalink_manager_options;
-
-		if ( ! empty( $permalink_manager_options["general"]["debug_mode"] ) ) {
-			add_filter( 'permalink_manager_filter_query', array( $this, 'debug_query' ), 9, 5 );
-			add_filter( 'permalink_manager_filter_redirect', array( $this, 'debug_redirect' ), 9, 3 );
-			add_filter( 'wp_redirect', array( $this, 'debug_wp_redirect' ), 9, 2 );
-		}
+		add_filter( 'permalink_manager_filter_query', array( $this, 'debug_query' ), 9, 5 );
+		add_filter( 'permalink_manager_filter_redirect', array( $this, 'debug_redirect' ), 9, 3 );
+		add_filter( 'wp_redirect', array( $this, 'debug_wp_redirect' ), 9, 2 );
 
 		self::debug_custom_fields();
 	}
@@ -137,7 +133,7 @@ class Permalink_Manager_Debug_Functions {
 		$debug_txt = print_r( $debug_info, true );
 		$debug_txt = sprintf( "<pre style=\"display:block;\">%s</pre>", esc_html( $debug_txt ) );
 
-		wp_die( $debug_txt );
+		wp_die( wp_kses_post( $debug_txt ) );
 	}
 
 	/**
@@ -177,6 +173,7 @@ class Permalink_Manager_Debug_Functions {
 		}
 		fclose( $df );
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ob_get_clean();
 		die();
 	}

@@ -36,6 +36,7 @@ class Permalink_Manager_Permastructs {
 
 		// Display additional information in Permalink Manager Lite
 		if ( ! Permalink_Manager_Admin_Functions::is_pro_active() && ! class_exists( 'Permalink_Manager_URI_Functions_Tax' ) ) {
+			/* translators: %s: Permalink Manager Pro website */
 			$pro_text = sprintf( __( 'To edit taxonomy permalinks, <a href="%s" target="_blank">Permalink Manager Pro</a> is required.', 'permalink-manager' ), PERMALINK_MANAGER_WEBSITE );
 			$pro_text = sprintf( '<div class="alert info">%s</div>', $pro_text );
 		}
@@ -127,12 +128,14 @@ class Permalink_Manager_Permastructs {
 	public function output() {
 		$sidebar = sprintf( '<h3>%s</h3>', __( 'Instructions', 'permalink-manager' ) );
 		$sidebar .= "<div class=\"notice notice-warning\"><p>";
-		$sidebar .= __( 'The current permastructures settings will be automatically applied <strong>only to the new posts & terms</strong>.' );
+		$sidebar .= __( 'The current permastructures settings will be automatically applied <strong>only to the new posts & terms</strong>.', 'permalink-manager' );
 		$sidebar .= '<br />';
+		/* translators: %s: Regenerate/reset admin URL */
 		$sidebar .= sprintf( __( 'To apply the <strong>new format to existing posts and terms</strong>, please use "<a href="%s">Regenerate/reset</a>" tool after you update the permastructure settings below.', 'permalink-manager' ), admin_url( 'tools.php?page=permalink-manager&section=tools&subsection=regenerate_slugs' ) );
 		$sidebar .= "</p></div>";
 
 		$sidebar .= sprintf( '<h4>%s</h4>', __( 'Permastructure tags', 'permalink-manager' ) );
+		/* translators: %s: WordPress.org docs reference */
 		$sidebar .= wpautop( sprintf( __( 'All allowed <a href="%s" target="_blank">permastructure tags</a> are listed below. Please note that some of them can be used only for particular post types or taxonomies.', 'permalink-manager' ), "https://codex.wordpress.org/Using_Permalinks#Structure_Tags" ) );
 		$sidebar .= Permalink_Manager_Helper_Functions::get_all_structure_tags();
 

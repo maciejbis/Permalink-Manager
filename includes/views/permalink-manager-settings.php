@@ -54,7 +54,7 @@ class Permalink_Manager_Settings {
 						'label'       => __( 'Slugs mode', 'permalink-manager' ),
 						'input_class' => 'settings-select',
 						'choices'     => array( 0 => __( 'Use WordPress slugs (default mode)', 'permalink-manager' ), 1 => __( 'Use actual titles instead of WordPress slugs', 'permalink-manager' ), 2 => __( 'Inherit parents\' slugs', 'permalink-manager' ) ),
-						'description' => sprintf( '%s<br />%s<br />%s', __( '<strong>Permalink Manager can generate custom permalinks using either WordPress slugs or actual titles.</strong>', 'permalink-manager' ), __( 'A slug is a permalink component that identifies a certain page. For example, "<em>shop</em>" and "<em>sample-product</em>" are two slugs in the permalink "<em>shop/sample-product</em>".', 'permalink-manager' ), __( 'WordPress slugs are generated automatically from the first title and remain the same even if the title is changed.', 'permalink-manager' ) )
+						'description' => sprintf( '<strong>%s</strong><br />%s<br />%s', __( 'Permalink Manager can generate custom permalinks using either WordPress slugs or actual titles.', 'permalink-manager' ), __( 'A slug is a permalink component that identifies a certain page. For example, "<em>shop</em>" and "<em>sample-product</em>" are two slugs in the permalink "<em>shop/sample-product</em>".', 'permalink-manager' ), __( 'WordPress slugs are generated automatically from the first title and remain the same even if the title is changed.', 'permalink-manager' ) )
 					),
 					'trailing_slashes'   => array(
 						'type'        => 'select',
@@ -74,7 +74,7 @@ class Permalink_Manager_Settings {
 						'type'        => 'single_checkbox',
 						'label'       => __( 'Canonical redirect', 'permalink-manager' ),
 						'input_class' => '',
-						'description' => sprintf( '%s<br />%s', __( '<strong>Canonical redirect allows WordPress to "correct" the requested URL and redirect visitor to the canonical permalink.</strong>', 'permalink-manager' ), __( 'Permalink Manager uses canonical redirect to avoid "duplicate content" SEO issues by redirecting different permalinks that lead to the same content to a custom permalink set in the plugin.', 'permalink-manager' ) )
+						'description' => sprintf( '<strong>%s</strong><br />%s', __( 'Canonical redirect allows WordPress to "correct" the requested URL and redirect visitor to the canonical permalink.', 'permalink-manager' ), __( 'Permalink Manager uses canonical redirect to avoid "duplicate content" SEO issues by redirecting different permalinks that lead to the same content to a custom permalink set in the plugin.', 'permalink-manager' ) )
 					),
 					/*'endpoint_redirect' => array(
 						'type' => 'single_checkbox',
@@ -87,7 +87,7 @@ class Permalink_Manager_Settings {
 						'type'        => 'single_checkbox',
 						'label'       => __( 'Old slug redirect', 'permalink-manager' ),
 						'input_class' => '',
-						'description' => sprintf( '%s<br />%s', __( '<strong>Old slug redirect is used by WordPress to provide a fallback for old version of slugs after they are changed.</strong>', 'permalink-manager' ), __( 'If enabled, the visitors trying to access the URL with the old slug will be redirected to the canonical permalink.', 'permalink-manager' ) )
+						'description' => sprintf( '<strong>%s</strong><br />%s', __( 'Old slug redirect is used by WordPress to provide a fallback for old version of slugs after they are changed.', 'permalink-manager' ), __( 'If enabled, the visitors trying to access the URL with the old slug will be redirected to the canonical permalink.', 'permalink-manager' ) )
 					),
 					'extra_redirects'                            => array(
 						'type'        => 'single_checkbox',
@@ -121,7 +121,7 @@ class Permalink_Manager_Settings {
 						'type'        => 'single_checkbox',
 						'label'       => __( 'Force HTTPS/WWW', 'permalink-manager' ),
 						'input_class' => '',
-						'description' => sprintf( '%s<br />%s', __( '<strong>You can use Permalink Manager to force SSL or "www" prefix in WordPress permalinks.</strong>', 'permalink-manager' ), __( 'Please disable it if you encounter any redirect loop issues.', 'permalink-manager' ) )
+						'description' => sprintf( '<strong>%s</strong><br />%s', __( 'You can use Permalink Manager to force SSL or "www" prefix in WordPress permalinks.', 'permalink-manager' ), __( 'Please disable it if you encounter any redirect loop issues.', 'permalink-manager' ) )
 					),
 					'redirect'                                   => array(
 						'type'        => 'select',
@@ -263,17 +263,13 @@ class Permalink_Manager_Settings {
 						'type'        => 'select',
 						'label'       => __( 'URI Editor role capability', 'permalink-manager' ),
 						'choices'     => array( 'edit_theme_options' => __( 'Administrator (edit_theme_options)', 'permalink-manager' ), 'publish_pages' => __( 'Editor (publish_pages)', 'permalink-manager' ), 'publish_posts' => __( 'Author (publish_posts)', 'permalink-manager' ), 'edit_posts' => __( 'Contributor (edit_posts)', 'permalink-manager' ) ),
+						/* translators: %s: WordPress.org docs reference */
 						'description' => sprintf( __( 'Only the users who have selected capability will be able to access URI Editor.<br />The list of capabilities <a href="%s" target="_blank">can be found here</a>.', 'permalink-manager' ), 'https://wordpress.org/support/article/roles-and-capabilities/#capability-vs-role-table' )
 					),
 					'auto_fix_duplicates'       => array(
 						'type'        => 'single_checkbox',
 						'label'       => __( 'Automatically fix broken URIs', 'permalink-manager' ),
 						'description' => sprintf( '%s', __( 'Enable this option if you would like to automatically remove redundant permalinks & duplicated redirects during page load.', 'permalink-manager' ) )
-					),
-					'debug_mode'       => array(
-						'type'        => 'single_checkbox',
-						'label'       => __( 'Debug mode', 'permalink-manager' ),
-						'description' => sprintf( '%s', __( 'This option activates permalink detection and redirect debug functions. To access them add "<em>?debug_url=1</em>" and "<em>?debug_redirect=1</em>" to the checked URLs.', 'permalink-manager' ) )
 					)
 				)
 			)

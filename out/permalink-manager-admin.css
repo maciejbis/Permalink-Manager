@@ -30,7 +30,7 @@
 #permalink-manager .tablenav.top{margin-top:0}
 #permalink-manager .tablenav .actions{padding:0;overflow:visible}
 #permalink-manager .tablenav #months-filter{margin-left:10px}
-#permalink-manager .search-box{margin-left:1em}
+#permalink-manager .search-box{margin:0 0 0 1em}
 #permalink-manager th#count a{display:inline-block}
 #permalink-manager .post_permalink{margin-top:5px;display:block}
 #permalink-manager .post_permalink a,#permalink-manager .post_permalink .dashicons,#permalink-manager .uri_locked .dashicons{font-size:13px;color:#aaa;line-height:1.5em;height:auto;width:auto}

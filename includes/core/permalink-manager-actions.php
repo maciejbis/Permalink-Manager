@@ -135,7 +135,8 @@ class Permalink_Manager_Actions {
 			Permalink_Manager_URI_Functions::save_all_uris();
 			update_option( 'permalink-manager-redirects', array_filter( $permalink_manager_redirects ), true );
 
-			$permalink_manager_before_sections_html .= Permalink_Manager_UI_Elements::get_alert_message( sprintf( __( '%d Custom URIs and %d Custom Redirects were removed!', 'permalink-manager' ), $removed_uris, $removed_redirects ), 'updated updated_slugs' );
+			// Translators: 1: Number of custom URIs, 2: Number of custom redirects.
+			$permalink_manager_before_sections_html .= Permalink_Manager_UI_Elements::get_alert_message( sprintf( __( '%1$d Custom URIs and %2$d Custom Redirects were removed!', 'permalink-manager' ), $removed_uris, $removed_redirects ), 'updated updated_slugs' );
 		} else {
 			$permalink_manager_before_sections_html .= Permalink_Manager_UI_Elements::get_alert_message( __( 'No Custom URIs or Custom Redirects were removed!', 'permalink-manager' ), 'error updated_slugs' );
 		}
@@ -325,6 +326,7 @@ class Permalink_Manager_Actions {
 		// Check if custom URI is set
 		if ( ! empty( $custom_uri ) ) {
 			Permalink_Manager_URI_Functions::remove_single_uri( $uri_key, null, true );
+			// translators: %s is the custom URI that was removed.
 			$updated = Permalink_Manager_UI_Elements::get_alert_message( sprintf( __( 'URI "%s" was removed successfully!', 'permalink-manager' ), $custom_uri ), 'updated' );
 		}
 
@@ -517,6 +519,7 @@ class Permalink_Manager_Actions {
 			// Reload globals
 			$permalink_manager->get_options_and_globals();
 
+			// Translators: %s is the name of the data field that was removed
 			$alert_message                          = sprintf( __( '%s were removed!', 'permalink-manager' ), $alert );
 			$permalink_manager_before_sections_html .= Permalink_Manager_UI_Elements::get_alert_message( $alert_message, 'updated updated_slugs' );
 		}
@@ -603,7 +606,7 @@ class Permalink_Manager_Actions {
 
 					// Check for MySQL errors
 					if ( ! empty( $wpdb->last_error ) ) {
-						printf( '%s (%sMB)', $wpdb->last_error, strlen( serialize( $items ) ) / 1000000 );
+						printf( '%s (%sMB)', esc_html( $wpdb->last_error ), esc_html( number_format( strlen( serialize( $items ) ) / 1000000, 2 ) ) );
 						http_response_code( 500 );
 						die();
 					}

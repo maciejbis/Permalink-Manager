@@ -393,6 +393,7 @@ class Permalink_Manager_Third_Parties {
 
 		$html .= '<div class="template_input">';
 		$html .= Permalink_Manager_UI_Elements::generate_option_field( 'custom_uri', array( 'extra_atts' => 'style="width:100%; line-height: 25px;"', 'placeholder' => __( 'Custom URI', 'permalink-manager' ), 'value' => $custom_uri ) );
+		/* translators: %s: Permastructures admin URL */
 		$html .= wpautop( sprintf( __( 'If empty, a default permalink based on your current <a href="%s" target="_blank">permastructure settings</a> will be used.', 'permalink-manager' ), Permalink_Manager_Admin_Functions::get_admin_url( '&section=permastructs' ) ) );
 		$html .= '</div>';
 
@@ -400,6 +401,7 @@ class Permalink_Manager_Third_Parties {
 		$html .= '</div>';
 		$html .= '</div>';
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo $html;
 	}
 

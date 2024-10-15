@@ -27,8 +27,9 @@ class Permalink_Manager_WooCommerce {
 					}
 
 					add_filter( 'request', 'Permalink_Manager_Pro_Functions::woocommerce_detect_coupon_code', 1, 1 );
-					add_filter( 'permalink_manager_disabled_post_types', 'Permalink_Manager_Pro_Functions::woocommerce_coupon_uris', 9, 1 );
 				}
+			} else {
+				add_filter( 'permalink_manager_disabled_post_types', array( $this, 'woocommerce_coupon_uris' ), 9, 1 );
 			}
 
 			// WooCommerce Import/Export
@@ -123,6 +124,21 @@ class Permalink_Manager_WooCommerce {
 		if ( is_checkout() || ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url() ) ) {
 			$wp_query->query_vars['do_not_redirect'] = 1;
 		}
+	}
+
+	/**
+	 * Add "Coupons" to the list of excluded post types
+	 *
+	 * @param array $post_types
+	 *
+	 * @return array
+	 */
+	public function woocommerce_coupon_uris( $post_types ) {
+		if ( is_array( $post_types ) ) {
+			$post_types[] = 'shop_coupon';
+		}
+
+		return $post_types;
 	}
 
 	/**

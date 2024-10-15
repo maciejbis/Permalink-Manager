@@ -41,17 +41,19 @@ class Permalink_Manager_Core_Functions {
 		// Use the URIs set in this plugin
 		add_filter( 'request', array( $this, 'detect_post' ), 0, 1 );
 
-		// Redirect from old URIs to new URIs  + adjust canonical redirect settings
-		add_action( 'template_redirect', array( $this, 'new_uri_redirect_and_404' ), 1 );
-		add_action( 'wp', array( $this, 'adjust_canonical_redirect' ), 1 );
+		if ( ! is_admin() ) {
+			// Redirect from old URIs to new URIs  + adjust canonical redirect settings
+			add_action( 'template_redirect', array( $this, 'new_uri_redirect_and_404' ), 1 );
+			add_action( 'wp', array( $this, 'adjust_canonical_redirect' ), 1 );
 
-		// Case-insensitive permalinks
-		if ( ! empty( $permalink_manager_options['general']['case_insensitive_permalinks'] ) ) {
-			add_action( 'parse_request', array( $this, 'case_insensitive_permalinks' ), 0 );
-		}
-		// Force 404 on non-existing pagination pages
-		if ( ! empty( $permalink_manager_options['general']['pagination_redirect'] ) ) {
-			add_action( 'wp', array( $this, 'fix_pagination_pages' ), 0 );
+			// Case-insensitive permalinks
+			if ( ! empty( $permalink_manager_options['general']['case_insensitive_permalinks'] ) ) {
+				add_action( 'parse_request', array( $this, 'case_insensitive_permalinks' ), 0 );
+			}
+			// Force 404 on non-existing pagination pages
+			if ( ! empty( $permalink_manager_options['general']['pagination_redirect'] ) ) {
+				add_action( 'wp', array( $this, 'fix_pagination_pages' ), 0 );
+			}
 		}
 	}
 

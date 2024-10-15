@@ -54,7 +54,8 @@ class Permalink_Manager_Debug {
 
 		if ( $custom_permalinks_count >= 1 ) {
 			$custom_permalinks_size  = ( is_numeric( ( $custom_permalinks_size ) ) ) ? round( $custom_permalinks_size / 1024, 2 ) . __( 'kb', 'permalink-manager' ) : '-';
-			$custom_permalinks_stats = sprintf( __( 'Custom permalinks count: <strong>%s</strong> | Custom permalinks array size in DB: <strong>%s</strong>', 'permalink-manager' ), $custom_permalinks_count, $custom_permalinks_size );
+			/* translators: 1: Custom permalinks count, 2: Custom permalinks array size */
+			$custom_permalinks_stats = sprintf( __( 'Custom permalinks count: <strong>%1$s</strong> | Custom permalinks array size in DB: <strong>%2$s</strong>', 'permalink-manager' ), esc_html( $custom_permalinks_count ), esc_html( $custom_permalinks_size ) );
 		} else {
 			$custom_permalinks_stats = __( 'The custom permalinks array has not been stored in the database yet.', 'permalink-manager' );
 		}

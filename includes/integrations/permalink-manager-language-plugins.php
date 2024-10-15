@@ -575,7 +575,7 @@ class Permalink_Manager_Language_Plugins {
 	 */
 	function uri_editor_get_lang_col( $output, $column, $element ) {
 		$language_code = self::get_language_code( $element );
-		$output        .= ( ! empty( $language_code ) ) ? sprintf( " | <span><strong>%s:</strong> %s</span>", __( "Language" ), $language_code ) : "";
+		$output        .= ( ! empty( $language_code ) ) ? sprintf( " | <span><strong>%s:</strong> %s</span>", __( 'Language', 'permalink-manager' ), $language_code ) : "";
 
 		return $output;
 	}

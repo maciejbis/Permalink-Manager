@@ -79,8 +79,8 @@ class Permalink_Manager_URI_Functions_Post {
 
 		$post = ( is_integer( $post ) ) ? get_post( $post ) : $post;
 
-		// Do not run if post object is invalid
-		if ( empty( $post ) || empty( $post->ID ) || empty( $post->post_type ) ) {
+		// Do not run if post object is invalid or the permalink is not string
+		if ( empty( $post ) || empty( $post->ID ) || empty( $post->post_type ) || ! is_string( $permalink ) ) {
 			return $permalink;
 		}
 
@@ -527,18 +527,7 @@ class Permalink_Manager_URI_Functions_Post {
 						$new_post_name = $old_post_name;
 					}
 				} else {
-					// Do replacement on slugs (non-REGEX)
-					if ( preg_match( "/^\/.+\/[a-z]*$/i", $old_string ) ) {
-						$regex   = stripslashes( trim( sanitize_text_field( $_POST['old_string'] ), "/" ) );
-						$regex   = preg_quote( $regex, '~' );
-						$pattern = "~{$regex}~";
-
-						$new_post_name = ( $mode == 'slugs' ) ? preg_replace( $pattern, $new_string, $old_post_name ) : $old_post_name;
-						$new_uri       = ( $mode != 'slugs' ) ? preg_replace( $pattern, $new_string, $old_uri ) : $old_uri;
-					} else {
-						$new_post_name = ( $mode == 'slugs' ) ? str_replace( $old_string, $new_string, $old_post_name ) : $old_post_name; // Post name is changed only in first mode
-						$new_uri       = ( $mode != 'slugs' ) ? str_replace( $old_string, $new_string, $old_uri ) : $old_uri;
-					}
+					list( $new_post_name, $new_uri ) = Permalink_Manager_Helper_Functions::replace_uri_slug( $old_string, $new_string, $old_post_name, $old_uri, $mode );
 				}
 
 				// Check if native slug should be changed
@@ -694,6 +683,7 @@ class Permalink_Manager_URI_Functions_Post {
 		// 4. Append hidden field with native slug
 		$new_html .= ( ! empty( $post->post_name ) && strpos( $new_html, 'editable-post-name-full' ) === false ) ? "<span id=\"editable-post-name-full\">{$post->post_name}</span>" : "";
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		return $new_html;
 	}
 
@@ -741,7 +731,7 @@ class Permalink_Manager_URI_Functions_Post {
 			}
 
 			$uri = ( ! empty( $permalink_manager_uris[ $post_id ] ) ) ? rawurldecode( $permalink_manager_uris[ $post_id ] ) : self::get_post_uri( $post_id, true, $is_draft );
-			printf( '<span class="permalink-manager-col-uri" data-disabled="%s">%s</span>', intval( $disabled ), $uri );
+			printf( '<span class="permalink-manager-col-uri" data-disabled="%s">%s</span>', esc_attr( intval( $disabled ) ), esc_html( $uri ) );
 		}
 	}
 

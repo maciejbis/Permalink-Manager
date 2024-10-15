@@ -7,7 +7,7 @@ Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, url edit
 Requires at least: 4.4.0
 Requires PHP: 5.4
 Tested up to: 6.7
-Stable tag: 2.4.4.1
+Stable tag: 2.4.4.2
 
 Permalink Manager improves the built-in permalink settings and allows you to change the URLs of native and custom post types and taxonomies as needed.
 
@@ -99,10 +99,14 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 
 == Changelog ==
 
+= 2.4.4.2 (October 16, 2024) =
+* Dev - Improved support for REGEX formulas in "Find & Replace"
+* Dev - Code adjustments to improve WPCS compliance
+* Fix - Fixed search functionality bug in Bulk URI Editor
+
 = 2.4.4.1 (August 28, 2024) =
 * Fix - Fixed the deprecated warning for The SEO Framework plugin
 * Fix - Fixed taxonomies' custom permalink import feature for WP All Import in Permalink Manager Lite
-* Dev - With the new "Debug Mode" options field, debug data visibility may be toggled
 * Dev - Code adjustments for WPForo integration
 * Dev - Minor code improvements
 

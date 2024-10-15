@@ -590,7 +590,9 @@ class Permalink_Manager_UI_Elements {
 		// 3. Display the alert
 		if ( isset( $updated_slugs_count ) ) {
 			if ( $updated_slugs_count > 0 && ! $preview_mode ) {
+				// translators: %d is the number of items where custom permalinks were updated
 				$alert_content = sprintf( _n( '<strong class="updated_count">%d</strong> item was updated!', '<strong class="updated_count">%d</strong> items were updated!', $updated_slugs_count, 'permalink-manager' ), $updated_slugs_count ) . ' ';
+				// translators: %s is the anchor link to the updated items' table
 				$alert_content .= sprintf( __( '<a %s>Click here</a> to go to the list of affected items', 'permalink-manager' ), "href=\"#updated-list\"" );
 
 				$alert = self::get_alert_message( $alert_content, 'updated updated_slugs' );
@@ -669,6 +671,7 @@ class Permalink_Manager_UI_Elements {
 			if ( ! empty( $element->post_status ) && $element->post_status == 'auto-draft' ) {
 				$alert = __( 'Save your post to activate the permalink editor and make changes to the custom permalink.', 'permalink-manager' );
 			} else {
+				/* translators: Link to settings page */
 				$alert = sprintf( __( 'The custom permalink cannot be edited due to the <a href="%s" target="_blank">Permalink Manager settings</a> ("<strong>Exclude drafts & pending posts</strong>") and the post status not allowing it.', 'permalink-manager' ), Permalink_Manager_Admin_Functions::get_admin_url( '&section=settings#exclusion' ) );
 			}
 
@@ -688,6 +691,7 @@ class Permalink_Manager_UI_Elements {
 			}
 
 			$auto_update_choices = array(
+				/* translators: The global value of the "Auto-update" mode setting */
 				0   => array( "label" => sprintf( __( "Use global settings [%s]", "permalink-manager" ), $auto_update_def_label ), "atts" => "data-readonly=\"{$auto_update_def_val}\"" ),
 				10  => '---',
 				- 1 => array( "label" => __( "Don't auto-update \"Custom permalink\"", "permalink-manager" ), "atts" => "data-readonly=\"0\"" ),
@@ -846,6 +850,7 @@ class Permalink_Manager_UI_Elements {
 		$html .= Permalink_Manager_UI_Elements::generate_option_field( "permalink-manager-edit-uri-element-id", array( "type" => "hidden", "input_class" => "permalink-manager-edit-uri-element-id", "value" => "" ) );
 		$html .= wp_nonce_field( 'permalink-manager-edit-uri-box', 'permalink-manager-nonce', true, false );
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo $html;
 	}
 
@@ -893,6 +898,7 @@ class Permalink_Manager_UI_Elements {
 		if ( class_exists( 'Permalink_Manager_Pro_Functions' ) ) {
 			$text = Permalink_Manager_Pro_Functions::get_expiration_date( false, true );
 		} else {
+			/* translators: Permalink Manager Pro website */
 			$text = sprintf( __( 'This functionality is available only in <a href="%s" target="_blank">Permalink Manager Pro</a>.', 'permalink-manager' ), PERMALINK_MANAGER_WEBSITE );
 		}
 

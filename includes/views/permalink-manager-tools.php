@@ -52,7 +52,7 @@ class Permalink_Manager_Tools {
 	 * @return string
 	 */
 	public function display_instructions() {
-		return wpautop( __( '<strong>A MySQL backup is highly recommended before using "<em>Native slugs</em>" mode!</strong>', 'permalink-manager' ) );
+		return sprintf( '<p><strong>%s</strong>', __( 'A MySQL backup is highly recommended before using "<em>Native slugs</em>" mode!', 'permalink-manager' ) );
 	}
 
 	/**
@@ -91,7 +91,7 @@ class Permalink_Manager_Tools {
 					$detected_id       = $parts[4];
 					// $detected_index = $parts[2];
 					$detected_term = ( ! empty( $parts[3] ) ) ? true : false;
-					$remove_link   = ( $is_extra_redirect ) ? sprintf( " <a href=\"%s\"><span class=\"dashicons dashicons-trash\"></span> %s</a>", admin_url( "tools.php?page=permalink-manager&section=tools&subsection=duplicates&remove-redirect={$item_id}" ), __( "Remove Redirect" ) ) : "";
+					$remove_link   = ( $is_extra_redirect ) ? sprintf( " <a href=\"%s\"><span class=\"dashicons dashicons-trash\"></span> %s</a>", admin_url( "tools.php?page=permalink-manager&section=tools&subsection=duplicates&remove-redirect={$item_id}" ), __( 'Remove Redirect', 'permalink-manager' ) ) : "";
 
 					// Get term
 					if ( $detected_term && ! empty( $detected_id ) ) {

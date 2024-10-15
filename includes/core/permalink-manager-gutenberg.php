@@ -59,6 +59,7 @@ class Permalink_Manager_Gutenberg {
 
 		// Check if the user can edit this post
 		if ( ! empty( $post->ID ) && current_user_can( 'edit_post', $post->ID ) ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo ( $post ) ? Permalink_Manager_UI_Elements::display_uri_box( $post, true ) : '';
 		}
 

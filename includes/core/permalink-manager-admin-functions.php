@@ -120,6 +120,7 @@ class Permalink_Manager_Admin_Functions {
 	 * Display the plugin sections
 	 */
 	public function display_section() {
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo Permalink_Manager_UI_Elements::get_plugin_sections_html( $this->sections, $this->active_section, $this->active_subsection );
 	}
 
@@ -243,7 +244,7 @@ class Permalink_Manager_Admin_Functions {
 			}
 		}
 
-		echo $html;
+		echo wp_kses_post( $html );
 	}
 
 	/**
@@ -252,7 +253,7 @@ class Permalink_Manager_Admin_Functions {
 	function display_plugin_notices() {
 		global $permalink_manager_before_sections_html;
 
-		echo $permalink_manager_before_sections_html;
+		echo wp_kses_post( $permalink_manager_before_sections_html );
 	}
 
 	/**

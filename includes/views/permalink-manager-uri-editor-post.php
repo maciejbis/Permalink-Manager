@@ -164,11 +164,16 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	function extra_tablenav( $which ) {
 		global $wpdb, $active_section, $active_subsection;
 
-		$button_top    = __( 'Save all the permalinks below', 'permalink-manager' );
-		$button_bottom = __( 'Save all the permalinks above', 'permalink-manager' );
+		if ( $which == "top" ) {
+			$button_text = __( 'Save all the permalinks below', 'permalink-manager' );
+			$button_name = 'update_all_slugs[top]';
+		} else {
+			$button_text = __( 'Save all the permalinks above', 'permalink-manager' );
+			$button_name = 'update_all_slugs[bottom]';
+		}
 
 		$html = "<div class=\"alignleft actions\">";
-		$html .= get_submit_button( ${"button_$which"}, 'primary alignleft', "update_all_slugs[{$which}]", false, array( 'id' => 'doaction', 'value' => 'update_all_slugs' ) );
+		$html .= get_submit_button( $button_text, 'primary alignleft', $button_name, false, array( 'id' => 'doaction', 'value' => 'update_all_slugs' ) );
 
 		if ( $which == "top" ) {
 			$html .= '<div class="alignright">';
@@ -186,15 +191,15 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 					'subsection' => $active_subsection
 				), admin_url( $screen->parent_file ) );
 
-				$html .= "<div id=\"months-filter\" class=\"alignright hide-if-no-js\" data-filter-url=\"{$current_url}\">";
-				$html .= "<select id=\"months-filter-select\" name=\"{$month_key}\">";
+				$html .= sprintf( "<div id=\"months-filter\" class=\"alignright hide-if-no-js\" data-filter-url=\"%s\">", $current_url );
+				$html .= sprintf( "<select id=\"months-filter-select\" name=\"%s\">", $month_key );
 				$html .= sprintf( "<option value=\"\">%s</option>", __( "All dates", "permalink-manager" ) );
 				foreach ( $months as $month ) {
-					$month_raw        = "{$month['y']}-{$month['m']}";
+					$month_raw        = sprintf( "%s-%s", $month['y'], $month['m'] );
 					$month_human_name = date_i18n( "F Y", strtotime( $month_raw ) );
 
 					$selected = ( ! empty( $_REQUEST[ $month_key ] ) ) ? selected( $_REQUEST[ $month_key ], $month_raw, false ) : "";
-					$html     .= "<option value=\"{$month_raw}\" {$selected}>{$month_human_name}</option>";
+					$html     .= sprintf( "<option value=\"%s\" %s>%s</option>", $month_raw, $selected, $month_human_name );
 				}
 				$html .= "</select>";
 				$html .= get_submit_button( __( "Filter", "permalink-manager" ), 'button', false, false, array( 'id' => 'months-filter-button', 'name' => 'months-filter-button' ) );
@@ -203,6 +208,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		}
 		$html .= "</div>";
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo $html;
 	}
 
