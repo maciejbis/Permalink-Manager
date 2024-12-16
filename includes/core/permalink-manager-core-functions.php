@@ -679,7 +679,7 @@ class Permalink_Manager_Core_Functions {
 			$queried_object = get_queried_object();
 
 			// Unset 404 if custom URI is detected
-			if ( ! empty( $pm_query['id'] ) && ( empty( $queried_object->post_status ) || $queried_object->post_status !== 'private' ) ) {
+			if ( ! empty( $pm_query['id'] ) && ! empty( $queried_object->post_status ) ) {
 				$wp_query->is_404 = false;
 			}
 

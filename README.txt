@@ -6,8 +6,8 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, url editor
 Requires at least: 4.4.0
 Requires PHP: 5.4
-Tested up to: 6.7
-Stable tag: 2.4.4.2
+Tested up to: 6.8
+Stable tag: 2.4.4.3
 
 Permalink Manager improves the built-in permalink settings and allows you to change the URLs of native and custom post types and taxonomies as needed.
 
@@ -98,6 +98,12 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 8.	Permalink Manager settings.
 
 == Changelog ==
+
+= 2.4.4.3 (December 16, 2024) =
+* Dev - Code refactoring for "Bulk URI Editor"
+* Dev - Code adjustments for MyListing support
+* Dev - Minor code improvements
+* Fix - Fallback for get_primary_term() function in older versions of The SEO Framework plugin
 
 = 2.4.4.2 (October 16, 2024) =
 * Dev - Improved support for REGEX formulas in "Find & Replace"

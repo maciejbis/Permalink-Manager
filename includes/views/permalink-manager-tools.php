@@ -87,7 +87,7 @@ class Permalink_Manager_Tools {
 					preg_match( "/(redirect-([\d]+)_)?(?:(tax-)?([\d]*))/", $item_id, $parts );
 
 					$is_extra_redirect = ( ! empty( $parts[1] ) ) ? true : false;
-					$duplicate_type    = ( $is_extra_redirect ) ? __( 'Extra Redirect', 'permalink-manager' ) : __( 'Custom URI', 'permalink-manager' );
+					$duplicate_type    = ( $is_extra_redirect ) ? __( 'Extra Redirect', 'permalink-manager' ) : __( 'Custom permalink', 'permalink-manager' );
 					$detected_id       = $parts[4];
 					// $detected_index = $parts[2];
 					$detected_term = ( ! empty( $parts[3] ) ) ? true : false;
@@ -163,7 +163,7 @@ class Permalink_Manager_Tools {
 				'type'      => 'select',
 				'container' => 'row',
 				'choices'   => array(
-					'custom_uris' => __( 'Custom URIs', 'permalink-manager' ),
+					'custom_uris' => __( 'Custom permalinks', 'permalink-manager' ),
 					'slugs'       => __( 'Native slugs', 'permalink-manager' )
 				),
 			),

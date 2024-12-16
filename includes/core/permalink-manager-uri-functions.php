@@ -207,7 +207,7 @@ class Permalink_Manager_URI_Functions {
 
 			return array( $custom_permalinks_size, $custom_permalinks_count );
 		} else {
-			return $permalink_manager_uris;
+			return array_filter( $permalink_manager_uris );
 		}
 	}
 

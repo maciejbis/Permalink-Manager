@@ -59,7 +59,11 @@ class Permalink_Manager_Helper_Functions {
 			$primary_term = ( is_numeric( $yoast_primary_term_id ) ) ? get_term( $yoast_primary_term_id, $taxonomy ) : '';
 		} // B. The SEO Framework
 		else if ( function_exists( 'the_seo_framework' ) || function_exists( 'tsf' ) ) {
-			$primary_term = ( function_exists( 'tsf' ) ) ? tsf()->data()->plugin()->post()->get_primary_term( $post_id, $taxonomy ) : the_seo_framework()->get_primary_term( $post_id, $taxonomy );
+			if ( class_exists( 'The_SEO_Framework\Data\Plugin\Post' ) ) {
+				$primary_term = The_SEO_Framework\Data\Plugin\Post::get_primary_term( $post_id, $taxonomy );
+			} elseif ( function_exists( 'the_seo_framework' ) && method_exists( the_seo_framework(), 'get_primary_term' ) ) {
+				$primary_term = the_seo_framework()->get_primary_term( $post_id, $taxonomy );
+			}
 		} // C. RankMath
 		else if ( class_exists( 'RankMath' ) ) {
 			$primary_cat_id = get_post_meta( $post_id, "rank_math_primary_{$taxonomy}", true );

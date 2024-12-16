@@ -581,24 +581,15 @@ class Permalink_Manager_URI_Functions_Post {
 			foreach ( $new_uris as $id => $new_uri ) {
 				// Prepare variables
 				$this_post = get_post( $id );
-				$is_draft  = ( ! empty( $this_post->post_status ) && $this_post->post_status == 'draft' ) ? true : false;
+				$old_uri   = Permalink_Manager_URI_Functions::get_single_uri( $this_post, false, true );
 
-				// Get default & native URL
-				$native_uri  = self::get_default_post_uri( $this_post, true );
-				$default_uri = ( $is_draft ) ? '' : self::get_default_post_uri( $this_post );
-				$old_uri     = Permalink_Manager_URI_Functions::get_single_uri( $this_post, false, true );
+				$final_uri = self::save_uri( $this_post, $new_uri, false, false, false );
 
-				// Process new values - empty entries will be treated as default values
-				$new_uri = Permalink_Manager_Helper_Functions::sanitize_title( $new_uri );
-				$new_uri = ( ! empty( $new_uri ) ) ? trim( $new_uri, "/" ) : $default_uri;
-
-				if ( $new_uri != $old_uri ) {
-					Permalink_Manager_URI_Functions::save_single_uri( $id, $new_uri, false, false );
-					$updated_array[] = array( 'item_title' => get_the_title( $id ), 'ID' => $id, 'old_uri' => $old_uri, 'new_uri' => $new_uri );
+				if ( $final_uri ) {
+					$updated_array[] = array( 'item_title' => get_the_title( $id ), 'ID' => $id, 'old_uri' => $old_uri, 'new_uri' => $final_uri );
 					$updated_slugs_count ++;
-
-					do_action( 'permalink_manager_updated_post_uri', $id, $new_uri, $old_uri, $native_uri, $default_uri );
 				}
+
 			}
 
 			// Save all custom permalinks
@@ -647,9 +638,10 @@ class Permalink_Manager_URI_Functions_Post {
 			// B. Do not change anything if post is not saved yet (display sample permalink instead)
 			if ( $autosave || empty( $post->post_status ) ) {
 				$sample_permalink_uri = self::get_default_post_uri( $id );
-			} // C. Display custom URI (if set) or default custom URI
+			} // C. Display custom URI (if set) or default custom URI (for drafts)
 			else {
-				$sample_permalink_uri = Permalink_Manager_URI_Functions::get_single_uri( $post, false, false );
+				$is_draft             = ( $post->post_status == 'draft' ) ? true : false;
+				$sample_permalink_uri = Permalink_Manager_URI_Functions::get_single_uri( $post, ! $is_draft, false );
 			}
 
 			if ( empty( $sample_permalink_uri ) && $post->post_type !== 'attachment' ) {
@@ -743,9 +735,9 @@ class Permalink_Manager_URI_Functions_Post {
 	 * @param bool $is_new_post
 	 * @param int|bool $auto_update_mode
 	 *
-	 * @return bool
+	 * @return bool|string
 	 */
-	static function save_uri( $post, $new_uri = '', $is_new_post = false, $auto_update_mode = false ) {
+	static function save_uri( $post, $new_uri = '', $is_new_post = false, $auto_update_mode = false, $db_save = true ) {
 		global $permalink_manager_options;
 
 		// Do not do anything if post is auto-saved
@@ -781,7 +773,7 @@ class Permalink_Manager_URI_Functions_Post {
 
 		$default_uri = self::get_default_post_uri( $post_object );
 		$native_uri  = self::get_default_post_uri( $post_object, true );
-		$old_uri     = self::get_post_uri( $post_object->ID, true );
+		$old_uri     = self::get_post_uri( $post_object->ID, false, true );
 
 		if ( $is_new_post ) {
 			$new_uri    = $default_uri;
@@ -793,18 +785,23 @@ class Permalink_Manager_URI_Functions_Post {
 
 		$new_uri = apply_filters( 'permalink_manager_pre_update_post_uri', $new_uri, $post_object->ID, $old_uri, $native_uri, $default_uri );
 
+		// The update URI process is stopped by the hook above or disabled in "Auto-update" settings
 		if ( ! $allow_save || ( ! empty( $auto_update_uri ) && $auto_update_uri == 2 ) ) {
-			$uri_saved = false;
-		} else if ( ! empty( $new_uri ) ) {
-			Permalink_Manager_URI_Functions::save_single_uri( $post_object->ID, $new_uri, false, true );
+			return false;
+		}
+
+		//  Save the URI only if $new_uri variable is set
+		if ( ! empty( $new_uri ) && $new_uri !== $old_uri ) {
+			Permalink_Manager_URI_Functions::save_single_uri( $post_object->ID, $new_uri, false, $db_save );
 			$uri_saved = true;
-		} else {
+		} // The $new_uri variable is empty or no change is detected
+		else {
 			$uri_saved = false;
 		}
 
-		do_action( 'permalink_manager_updated_post_uri', $post_object->ID, $new_uri, $old_uri, $native_uri, $default_uri, $single_update = true, $uri_saved );
+		do_action( 'permalink_manager_updated_post_uri', $post_object->ID, $new_uri, $old_uri, $native_uri, $default_uri, $uri_saved );
 
-		return $uri_saved;
+		return ( $uri_saved ) ? $new_uri : false;
 	}
 
 	/**

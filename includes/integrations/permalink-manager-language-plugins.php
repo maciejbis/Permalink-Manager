@@ -855,7 +855,7 @@ class Permalink_Manager_Language_Plugins {
 				'field_data_translated' => $translation_custom_uri,
 				'field_finished'        => $uri_translation_complete,
 				'field_style'           => '0',
-				'title'                 => 'Custom URI',
+				'title'                 => __( 'Custom permalink', 'permalink-manager' )
 			);
 		}
 
