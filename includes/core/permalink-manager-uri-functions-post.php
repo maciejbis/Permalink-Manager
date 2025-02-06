@@ -213,7 +213,7 @@ class Permalink_Manager_URI_Functions_Post {
 
 			$native_permastructure = ( $parent_page ) ? trim( $parent_page_uri, "/" ) . "/attachment" : "";
 		} else {
-			$native_permastructure = Permalink_Manager_Helper_Functions::get_default_permastruct( $post_type );
+			$native_permastructure = Permalink_Manager_Permastructure_Functions::get_default_permastruct( $post_type );
 		}
 
 		// 1B. Get the permastructure
@@ -276,7 +276,7 @@ class Permalink_Manager_URI_Functions_Post {
 			$full_slug = $full_native_slug;
 		}
 
-		$post_type_tag = Permalink_Manager_Helper_Functions::get_post_tag( $post_type );
+		$post_type_tag = Permalink_Manager_Permastructure_Functions::get_post_tag( $post_type );
 
 		// 3C. Get the standard tags and replace them with their values
 		$tags              = array( '%year%', '%monthnum%', '%monthname%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%author%', '%post_type%' );
@@ -478,7 +478,10 @@ class Permalink_Manager_URI_Functions_Post {
 		}
 
 		// Get the rows before they are altered
-		return $wpdb->get_results( "SELECT post_type, post_title, post_name, ID FROM {$wpdb->posts} AS p LEFT JOIN {$wpdb->postmeta} AS pm ON pm.post_ID = p.ID AND pm.meta_key = 'auto_update_uri' WHERE ((post_status IN ('{$post_statuses}') AND post_type IN ('{$post_types}')){$attachment_support}) {$where}", ARRAY_A );
+		$query = "SELECT post_type, post_title, post_name, ID FROM {$wpdb->posts} AS p LEFT JOIN {$wpdb->postmeta} AS pm ON pm.post_ID = p.ID AND pm.meta_key = 'auto_update_uri' WHERE ((post_status IN ('{$post_statuses}') AND post_type IN ('{$post_types}')){$attachment_support}) {$where}";
+		$query = apply_filters( 'permalink_manager_get_items_query', $query, $where, 'post_types' );
+
+		return $wpdb->get_results( $query, ARRAY_A );
 	}
 
 	/**

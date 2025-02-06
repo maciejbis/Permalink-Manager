@@ -26,6 +26,8 @@ class Permalink_Manager_Language_Plugins {
 
 			// URI Editor
 			add_filter( 'permalink_manager_uri_editor_extra_info', array( $this, 'uri_editor_get_lang_col' ), 9, 3 );
+			add_filter( 'permalink_manager_uri_editor_extra_fields', array( $this, 'uri_editor_filter_lang' ), 9, 2 );
+			add_filter( 'permalink_manager_filter_uri_editor_query', array( $this, 'uri_editor_filter_sql_query' ), 9, 3 );
 
 			// Adjust front page ID
 			add_filter( 'permalink_manager_is_front_page', array( $this, 'wpml_is_front_page' ), 9, 3 );
@@ -565,7 +567,7 @@ class Permalink_Manager_Language_Plugins {
 	}
 
 	/**
-	 * Display the language code in a table column in bulk permalink Editor
+	 * Display the language code in a table column in Bulk Permalink Editor
 	 *
 	 * @param string $output
 	 * @param string $column
@@ -578,6 +580,84 @@ class Permalink_Manager_Language_Plugins {
 		$output        .= ( ! empty( $language_code ) ) ? sprintf( " | <span><strong>%s:</strong> %s</span>", __( 'Language', 'permalink-manager' ), $language_code ) : "";
 
 		return $output;
+	}
+
+	/**
+	 * Add extra 'language' filter field to Bulk Permalink Editor
+	 *
+	 * @param $html
+	 * @param $content_type
+	 *
+	 * @return mixed|string
+	 */
+	function uri_editor_filter_lang( $html, $content_type ) {
+		$choices   = array();
+
+		if ( class_exists( 'SitePress' ) ) {
+			$languages = apply_filters( 'wpml_active_languages', '' );
+
+			foreach ( $languages as $l ) {
+				$choices[ $l['language_code'] ] = $l['translated_name'];
+			}
+		} else {
+			$languages = pll_the_languages( array( 'show_flags' => 0,'echo' => 0, 'raw' => 1 ) );
+
+			foreach ( $languages as $l ) {
+				$choices[ $l['slug'] ] = $l['name'];
+			}
+		}
+
+		if ( ! empty( $choices ) ) {
+			$choices = array_merge( array( __( 'All languages', 'permalink-manager' ) ), $choices );
+
+			$select_field = Permalink_Manager_UI_Elements::generate_option_field( 'langcode', array(
+				'type'    => 'select',
+				'choices' => $choices,
+				'value'   => ( isset( $_REQUEST['langcode'] ) ) ? esc_attr( $_REQUEST['langcode'] ) : ''
+			) );
+
+			$html = sprintf( '<div class="alignleft actions">%s</div>', $select_field );
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Filter the fetched items by selected language code
+	 *
+	 * @param $sql_query
+	 * @param $sql_parts
+	 * @param $is_taxonomy
+	 *
+	 * @return void
+	 */
+	function uri_editor_filter_sql_query( $sql_query, $sql_parts, $is_taxonomy ) {
+		global $wpdb;
+
+		if ( isset( $_GET['langcode'] ) ) {
+			$lang = esc_sql( $_GET['langcode'] );
+
+			if ( class_exists( 'SitePress' ) ) {
+				if ( $is_taxonomy ) {
+					$join = "{$sql_parts['start']} INNER JOIN {$wpdb->prefix}icl_translations AS icl ON tt.term_taxonomy_id = icl.element_id AND icl.element_type = CONCAT('tax_', tt.taxonomy) AND icl.language_code = '{$lang}' ";
+				} else {
+					$join = "{$sql_parts['start']} JOIN {$wpdb->prefix}icl_translations icl ON p.ID = icl.element_id AND icl.element_type = CONCAT('post_', p.post_type) AND icl.language_code = '{$lang}' ";
+				}
+			} else if ( class_exists( 'Polylang' ) && function_exists( 'PLL' ) ) {
+				$lang_term      = PLL()->model->get_language( $lang );
+				$lang_term_ttid = ( $is_taxonomy ) ? $lang_term->get_tax_prop( 'term_language', 'term_taxonomy_id' ) : $lang_term->get_tax_prop( 'language', 'term_taxonomy_id' );
+
+				if ( $is_taxonomy ) {
+					$join = "{$sql_parts['start']} INNER JOIN {$wpdb->term_relationships} AS tr ON tt.term_id = tr.object_id AND tr.term_taxonomy_id = {$lang_term_ttid} ";
+				} else {
+					$join = "{$sql_parts['start']} INNER JOIN {$wpdb->term_relationships} AS tr ON p.ID = tr.object_id AND tr.term_taxonomy_id = {$lang_term_ttid} ";
+				}
+			}
+
+			$sql_query = ( ! empty( $join ) ) ? str_replace( $sql_parts['start'], $join, $sql_query ) : $sql_query;
+		}
+
+		return $sql_query;
 	}
 
 	/**

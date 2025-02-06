@@ -30,7 +30,11 @@ class Permalink_Manager_Actions {
 		}
 
 		// 2. Do nothing if search query is not empty
-		if ( isset( $_REQUEST['search-submit'] ) || isset( $_REQUEST['months-filter-button'] ) ) {
+		if ( isset( $_REQUEST['search-submit'] ) || isset( $_REQUEST['filter-button'] ) ) {
+			if ( wp_verify_nonce( $_POST[ 'uri_editor' ], 'permalink-manager' ) ) {
+				$this->trigger_filter_action();
+			}
+
 			return;
 		}
 
@@ -61,6 +65,27 @@ class Permalink_Manager_Actions {
 		// 4. Display the slugs table (and append the globals)
 		if ( isset( $updated_slugs_count ) && isset( $updated_slugs_array ) ) {
 			$permalink_manager_after_sections_html .= Permalink_Manager_UI_Elements::display_updated_slugs( $updated_slugs_array );
+		}
+	}
+
+	/**
+	 * Adjust the Bulk URI Editor filter URL
+	 *
+	 * @return void
+	 */
+	public function trigger_filter_action() {
+		$query_args = array(
+			'langcode' => ! empty( $_REQUEST['langcode'] ) ? $_REQUEST['langcode'] : null,
+			'month'    => ! empty( $_REQUEST['month'] ) ? $_REQUEST['month'] : null,
+			's'        => ! empty( $_REQUEST['s'] ) ? $_REQUEST['s'] : null,
+		);
+
+		if ( ! empty( $query_args ) ) {
+			$sendback = remove_query_arg( array_keys( $query_args ), wp_get_referer() );
+			$sendback = add_query_arg( array_filter( $query_args ), $sendback );
+
+			wp_redirect( $sendback );
+			exit;
 		}
 	}
 

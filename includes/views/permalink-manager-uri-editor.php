@@ -100,7 +100,7 @@ class Permalink_Manager_URI_Editor {
 			'post_statuses' => array(
 				'type'         => 'checkbox',
 				'label'        => __( 'Post statuses', 'permalink-manager' ),
-				'choices'      => get_post_statuses(),
+				'choices'      => Permalink_Manager_Helper_Functions::get_post_statuses(),
 				'select_all'   => '',
 				'unselect_all' => '',
 			)
@@ -114,6 +114,41 @@ class Permalink_Manager_URI_Editor {
 		$html .= sprintf( "</fieldset>%s", $button );
 
 		return $html;
+	}
+
+	/**
+	 * Trigger SQL query to get all items
+	 *
+	 * @param $sql_parts
+	 * @param $current_page
+	 * @param $is_taxonomy
+	 *
+	 * @return array
+	 */
+	public static function prepare_sql_query( $sql_parts, $current_page, $is_taxonomy = false ) {
+		global $permalink_manager_options, $wpdb;
+
+		$per_page = is_numeric( $permalink_manager_options['screen-options']['per_page'] ) ? $permalink_manager_options['screen-options']['per_page'] : 10;
+		$offset   = ( $current_page - 1 ) * $per_page;
+
+		// Prepare the count SQL query
+		$count_query_parts          = $sql_parts;
+		$count_query_parts['start'] = preg_replace( '/(SELECT.*FROM)/', 'SELECT COUNT(*) FROM', $count_query_parts['start'] );
+		$count_query                = apply_filters( 'permalink_manager_filter_uri_editor_query', implode( "", $count_query_parts ), $count_query_parts, $is_taxonomy );
+		$total_items_raw            = $wpdb->get_var( $count_query );
+
+		// Pagination support
+		$sql_query = implode( "", $sql_parts );
+		$sql_query .= sprintf( " LIMIT %d, %d", $offset, $per_page );
+
+		// Get items
+		$sql_query     = apply_filters( 'permalink_manager_filter_uri_editor_query', $sql_query, $sql_parts, $is_taxonomy );
+		$all_items_raw = $wpdb->get_results( $sql_query, ARRAY_A );
+
+		$total_items = ( is_numeric( $total_items_raw ) ) ? (int) $total_items_raw : 0;
+		$all_items   = ( ! empty( $all_items_raw ) ) ? $all_items_raw : array();
+
+		return array( $all_items, $total_items, $per_page );
 	}
 
 }

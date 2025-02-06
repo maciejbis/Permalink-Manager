@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager Lite
  * Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
  * Description:       Advanced plugin that allows to set up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
- * Version:           2.4.4.3
+ * Version:           2.5.0
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -12,7 +12,7 @@
  * Text Domain:       permalink-manager
  * Domain Path:       /languages
  * WC requires at least: 3.0.0
- * WC tested up to:      9.4.3
+ * WC tested up to:      9.6.1
  */
 
 // If this file is called directly or plugin is already defined, abort
@@ -25,7 +25,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 	// Define the directories used to load plugin files.
 	define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 	define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-	define( 'PERMALINK_MANAGER_VERSION', '2.4.4.3' );
+	define( 'PERMALINK_MANAGER_VERSION', '2.5.0' );
 	define( 'PERMALINK_MANAGER_FILE', __FILE__ );
 	define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 	define( 'PERMALINK_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
@@ -57,17 +57,18 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 			}
 
 			$classes = array(
-				'core'  => array(
-					'helper-functions'   => 'Permalink_Manager_Helper_Functions',
-					'uri-functions'      => 'Permalink_Manager_URI_Functions',
-					'uri-functions-post' => 'Permalink_Manager_URI_Functions_Post',
-					'uri-functions-tax'  => 'Permalink_Manager_URI_Functions_Tax',
-					'admin-functions'    => 'Permalink_Manager_Admin_Functions',
-					'actions'            => 'Permalink_Manager_Actions',
-					'core-functions'     => 'Permalink_Manager_Core_Functions',
-					'gutenberg'          => 'Permalink_Manager_Gutenberg',
-					'debug'              => 'Permalink_Manager_Debug_Functions',
-					'pro-functions'      => 'Permalink_Manager_Pro_Functions'
+				'core' => array(
+					'helper-functions'          => 'Permalink_Manager_Helper_Functions',
+					'uri-functions'             => 'Permalink_Manager_URI_Functions',
+					'uri-functions-post'        => 'Permalink_Manager_URI_Functions_Post',
+					'uri-functions-tax'         => 'Permalink_Manager_URI_Functions_Tax',
+					'admin-functions'           => 'Permalink_Manager_Admin_Functions',
+					'actions'                   => 'Permalink_Manager_Actions',
+					'core-functions'            => 'Permalink_Manager_Core_Functions',
+					'permastructures-functions' => 'Permalink_Manager_Permastructure_Functions',
+					'gutenberg'                 => 'Permalink_Manager_Gutenberg',
+					'debug'                     => 'Permalink_Manager_Debug_Functions',
+					'pro-functions'             => 'Permalink_Manager_Pro_Functions'
 				),
 				'integrations' => array(
 					'third-parties'    => 'Permalink_Manager_Third_Parties',
@@ -79,7 +80,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 					'ui-elements'     => 'Permalink_Manager_UI_Elements',
 					'uri-editor'      => 'Permalink_Manager_URI_Editor',
 					'tools'           => 'Permalink_Manager_Tools',
-					'permastructs'    => 'Permalink_Manager_Permastructs',
+					'permastructures' => 'Permalink_Manager_Permastructs',
 					'settings'        => 'Permalink_Manager_Settings',
 					'debug'           => 'Permalink_Manager_Debug',
 					'pro-addons'      => 'Permalink_Manager_Pro_Addons',
@@ -119,6 +120,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 
 			// Load globals & options
 			add_action( 'plugins_loaded', array( $this, 'get_options_and_globals' ), 9 );
+			add_action( 'init', array( $this, 'get_output_globals' ), 9 );
 
 			// Legacy support
 			add_action( 'init', array( $this, 'legacy_support' ), 2 );
@@ -147,7 +149,12 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 			$permalink_manager_permastructs       = (array) apply_filters( 'permalink_manager_permastructs', get_option( 'permalink-manager-permastructs', array() ) );
 			$permalink_manager_redirects          = (array) apply_filters( 'permalink_manager_redirects', get_option( 'permalink-manager-redirects', array() ) );
 			$permalink_manager_external_redirects = (array) apply_filters( 'permalink_manager_external_redirects', get_option( 'permalink-manager-external-redirects', array() ) );
+		}
 
+		/**
+		 * Get global variables
+		 */
+		public function get_output_globals() {
 			// 2. Globals used to display additional content (e.g. alerts)
 			global $permalink_manager_alerts, $permalink_manager_before_sections_html, $permalink_manager_after_sections_html;
 

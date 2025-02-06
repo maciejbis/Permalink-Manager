@@ -101,7 +101,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		$field_args_base = array( 'type' => 'text', 'value' => $uri, 'without_label' => true, 'input_class' => 'custom_uri', 'extra_atts' => "data-element-id=\"{$item['ID']}\"" );
 		$post_title      = sanitize_text_field( $item['post_title'] );
 
-		$post_statuses_array            = get_post_statuses();
+		$post_statuses_array            = Permalink_Manager_Helper_Functions::get_post_statuses();
 		$post_statuses_array['inherit'] = __( 'Inherit (Attachment)', 'permalink-manager' );
 
 		$output = apply_filters( 'permalink_manager_uri_editor_column_content', '', $column_name, get_post( $item['ID'] ) );
@@ -174,39 +174,43 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 
 		$html = "<div class=\"alignleft actions\">";
 		$html .= get_submit_button( $button_text, 'primary alignleft', $button_name, false, array( 'id' => 'doaction', 'value' => 'update_all_slugs' ) );
+		$html .= "</div>";
 
 		if ( $which == "top" ) {
+			// Filter by date
+			$months = $wpdb->get_results( "SELECT DISTINCT month(post_date) AS m, year(post_date) AS y FROM {$wpdb->posts} WHERE post_status IN ($this->displayed_post_statuses) AND post_type IN ($this->displayed_post_types) ORDER BY post_date DESC", ARRAY_A );
+
+			if ( $months ) {
+				$choices = array( __( 'All dates', 'permalink-manager' ) );
+
+				foreach ( $months as $month ) {
+					$month_raw             = sprintf( "%s-%s", $month['y'], $month['m'] );
+					$choices[ $month_raw ] = date_i18n( "F Y", strtotime( $month_raw ) );
+				}
+
+				$select_field = Permalink_Manager_UI_Elements::generate_option_field( 'month', array(
+					'type'    => 'select',
+					'choices' => $choices,
+					'value'   => ( isset( $_REQUEST['month'] ) ) ? esc_attr( $_REQUEST['month'] ) : ''
+				) );
+
+				$html .= sprintf( '<div id=\"months-filter\" class="alignleft actions">%s</div>', $select_field );
+			}
+
+			$extra_fields = apply_filters( 'permalink_manager_uri_editor_extra_fields', '', 'posts' );
+
+			if ( $months || $extra_fields ) {
+				$html .= $extra_fields;
+
+				$html .= '<div class="alignleft">';
+				$html .= get_submit_button( __( "Filter", "permalink-manager" ), 'button', false, false, array( 'id' => 'filter-button', 'name' => 'filter-button' ) );
+				$html .= "</div>";
+			}
+
 			$html .= '<div class="alignright">';
 			$html .= $this->search_box( __( 'Search', 'permalink-manager' ), 'search-input' );
 			$html .= '</div>';
-
-			// Filter by date
-			$months = $wpdb->get_results( "SELECT DISTINCT month(post_date) AS m, year(post_date) AS y FROM {$wpdb->posts} WHERE post_status IN ($this->displayed_post_statuses) AND post_type IN ($this->displayed_post_types) ORDER BY post_date DESC", ARRAY_A );
-			if ( $months ) {
-				$month_key   = 'month';
-				$screen      = get_current_screen();
-				$current_url = add_query_arg( array(
-					'page'       => PERMALINK_MANAGER_PLUGIN_SLUG,
-					'section'    => $active_section,
-					'subsection' => $active_subsection
-				), admin_url( $screen->parent_file ) );
-
-				$html .= sprintf( "<div id=\"months-filter\" class=\"alignright hide-if-no-js\" data-filter-url=\"%s\">", $current_url );
-				$html .= sprintf( "<select id=\"months-filter-select\" name=\"%s\">", $month_key );
-				$html .= sprintf( "<option value=\"\">%s</option>", __( "All dates", "permalink-manager" ) );
-				foreach ( $months as $month ) {
-					$month_raw        = sprintf( "%s-%s", $month['y'], $month['m'] );
-					$month_human_name = date_i18n( "F Y", strtotime( $month_raw ) );
-
-					$selected = ( ! empty( $_REQUEST[ $month_key ] ) ) ? selected( $_REQUEST[ $month_key ], $month_raw, false ) : "";
-					$html     .= sprintf( "<option value=\"%s\" %s>%s</option>", $month_raw, $selected, $month_human_name );
-				}
-				$html .= "</select>";
-				$html .= get_submit_button( __( "Filter", "permalink-manager" ), 'button', false, false, array( 'id' => 'months-filter-button', 'name' => 'months-filter-button' ) );
-				$html .= "</div>";
-			}
 		}
-		$html .= "</div>";
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo $html;
@@ -233,20 +237,16 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	 * Prepare the items for the table to process
 	 */
 	public function prepare_items() {
-		global $wpdb, $permalink_manager_options;
+		global $wpdb;
 
 		$columns      = $this->get_columns();
 		$hidden       = $this->get_hidden_columns();
 		$sortable     = $this->get_sortable_columns();
 		$current_page = $this->get_pagenum();
 
-		// Get query variables
-		$per_page = $permalink_manager_options['screen-options']['per_page'];
-
 		// SQL query parameters
 		$order        = ( isset( $_REQUEST['order'] ) && in_array( $_REQUEST['order'], array( 'asc', 'desc' ) ) ) ? sanitize_sql_orderby( $_REQUEST['order'] ) : 'desc';
 		$orderby      = ( isset( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( $_REQUEST['orderby'] ) : 'ID';
-		$offset       = ( $current_page - 1 ) * $per_page;
 		$search_query = ( ! empty( $_REQUEST['s'] ) ) ? esc_sql( $_REQUEST['s'] ) : "";
 
 		// Extra filters
@@ -264,7 +264,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		}
 
 		// Grab posts from database
-		$sql_parts['start'] = "SELECT * FROM {$wpdb->posts} ";
+		$sql_parts['start'] = "SELECT * FROM {$wpdb->posts} AS p ";
 		if ( $search_query ) {
 			$sql_parts['where'] = "WHERE (LOWER(post_title) LIKE LOWER('%{$search_query}%') ";
 
@@ -286,19 +286,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 
 		$sql_parts['end'] = "ORDER BY {$orderby} {$order}";
 
-		// Prepare the SQL query
-		$sql_query = implode( "", $sql_parts );
-
-		// Count items
-		$count_query = str_replace( 'SELECT *', 'SELECT COUNT(*)', $sql_query );
-		$total_items = $wpdb->get_var( $count_query );
-
-		// Pagination support
-		$sql_query .= sprintf( " LIMIT %d, %d", $offset, $per_page );
-
-		// Get items
-		$sql_query = apply_filters( 'permalink_manager_filter_uri_editor_query', $sql_query, $this, $sql_parts, $is_taxonomy = false );
-		$all_items = $wpdb->get_results( $sql_query, ARRAY_A );
+		list( $all_items, $total_items, $per_page ) = Permalink_Manager_URI_Editor::prepare_sql_query( $sql_parts, $current_page, false );
 
 		$this->set_pagination_args( array(
 			'total_items' => $total_items,

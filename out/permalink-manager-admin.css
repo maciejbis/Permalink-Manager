@@ -81,8 +81,13 @@
 #permalink-manager #tools select{min-width:60%}
 #permalink-manager fieldset label{margin-bottom:0 !important}
 
-#permalink-manager .structure-tags-list{display:block;line-height:175%}
-#permalink-manager .structure-tags-list code{}
+.structure-tags-list{display:block;line-height:175%}
+.structure-tags-list pre{white-space:normal;line-height:2em;word-break:keep-all;margin:0}
+.structure-tags-list .notice{padding:6px 12px;margin:1em 0;display:block}
+.structure-tags-list .permastruct-tag-container{display:flex;flex-direction:row;gap:20px}
+.structure-tags-list .permastruct-tag-container > *{flex-basis:400px}
+.structure-tags-list .permastruct-tag-container .permastruct-tag-buttons{display:inline-flex;flex-wrap:wrap;gap:10px}
+.structure-tags-list .permastruct-tag-container p:first-of-type{margin-top:0;padding-top:0!important}
 
 #permalink-manager .updated-slugs-table .row-title{max-width:400px}
 
@@ -121,8 +126,8 @@
 .permalink-manager-edit-uri-box .default-permalink-row,.permalink-manager-edit-uri-box .redirects-row{border-top:1px solid #eee;padding-top:15px}
 .permalink-manager-edit-uri-box .default-permalink-row,.permalink-manager-edit-uri-box .default-permastruct-row,.permalink-manager-edit-uri-box .redirects-row{color:#aaa;font-size:90%}
 
-#permalink-manager .restore-default,#permalink-manager .permastruct-buttons a{display:inline-block;width:100%;border-radius:0;color:#959595;text-decoration:none}
-#permalink-manager .restore-default{text-align:right}
+#permalink-manager .restore-default{display:inline-block;border-radius:0;color:#959595;text-decoration:none}
+#permalink-manager .restore-default{text-align:right;width:100%}
 #permalink-manager .widefat,#permalink-manager #redirect-panel-inside,#permalink-manager #redirect-panel-inside table{width:100%!important;max-width:none;min-height:0!important;box-sizing:border-box;height:32px}
 #permalink-manager textarea.widefat,#permalink-manager #redirect-panel-inside table{height:auto}
 #permalink-manager .heading,#permalink-manager .heading a{margin:0;line-height:1.4;font-weight:600;text-decoration:none;color:#777}
@@ -181,18 +186,23 @@
 /**
  * Permastructures
  */
-#permalink-manager .all-permastruct-container{}
-#permalink-manager .all-permastruct-container > *{margin-bottom:15px}
-#permalink-manager .all-permastruct-container > *:last-child{margin:0}
-#permalink-manager .all-permastruct-container .permastruct-toggle{display:none;padding-bottom:15px;border-bottom:1px dashed #ddd}
-#permalink-manager .all-permastruct-container .permastruct-toggle > *:first-child{margin-top:0}
-#permalink-manager .all-permastruct-container .permastruct-toggle .default-permastruct-row{margin-top:15px}
-#permalink-manager .all-permastruct-container h4{font-size:14px}
-#permalink-manager .all-permastruct-container p{font-size:13px}
-#permalink-manager .all-permastruct-container label{font-weight:600;margin-top:15px!important;font-size:13px;margin-bottom:5px!important;display:block;clear:both}
-#permalink-manager .all-permastruct-container .permastruct-field:disabled{cursor:not-allowed}
-#permalink-manager .all-permastruct-container .settings-container label{font-weight:400}
-#permalink-manager .permastruct-buttons a{font-size:90%;font-weight:bold}
+#permalink-manager #permastructs{margin-top:1em}
+#permalink-manager .permastruct-row .permastruct-settings{display:none}
+#permalink-manager .permastruct-row .permastruct-settings .default-permastruct-row{margin-top:15px}
+#permalink-manager .permastruct-row .permastruct-settings .single_checkbox label{font-weight:400}
+#permalink-manager .permastruct-row h4{font-size:14px}
+#permalink-manager .permastruct-row p{font-size:13px}
+#permalink-manager .permastruct-row td label{font-weight:600;margin-top:15px!important;font-size:13px;margin-bottom:5px!important;display:block;clear:both}
+
+#permalink-manager .permastruct-row .permastruct-container{display:flex;flex-direction:row;justify-content:flex-start;gap:15px;flex-wrap:wrap}
+#permalink-manager .permastruct-row .permastruct-field-container{display:flex;align-items:center;gap:5px;flex-wrap:wrap;flex-grow:1}
+#permalink-manager .permastruct-row .permastruct-field-container span:last-child{flex:1 0 auto;min-width:35%}
+#permalink-manager .permastruct-row .permastruct-field-container span:last-child input{width:100%}
+#permalink-manager .permastruct-row .permastruct-field:disabled{cursor:not-allowed}
+#permalink-manager .permastruct-row .permastruct-buttons{margin:0;font-size:13px;min-width:fit-content;display:flex;gap:10px}
+#permalink-manager .permastruct-row .permastruct-buttons > span{height:100%;display:flex}
+#permalink-manager .permastruct-row .permastruct-buttons a{border-color:#ddd;padding:0 8px;font-size:inherit;align-content:center}
+#permalink-manager .permastruct-row .permastruct-buttons a .dashicons{font-size:initial;line-height:1em;height:1em;vertical-align:middle}
 
 /**
  * TagEditor custom theme & "Stop Words"
@@ -207,17 +217,13 @@
 /**
  * Breakpoints
  */
-@media only screen and (min-width :992px) {
+@media only screen and (min-width: 992px) {
 	#permalink-manager #permalink-manager-tab-nav .section_debug,#permalink-manager #permalink-manager-tab-nav .section_upgrade,#permalink-manager #permalink-manager-tab-nav .section_support{float:right}
-	#permalink-manager .permastruct-container{display:table;width:100%;table-layout:auto}
-	#permalink-manager .permastruct-container > *{display:table-cell}
-	#permalink-manager .permastruct-container > span:first-child{width:1%;white-space:nowrap}
-	#permalink-manager .permastruct-field{width:100%}
 
 	#permalink-manager .column-item_uri{width:600px;max-width:100%}
 	#permalink-manager .column-item_uri input{width:100%}
 }
-@media only screen and (max-width :782px) {
+@media only screen and (max-width: 782px) {
 	#permalink-manager .columns-container .column-1_2,#permalink-manager .columns-container .column-1_3,#permalink-manager .columns-container .column-2_3{width:100%}
 	#permalink-manager .permalink-manager-duplicate-box table tr td:first-child{width:40%}
 }
