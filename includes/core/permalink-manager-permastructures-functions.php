@@ -84,9 +84,10 @@ class Permalink_Manager_Permastructure_Functions {
 			return null;
 		}
 
-		$do_not_append_settings = $permalink_manager_options['permastructure-settings']['do_not_append_slug'];
-		$do_not_append_slug     = ( ! empty( $do_not_append_settings[ $content_type_key ] ) && ! empty( $do_not_append_settings[ $content_type_key ][ $content_type ] ) ) ? true : false;
-		$do_not_append_slug     = apply_filters( "permalink_manager_do_not_append_slug", $do_not_append_slug, $content_type, $content_element );
+		$permastructure_settings = ( ! empty( $permalink_manager_options['permastructure-settings'] ) ) ? $permalink_manager_options['permastructure-settings'] : array();
+		$do_not_append_settings  = ( ! empty( $permastructure_settings['do_not_append_slug'] ) ) ? $permastructure_settings['do_not_append_slug'] : array();
+		$do_not_append_slug      = ( ! empty( $do_not_append_settings[ $content_type_key ] ) && ! empty( $do_not_append_settings[ $content_type_key ][ $content_type ] ) ) ? true : false;
+		$do_not_append_slug      = apply_filters( "permalink_manager_do_not_append_slug", $do_not_append_slug, $content_type, $content_element );
 
 		if ( ! $do_not_append_slug ) {
 			foreach ( $slug_tags as $tag ) {
