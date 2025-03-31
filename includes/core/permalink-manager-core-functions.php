@@ -539,11 +539,13 @@ class Permalink_Manager_Core_Functions {
 
 		// Keep the original permalink in a separate variable
 		$original_permalink = $permalink;
+		$permalink_path     = parse_url( $original_permalink, PHP_URL_PATH );
+		$permalink_path     = ( ! empty( $permalink_path ) ) ? trim( $permalink_path, '/' ) : $permalink_path;
 
 		$trailing_slash_mode = ( ! empty( $permalink_manager_options['general']['trailing_slashes'] ) ) ? $permalink_manager_options['general']['trailing_slashes'] : "";
 
 		// Ignore homepage URLs
-		if ( ( filter_var( $permalink, FILTER_VALIDATE_URL ) && trim( parse_url( $permalink, PHP_URL_PATH ), '/' ) == '' ) ) {
+		if ( filter_var( $permalink, FILTER_VALIDATE_URL ) && empty( $permalink_path ) ) {
 			return $permalink;
 		}
 

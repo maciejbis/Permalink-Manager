@@ -146,7 +146,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 				$output .= '</div>';
 
 				$output .= '<div class="row-actions">';
-				$output .= sprintf( "<span class=\"edit\"><a href=\"%s/wp-admin/post.php?post={$item['ID']}&amp;action=edit\" title=\"%s\">%s</a> | </span>", get_option( 'home' ), __( 'Edit', 'permalink-manager' ), __( 'Edit', 'permalink-manager' ) );
+				$output .= sprintf( "<span class=\"edit\"><a href=\"%s\" title=\"%s\">%s</a> | </span>", get_edit_post_link( $item['ID'] ), __( 'Edit', 'permalink-manager' ), __( 'Edit', 'permalink-manager' ) );
 				$output .= '<span class="view"><a target="_blank" href="' . $permalink . '" title="' . __( 'View', 'permalink-manager' ) . ' ' . $post_title . '" rel="permalink">' . __( 'View', 'permalink-manager' ) . '</a> | </span>';
 				$output .= '<span class="id">#' . $item['ID'] . '</span>';
 				$output .= '</div>';

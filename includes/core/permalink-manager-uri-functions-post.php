@@ -180,7 +180,7 @@ class Permalink_Manager_URI_Functions_Post {
 	 * @return string
 	 */
 	public static function get_default_post_uri( $post, $native_uri = false, $check_if_disabled = false ) {
-		global $permalink_manager_options, $permalink_manager_uris, $permalink_manager_permastructs, $wp_post_types, $icl_adjust_id_url_filter_off;
+		global $permalink_manager_uris, $permalink_manager_permastructs, $wp_post_types, $icl_adjust_id_url_filter_off;
 
 		// Disable WPML adjust ID filter
 		$icl_adjust_id_url_filter_off = true;
@@ -194,7 +194,13 @@ class Permalink_Manager_URI_Functions_Post {
 		}
 
 		$post_type = $post->post_type;
-		$post_name = ( empty( $post->post_name ) ) ? Permalink_Manager_Helper_Functions::sanitize_title( $post->post_title ) : $post->post_name;
+
+		if ( empty( $post->post_name ) ) {
+			$pre_post_name = Permalink_Manager_Helper_Functions::sanitize_title( $post->post_title );
+			$post_name     = wp_unique_post_slug( $pre_post_name, $post->ID, 'publish', $post->post_type, $post->post_parent );
+		} else {
+			$post_name = $post->post_name;
+		}
 
 		// 1A. Check if post type is allowed
 		if ( $check_if_disabled && Permalink_Manager_Helper_Functions::is_post_type_disabled( $post_type ) ) {
@@ -258,15 +264,9 @@ class Permalink_Manager_URI_Functions_Post {
 		$full_native_slug = $post_name;
 
 		// 3A. Fix for hierarchical CPT (start)
-		// $full_slug = (is_post_type_hierarchical($post_type)) ? get_page_uri($post) : $post_name;
 		if ( $post->ancestors && is_post_type_hierarchical( $post_type ) ) {
-			foreach ( $post->ancestors as $parent ) {
-				$parent = get_post( $parent );
-				if ( $parent && $parent->post_name ) {
-					$full_native_slug = $parent->post_name . '/' . $full_native_slug;
-					$full_custom_slug = Permalink_Manager_Helper_Functions::force_custom_slugs( $parent->post_name, $parent ) . '/' . $full_custom_slug;
-				}
-			}
+			$full_native_slug = Permalink_Manager_Helper_Functions::get_post_full_slug( $post, false, true );
+			$full_custom_slug = Permalink_Manager_Helper_Functions::get_post_full_slug( $post, false, false );
 		}
 
 		// 3B. Allow filter the default slug (only custom permalinks)
@@ -287,19 +287,9 @@ class Permalink_Manager_URI_Functions_Post {
 		$slug_tags             = array( $post_type_tag, "%postname%", "%postname_flat%", "%pagename_flat%", "%{$post_type}_flat%", "%native_slug%", '%native_title%' );
 		$slug_tags_replacement = array( $full_slug, $full_slug, $custom_slug, $custom_slug, $custom_slug, $full_native_slug, $post_title_slug );
 
-		// 3E. Check if any post tag is present in custom permastructure
-		$do_not_append_slug = ( ! empty( $permalink_manager_options['permastructure-settings']['do_not_append_slug']['post_types'][ $post_type ] ) ) ? true : false;
-		$do_not_append_slug = apply_filters( "permalink_manager_do_not_append_slug", $do_not_append_slug, $post_type, $post );
-		if ( ! $do_not_append_slug ) {
-			foreach ( $slug_tags as $tag ) {
-				if ( strpos( $default_uri, $tag ) !== false ) {
-					$do_not_append_slug = true;
-					break;
-				}
-			}
-		}
+		$do_not_append_slug = Permalink_Manager_Permastructure_Functions::is_slug_tag_present( $default_uri, $slug_tags, $post );
 
-		// 3F. Replace the post tags with slugs or append the slug if no post tag is defined
+		// 3E. Replace the post tags with slugs or append the slug if no post tag is defined
 		if ( ! empty( $do_not_append_slug ) ) {
 			$default_uri = str_replace( $slug_tags, $slug_tags_replacement, $default_uri );
 		} else {
@@ -621,11 +611,13 @@ class Permalink_Manager_URI_Functions_Post {
 
 		// Check if the post is excluded
 		if ( empty( $post->post_type ) || Permalink_Manager_Helper_Functions::is_post_excluded( $post, true ) ) {
-			return $html;
+			$show_uri_editor = false;
+		} else {
+			$show_uri_editor = true;
 		}
 
 		// Stop the hook (if needed)
-		$show_uri_editor = apply_filters( "permalink_manager_show_uri_editor_post", true, $post, $post->post_type );
+		$show_uri_editor = apply_filters( "permalink_manager_show_uri_editor_post", $show_uri_editor, $post, $post->post_type );
 		if ( ! $show_uri_editor ) {
 			return $html;
 		}
@@ -670,7 +662,7 @@ class Permalink_Manager_URI_Functions_Post {
 		}
 
 		// 2. Append the Permalink Editor
-		$new_html .= ( ! $autosave ) ? Permalink_Manager_UI_Elements::display_uri_box( $post ) : "";
+		$new_html .= Permalink_Manager_UI_Elements::display_uri_box( $post );
 
 		// 3. Hide the "Edit" slug button
 		$new_html = str_replace( 'edit-slug button', 'edit-slug button hidden', $new_html );

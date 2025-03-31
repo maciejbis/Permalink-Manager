@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-29 21:01+0000\n"
+"POT-Creation-Date: 2025-02-06 10:50+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -312,6 +312,13 @@ msgstr ""
 #: includes/views/permalink-manager-tools.php:166
 #: includes/core/permalink-manager-actions.php:518
 msgid "Custom permalinks"
+msgstr ""
+
+#: includes/views/permalink-manager-permastructures.php:231
+msgid ""
+"Custom permalinks can include taxonomy-based slugs such as categories, tags, "
+"and custom taxonomy terms. If a post belongs to multiple terms, the lowest-"
+"level one is used unless a specific term is selected as primary."
 msgstr ""
 
 #. 1: Custom permalinks count, 2: Custom permalinks array size
@@ -838,7 +845,7 @@ msgstr ""
 msgid "Manage redirects"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:228
+#: includes/views/permalink-manager-permastructures.php:226
 msgid "Meta data"
 msgstr ""
 
@@ -848,16 +855,15 @@ msgid "Mode"
 msgstr ""
 
 #: includes/views/permalink-manager-ui-elements.php:680
-#: includes/views/permalink-manager-permastructures.php:222
 msgid "Native slug"
+msgstr ""
+
+#: includes/views/permalink-manager-permastructures.php:222
+msgid "Native slug & title"
 msgstr ""
 
 #: includes/views/permalink-manager-tools.php:167
 msgid "Native slugs"
-msgstr ""
-
-#: includes/views/permalink-manager-permastructures.php:225
-msgid "Native title"
 msgstr ""
 
 #: includes/views/permalink-manager-ui-elements.php:474
@@ -994,6 +1000,13 @@ msgstr ""
 #: includes/views/permalink-manager-settings.php:47
 #: includes/views/permalink-manager-ui-elements.php:672
 msgid "Permalink update"
+msgstr ""
+
+#: includes/views/permalink-manager-permastructures.php:235
+msgid ""
+"Permalinks can be modified with custom fields to dynamically include extra "
+"data. For example, you can append product SKUs to WooCommerce URLs or "
+"include geolocation details in your custom post types' permalinks."
 msgstr ""
 
 #: includes/views/permalink-manager-permastructures.php:178
@@ -1337,7 +1350,7 @@ msgstr ""
 #: includes/views/permalink-manager-tools.php:265
 #: includes/views/permalink-manager-ui-elements.php:98
 #: includes/views/permalink-manager-permastructures.php:52
-#: includes/views/permalink-manager-permastructures.php:231
+#: includes/views/permalink-manager-permastructures.php:230
 msgid "Taxonomies"
 msgstr ""
 
@@ -1382,6 +1395,14 @@ msgstr ""
 msgid ""
 "The native slug is by default automatically used in native permalinks (when "
 "Permalink Manager is disabled)."
+msgstr ""
+
+#: includes/views/permalink-manager-permastructures.php:223
+msgid ""
+"The native slug is generated from the initial title and will not update "
+"automatically if the title is changed later. You can use the %native_title% "
+"tag to replace native slugs with actual titles, even if another content item "
+"has the same title."
 msgstr ""
 
 #: includes/views/permalink-manager-settings.php:50
@@ -1590,6 +1611,13 @@ msgstr ""
 
 #: includes/views/permalink-manager-settings.php:56
 msgid "Use WordPress slugs (default mode)"
+msgstr ""
+
+#: includes/views/permalink-manager-permastructures.php:227
+msgid ""
+"Using meta tags, you may add post-specific information like item IDs or "
+"author names to permalinks. This might be beneficial to news, events, and "
+"time-sensitive content where you can use date-based tags."
 msgstr ""
 
 #: includes/views/permalink-manager-uri-editor-tax.php:104

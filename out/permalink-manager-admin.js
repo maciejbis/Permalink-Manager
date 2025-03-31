@@ -55,7 +55,7 @@ jQuery(document).ready(function() {
 	/**
 	 * Toggle "Edit URI" box
 	 */
-	jQuery('#permalink-manager-toggle, .permalink-manager-edit-uri-box .close-button').on('click', function() {
+	jQuery('#wpwrap').on('click', '#permalink-manager-toggle, .permalink-manager-edit-uri-box .close-button', function() {
 		jQuery('.permalink-manager-edit-uri-box').slideToggle();
 
 		return false;

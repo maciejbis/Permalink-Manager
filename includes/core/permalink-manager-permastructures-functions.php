@@ -62,6 +62,50 @@ class Permalink_Manager_Permastructure_Functions {
 	}
 
 	/**
+	 * Check if any of slug tags is present inside Permastructure settings
+	 *
+	 * @param $default_uri
+	 * @param $slug_tags
+	 * @param $content_element
+	 *
+	 * @return bool|null
+	 */
+	public static function is_slug_tag_present( $default_uri, $slug_tags, $content_element ) {
+		global $permalink_manager_options;
+
+		// Check if any post tag is present in custom permastructure
+		if ( ! empty( $content_element->post_type ) ) {
+			$content_type     = $content_element->post_type;
+			$content_type_key = 'post_types';
+		} else if ( ! empty( $content_element->taxonomy ) ) {
+			$content_type     = $content_element->taxonomy;
+			$content_type_key = 'taxonomies';
+		} else {
+			return null;
+		}
+
+		$do_not_append_settings = $permalink_manager_options['permastructure-settings']['do_not_append_slug'];
+		$do_not_append_slug     = ( ! empty( $do_not_append_settings[ $content_type_key ] ) && ! empty( $do_not_append_settings[ $content_type_key ][ $content_type ] ) ) ? true : false;
+		$do_not_append_slug     = apply_filters( "permalink_manager_do_not_append_slug", $do_not_append_slug, $content_type, $content_element );
+
+		if ( ! $do_not_append_slug ) {
+			foreach ( $slug_tags as $tag ) {
+				if ( strpos( $default_uri, $tag ) !== false ) {
+					$do_not_append_slug = true;
+					break;
+				}
+			}
+		}
+
+		// 3F. Replace the post tags with slugs or append the slug if no post tag is defined
+		if ( ! empty( $do_not_append_slug ) ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
 	 * Replace empty placeholder tags & remove BOM
 	 *
 	 * @param string $default_uri

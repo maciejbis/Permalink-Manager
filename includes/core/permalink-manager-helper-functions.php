@@ -195,6 +195,38 @@ class Permalink_Manager_Helper_Functions {
 	}
 
 	/**
+	 * Get the full (hierarchical) slug for specific post object
+	 *
+	 * @param WP_Post|int $post
+	 * @param bool $slugs_mode
+	 * @param bool $native_uri
+	 *
+	 * @return string
+	 */
+	static function get_post_full_slug( $post, $slugs_mode = false, $native_uri = false ) {
+		$post = ( ! empty( $post->ID ) ) ? $post : get_post( $post );
+
+		if ( ! empty( $post->post_type ) ) {
+			$full_native_slug = $post->post_name;
+			$full_custom_slug = Permalink_Manager_Helper_Functions::force_custom_slugs( $post->post_name, $post, false, $slugs_mode );
+
+			if ( $post->ancestors && is_post_type_hierarchical( $post->post_type ) ) {
+				foreach ( $post->ancestors as $parent ) {
+					$parent = get_post( $parent );
+					if ( $parent && $parent->post_name ) {
+						$full_native_slug = $parent->post_name . '/' . $full_native_slug;
+						$full_custom_slug = Permalink_Manager_Helper_Functions::force_custom_slugs( $parent->post_name, $parent, false, $slugs_mode ) . '/' . $full_custom_slug;
+					}
+				}
+			}
+
+			$post_slug = ( $native_uri ) ? $full_native_slug : $full_custom_slug;
+		}
+
+		return ( ! empty( $post_slug ) ) ? $post_slug : "";
+	}
+
+	/**
 	 * Allow to disable post types and taxonomies
 	 */
 	static function get_disabled_post_types( $include_user_excluded = true ) {

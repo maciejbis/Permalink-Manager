@@ -158,7 +158,7 @@ class Permalink_Manager_Actions {
 		// 3. Save cleared URIs & Redirects
 		if ( $removed_uris > 0 || $removed_redirects > 0 ) {
 			Permalink_Manager_URI_Functions::save_all_uris();
-			update_option( 'permalink-manager-redirects', array_filter( $permalink_manager_redirects ), true );
+			update_option( 'permalink-manager-redirects', array_filter( $permalink_manager_redirects ) );
 
 			// Translators: 1: Number of custom URIs, 2: Number of custom redirects.
 			$permalink_manager_before_sections_html .= Permalink_Manager_UI_Elements::get_alert_message( sprintf( __( '%1$d Custom URIs and %2$d Custom Redirects were removed!', 'permalink-manager' ), $removed_uris, $removed_redirects ), 'updated updated_slugs' );
@@ -259,7 +259,7 @@ class Permalink_Manager_Actions {
 			return array( $removed_uris, $removed_redirects );
 		} else if ( ! empty( $removed_uris ) || ! empty( $removed_redirects ) ) {
 			Permalink_Manager_URI_Functions::save_all_uris();
-			update_option( 'permalink-manager-redirects', array_filter( $permalink_manager_redirects ), true );
+			update_option( 'permalink-manager-redirects', array_filter( $permalink_manager_redirects ) );
 		}
 
 		return array();
@@ -358,7 +358,7 @@ class Permalink_Manager_Actions {
 		// Check if custom redirects are set
 		if ( isset( $permalink_manager_redirects[ $uri_key ] ) ) {
 			unset( $permalink_manager_redirects[ $uri_key ] );
-			update_option( 'permalink-manager-redirects', $permalink_manager_redirects, true );
+			update_option( 'permalink-manager-redirects', $permalink_manager_redirects );
 		}
 
 		if ( empty( $updated ) ) {
