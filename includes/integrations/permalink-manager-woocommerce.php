@@ -46,6 +46,10 @@ class Permalink_Manager_WooCommerce {
 			if ( wp_doing_ajax() && class_exists( 'SitePress' ) ) {
 				add_filter( 'permalink_manager_filter_final_post_permalink', array( $this, 'woocommerce_translate_ajax_fragments_urls' ), 9999, 3 );
 			}
+
+			// Make sure that the custom permalinks are not generated prematurely
+			add_filter( 'woocommerce_rest_pre_insert_product_object', array( $this, 'woocommerce_delay_product_custom_permalink' ), 10, 3 );
+			add_action( 'woocommerce_rest_insert_product_object', array( $this, 'woocommerce_set_custom_uri_after_rest_insert' ), 20, 3 );
 		}
 
 		// WooCommerce Wishlist Plugin
@@ -197,6 +201,37 @@ class Permalink_Manager_WooCommerce {
 		}
 
 		return $default_uri;
+	}
+
+	/**
+	 * Stop the plugin from generating the custom permalink for new WooCommerce product prematurely.
+	 *
+	 * @param WC_Data $data The product object.
+	 * @param WP_REST_Request $request The REST API request object.
+	 * @param bool $is_new_post Whether the product is newly created.
+	 */
+	function woocommerce_delay_product_custom_permalink( $data, $request, $is_new_post ) {
+		add_filter( 'permalink_manager_pre_update_post_uri', '__return_null', 100 );
+
+		return $data;
+	}
+
+	/**
+	 * Sets a custom permalink for a WooCommerce product after it is inserted via the REST API.
+	 *
+	 * @param WC_Product $product The product object.
+	 * @param WP_REST_Request $request The REST API request object.
+	 * @param bool $is_new_post Whether the product is newly created.
+	 */
+	function woocommerce_set_custom_uri_after_rest_insert( $product, $request, $is_new_post ) {
+		if ( $is_new_post && class_exists( 'Permalink_Manager_URI_Functions_Post' ) && method_exists( $product, 'get_id' ) ) {
+			$product_id = $product->get_id();
+
+			remove_filter( 'permalink_manager_pre_update_post_uri', '__return_null', 100 );
+
+			$new_uri = Permalink_Manager_URI_Functions_Post::get_default_post_uri( $product_id );
+			Permalink_Manager_URI_Functions_Post::save_uri( $product_id, $new_uri, $is_new_post );
+		}
 	}
 
 	/**

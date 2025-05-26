@@ -811,11 +811,12 @@ class Permalink_Manager_Helper_Functions {
 	 * Remove all slashes from given string
 	 *
 	 * @param string $uri
+	 * @param string $replacement
 	 *
 	 * @return array|string|string[]|null
 	 */
-	public static function remove_slashes( $uri ) {
-		return preg_replace( "/[\/]+/", "", $uri );
+	public static function remove_slashes( $uri, $replacement = '' ) {
+		return preg_replace( "/[\/]+/", $replacement, $uri );
 	}
 
 	/**
@@ -847,7 +848,7 @@ class Permalink_Manager_Helper_Functions {
 				}
 
 				$title = strip_tags( $title );
-				$title = self::remove_slashes( $title );
+				$title = self::remove_slashes( $title, '-' );
 
 				$new_slug = self::sanitize_title( $title );
 			} // B. Custom slug (custom permalink)

@@ -133,7 +133,7 @@ class Permalink_Manager_Core_Functions {
 			}
 
 			// Support pagination endpoint
-			if ( $uri_parts['endpoint'] == $wp_rewrite->pagination_base ) {
+			if ( ! empty( $wp_rewrite->pagination_base ) && $uri_parts['endpoint'] == $wp_rewrite->pagination_base ) {
 				$uri_parts['endpoint'] = 'page';
 			}
 
@@ -794,7 +794,7 @@ class Permalink_Manager_Core_Functions {
 				$slug = basename( $pm_query['uri'] );
 
 				$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT post_id from {$wpdb->postmeta} WHERE meta_key = '_wp_old_slug' AND meta_value = %s", $slug ) );
-				if ( ! empty( $post_id ) ) {
+				if ( ! empty( $post_id ) && Permalink_Manager_Helper_Functions::is_post_excluded( $post_id, true ) !== true ) {
 					$correct_permalink = get_permalink( $post_id );
 					$redirect_type     = 'old_slug_redirect';
 				}

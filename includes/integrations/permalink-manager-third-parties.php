@@ -75,9 +75,10 @@ class Permalink_Manager_Third_Parties {
 			add_filter( 'permalink_manager_filter_default_post_uri', array( $this, 'ml_listing_custom_fields' ), 5, 5 );
 			add_filter( 'permalink_manager_filter_query', array( $this, 'ml_detect_archives' ), 1, 2 );
 
-			add_filter( 'mylisting/admin/save-listing-data', array( $this, 'ml_delay_set_listing_uri' ), 0 );
+			add_filter( 'mylisting/submission/save-listing-arr', array( $this, 'ml_delay_set_listing_uri' ), 0 );
+			add_filter( 'mylisting/admin/submission/fields', array( $this, 'ml_delay_set_listing_uri' ), 0 );
+			add_action( 'mylisting/submission/save-listing-data', array( $this, 'ml_set_listing_uri' ), 1500 );
 			add_action( 'mylisting/admin/save-listing-data', array( $this, 'ml_set_listing_uri' ), 1500 );
-			add_action( 'mylisting/submission/done', array( $this, 'ml_set_listing_uri' ), 1500 );
 		}
 
 		// bbPress
@@ -860,10 +861,14 @@ class Permalink_Manager_Third_Parties {
 	/**
 	 * Make sure that the custom permalink is generated only after the listing's field are processed
 	 *
-	 * @param $post_id
+	 * @param array $data
+	 *
+	 * @return array
 	 */
-	function ml_delay_set_listing_uri( $post_id ) {
+	function ml_delay_set_listing_uri( $data ) {
 		add_filter( 'permalink_manager_allow_new_post_uri', '__return_false' );
+
+		return $data;
 	}
 
 	/**
