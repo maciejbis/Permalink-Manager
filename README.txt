@@ -6,8 +6,8 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, url editor
 Requires at least: 4.4.0
 Requires PHP: 5.4
-Tested up to: 6.8
-Stable tag: 2.5.1.2
+Tested up to: 6.9
+Stable tag: 2.5.1.3
 
 Permalink Manager improves the built-in permalink settings and allows you to change the URLs of native and custom post types and taxonomies as needed.
 
@@ -99,7 +99,13 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 
 == Changelog ==
 
-= 2.5.2 (May 26, 2025) =
+= 2.5.1.3 (July 22, 2025)
+* Fix - The url_to_postid() function works also when the language code is provided with URL
+* Fix - Improvements for WPML's Advanced Translation Editor integration
+* Dev - New setting field - "Edit permalinks in WPML's Translation Editor"
+* Dev - Minor code improvements
+
+= 2.5.1.2 (May 26, 2025) =
 * Dev - WPML's Translation Editor compatibility code refactored
 * Dev - The slashes in titles are now changed to dashes when custom permalinks are sanitized, just like they are in default WordPress slugs
 * Fix - Improvements for WooCommerce REST API integration

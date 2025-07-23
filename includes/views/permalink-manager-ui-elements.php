@@ -382,7 +382,7 @@ class Permalink_Manager_UI_Elements {
 		global $permalink_manager_after_sections_html;
 
 		$html = "<div id=\"permalink-manager\" class=\"wrap\">";
-		$html .= sprintf( "<h2 id=\"plugin-name-heading\">%s <a href=\"https://maciejbis.net\" class=\"author-link\" target=\"_blank\">%s</a></h2>", PERMALINK_MANAGER_PLUGIN_NAME, __( "by Maciej Bis", "permalink-manager" ) );
+		$html .= sprintf( '<h2 id="plugin-name-heading">%1$s <a href="%2$s" class="author-link" target="_blank">%3$s</a></h2>', PERMALINK_MANAGER_PLUGIN_NAME, esc_attr( PERMALINK_MANAGER_WEBSITE ), PERMALINK_MANAGER_VERSION );
 
 		// Display the tab navigation
 		$html .= "<div id=\"permalink-manager-tab-nav\" class=\"nav-tab-wrapper\">";

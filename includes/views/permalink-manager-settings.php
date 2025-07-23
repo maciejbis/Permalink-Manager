@@ -196,6 +196,13 @@ class Permalink_Manager_Settings {
 						'class_exists' => array( 'SitePress' ),
 						'description'  => __( 'Please disable this feature if the language code in the custom permalinks is incorrect.', 'permalink-manager' )
 					),
+					'wpml_translate_mode'   => array(
+						'type'         => 'single_checkbox',
+						'label'        => __( 'Edit permalinks in WPML\'s Translation Editor', 'permalink-manager' ),
+						'input_class'  => '',
+						'class_exists' => array( 'SitePress' ),
+						'description'  => __( 'If enabled, you will be able to <strong>manually edit custom permalinks</strong> directly while translating the content in WPML.', 'permalink-manager' )
+					),
 					'pmxi_support'          => array(
 						'type'         => 'single_checkbox',
 						'label'        => __( 'WP All Import/Export support', 'permalink-manager' ),

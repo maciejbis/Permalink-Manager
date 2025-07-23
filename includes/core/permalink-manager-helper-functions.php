@@ -377,7 +377,7 @@ class Permalink_Manager_Helper_Functions {
 	 * @return bool
 	 */
 	public static function is_post_excluded( $post = null, $draft_check = false, $strict_draft_check = false ) {
-		$post = ( is_integer( $post ) ) ? get_post( $post ) : $post;
+		$post = ( is_numeric( $post ) ) ? get_post( $post ) : $post;
 
 		// 1. Check if post type is disabled
 		if ( ! empty( $post->post_type ) && self::is_post_type_disabled( $post->post_type ) ) {
@@ -411,7 +411,7 @@ class Permalink_Manager_Helper_Functions {
 	public static function is_draft_excluded( $post = null, $strict_draft_check = false ) {
 		global $permalink_manager_options;
 
-		$post = ( is_integer( $post ) ) ? get_post( $post ) : $post;
+		$post = ( is_numeric( $post ) ) ? get_post( $post ) : $post;
 
 		// Check if post is a "draft", "pending" or moved to trash
 		if ( ! empty( $post->post_status ) ) {
@@ -851,6 +851,7 @@ class Permalink_Manager_Helper_Functions {
 				$title = self::remove_slashes( $title, '-' );
 
 				$new_slug = self::sanitize_title( $title );
+
 			} // B. Custom slug (custom permalink)
 			else {
 				$new_slug = basename( Permalink_Manager_URI_Functions::get_single_uri( $object, false, true ) );

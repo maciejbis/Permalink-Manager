@@ -16,7 +16,7 @@ class Permalink_Manager_URI_Functions_Post {
 
 		add_filter( 'permalink_manager_uris', array( $this, 'exclude_homepage' ), 99 );
 
-		add_filter( 'url_to_postid', array( $this, 'url_to_postid' ), 999 );
+		add_filter( 'url_to_postid', array( $this, 'url_to_postid' ), 9 );
 
 		add_filter( 'get_sample_permalink_html', array( $this, 'edit_uri_box' ), 20, 5 );
 
@@ -180,10 +180,12 @@ class Permalink_Manager_URI_Functions_Post {
 	 * @return string
 	 */
 	public static function get_default_post_uri( $post, $native_uri = false, $check_if_disabled = false ) {
-		global $permalink_manager_uris, $permalink_manager_permastructs, $wp_post_types, $icl_adjust_id_url_filter_off;
+		global $permalink_manager_uris, $permalink_manager_permastructs, $wp_post_types;
 
 		// Disable WPML adjust ID filter
-		$icl_adjust_id_url_filter_off = true;
+		if ( class_exists( 'SitePress' ) ) {
+			add_filter( 'wpml_disable_term_adjust_id', '__return_true', 999 );
+		}
 
 		// Load all bases & post
 		$post = is_object( $post ) ? $post : get_post( $post );
@@ -357,8 +359,10 @@ class Permalink_Manager_URI_Functions_Post {
 			}
 		}
 
-		// Enable WPML adjust ID filter
-		$icl_adjust_id_url_filter_off = false;
+		// Restore WPML adjust ID filter
+		if ( class_exists( 'SitePress' ) ) {
+			remove_filter( 'wpml_disable_term_adjust_id', '__return_true', 999 );
+		}
 
 		return apply_filters( 'permalink_manager_filter_default_post_uri', $default_uri, $post->post_name, $post, $post_name, $native_uri );
 	}
