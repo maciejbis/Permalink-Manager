@@ -17,7 +17,9 @@ class Permalink_Manager_Debug_Functions {
 		add_filter( 'permalink_manager_filter_redirect', array( $this, 'debug_redirect' ), 9, 3 );
 		add_filter( 'wp_redirect', array( $this, 'debug_wp_redirect' ), 9, 2 );
 
-		self::debug_custom_fields();
+		if ( current_user_can( 'manage_options' ) ) {
+			self::debug_custom_fields();
+		}
 	}
 
 	/**

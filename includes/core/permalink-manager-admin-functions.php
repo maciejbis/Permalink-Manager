@@ -5,7 +5,7 @@
  */
 class Permalink_Manager_Admin_Functions {
 
-	public $menu_name, $sections, $active_section, $active_subsection;
+	public $sections, $active_section, $active_subsection;
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ) );
@@ -110,7 +110,7 @@ class Permalink_Manager_Admin_Functions {
 	 * Add "Tools -> Permalink Manager" to the admin sidebar menu
 	 */
 	public function add_menu_page() {
-		$this->menu_name = add_management_page( __( 'Permalink Manager', 'permalink-manager' ), __( 'Permalink Manager', 'permalink-manager' ), 'manage_options', PERMALINK_MANAGER_PLUGIN_SLUG, array( $this, 'display_section' ) );
+		add_management_page( __( 'Permalink Manager', 'permalink-manager' ), __( 'Permalink Manager', 'permalink-manager' ), 'manage_options', PERMALINK_MANAGER_PLUGIN_SLUG, array( $this, 'display_section' ) );
 
 		add_action( 'admin_init', array( $this, 'enqueue_cssjs' ) );
 	}
