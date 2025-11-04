@@ -37,7 +37,7 @@ class Permalink_Manager_Permastructs {
 		// Display additional information in Permalink Manager Lite
 		if ( ! Permalink_Manager_Admin_Functions::is_pro_active() ) {
 			/* translators: %s: Permalink Manager Pro website */
-			$pro_text = sprintf( __( 'To edit taxonomy permalinks, <a href="%s" target="_blank">Permalink Manager Pro</a> is required.', 'permalink-manager' ), PERMALINK_MANAGER_WEBSITE );
+			$pro_text = sprintf( __( 'To edit taxonomy permalinks, <a href="%s" target="_blank">Permalink Manager Pro</a> is required.', 'permalink-manager' ), PERMALINK_MANAGER_PROMO );
 			$pro_text = sprintf( '<div class="alert info">%s</div>', $pro_text );
 		}
 
@@ -129,7 +129,7 @@ class Permalink_Manager_Permastructs {
 		$content_type_name  = $content_type['name'];
 		$content_type_label = $content_type['label'];
 
-		$siteurl           = Permalink_Manager_Helper_Functions::get_permalink_base();
+		$siteurl           = Permalink_Manager_Permastructure_Functions::get_permalink_base();
 		$tags_container_id = sprintf( 'permastruct-tags-%s-%s', $content_group, $content_type_name );
 		$available_tags    = self::get_all_structure_tags( $content_type_name, $is_tax );
 

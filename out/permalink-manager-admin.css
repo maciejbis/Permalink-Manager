@@ -218,7 +218,8 @@
  * Breakpoints
  */
 @media only screen and (min-width: 992px) {
-	#permalink-manager #permalink-manager-tab-nav .section_debug,#permalink-manager #permalink-manager-tab-nav .section_upgrade,#permalink-manager #permalink-manager-tab-nav .section_support{float:right}
+	#permalink-manager #permalink-manager-tab-nav .section_debug,#permalink-manager #permalink-manager-tab-nav .section_support{float:right}
+    #permalink-manager #permalink-manager-tab-nav .section_upgrade{margin-left:50px}
 
 	#permalink-manager .column-item_uri{width:600px;max-width:100%}
 	#permalink-manager .column-item_uri input{width:100%}

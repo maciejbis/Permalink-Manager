@@ -9,9 +9,9 @@ class Permalink_Manager_URI_Functions_Post {
 		add_action( 'admin_init', array( $this, 'admin_init' ), 99, 3 );
 
 		add_filter( '_get_page_link', array( $this, 'custom_post_permalinks' ), 99, 2 );
-		add_filter( 'page_link', array( $this, 'custom_post_permalinks' ), 99, 2 );
-		add_filter( 'post_link', array( $this, 'custom_post_permalinks' ), 99, 2 );
-		add_filter( 'post_type_link', array( $this, 'custom_post_permalinks' ), 99, 2 );
+		add_filter( 'page_link', array( $this, 'custom_post_permalinks' ), 99, 3 );
+		add_filter( 'post_link', array( $this, 'custom_post_permalinks' ), 99, 3 );
+		add_filter( 'post_type_link', array( $this, 'custom_post_permalinks' ), 99, 3 );
 		add_filter( 'attachment_link', array( $this, 'custom_post_permalinks' ), 99, 2 );
 
 		add_filter( 'permalink_manager_uris', array( $this, 'exclude_homepage' ), 99 );
@@ -49,7 +49,7 @@ class Permalink_Manager_URI_Functions_Post {
 	 *
 	 * @return string
 	 */
-	static function custom_post_permalinks( $permalink, $post ) {
+	static function custom_post_permalinks( $permalink, $post, $leavename = false ) {
 		global $permalink_manager_uris, $permalink_manager_options, $permalink_manager_ignore_permalink_filters;
 
 		// Do not filter permalinks in Customizer
@@ -85,7 +85,7 @@ class Permalink_Manager_URI_Functions_Post {
 		}
 
 		// Start with homepage URL
-		$home_url = Permalink_Manager_Helper_Functions::get_permalink_base( $post );
+		$home_url = Permalink_Manager_Permastructure_Functions::get_permalink_base( $post );
 
 		// Check if the post is excluded
 		if ( ! empty( $post->post_type ) && Permalink_Manager_Helper_Functions::is_post_excluded( $post ) && $post->post_type !== 'attachment' ) {
@@ -100,7 +100,7 @@ class Permalink_Manager_URI_Functions_Post {
 			return $permalink;
 		}
 
-		// 3. Save the old permalink to separate variable
+		// 3. Save the old permalink to a separate variable
 		$old_permalink = $permalink;
 
 		// 4. Filter only the posts with custom permalink assigned
@@ -113,6 +113,14 @@ class Permalink_Manager_URI_Functions_Post {
 			}
 		} else if ( $post->post_type == 'attachment' && $post->post_parent > 0 && $post->post_parent != $post->ID && ! empty( $permalink_manager_uris[ $post->post_parent ] ) ) {
 			$permalink = "{$home_url}/{$permalink_manager_uris[$post->post_parent]}/attachment/{$post->post_name}";
+		}
+
+		// Keep the slug editor in Block Editor wherever it may help
+		if ( $leavename ) {
+			$placeholder   = Permalink_Manager_Permastructure_Functions::get_post_tag( $post->post_type );
+			$post_name_esc = preg_quote( $post->post_name, '/' );
+
+			$permalink = preg_replace("/\/({$post_name_esc})\/?$/", "/{$placeholder}/", $permalink);
 		}
 
 		return apply_filters( 'permalink_manager_filter_final_post_permalink', $permalink, $post, $old_permalink );
@@ -261,7 +269,7 @@ class Permalink_Manager_URI_Functions_Post {
 
 		// 3B. Get the full slug
 		$post_name        = Permalink_Manager_Helper_Functions::remove_slashes( $post_name );
-		$custom_slug      = $full_custom_slug = Permalink_Manager_Helper_Functions::force_custom_slugs( $post_name, $post );
+		$custom_slug      = $full_custom_slug = Permalink_Manager_Helper_Functions::force_custom_slugs( $post_name, $post, true, null, false );
 		$post_title_slug  = Permalink_Manager_Helper_Functions::force_custom_slugs( $post_name, $post, true, 1 );
 		$full_native_slug = $post_name;
 
@@ -627,9 +635,9 @@ class Permalink_Manager_URI_Functions_Post {
 		}
 
 		// Make sure that home URL ends with slash
-		$home_url = Permalink_Manager_Helper_Functions::get_permalink_base( $post );
+		$home_url = Permalink_Manager_Permastructure_Functions::get_permalink_base( $post );
 
-		// A. Display original permalink on front-page editor
+		// A. Display the original permalink on the front-page editor
 		if ( Permalink_Manager_Helper_Functions::is_front_page( $id ) ) {
 			preg_match( '/href="([^"]+)"/mi', $html, $matches );
 			$sample_permalink = ( ! empty( $matches[1] ) ) ? $matches[1] : "";

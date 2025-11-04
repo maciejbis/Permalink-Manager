@@ -63,7 +63,7 @@ class Permalink_Manager_Gutenberg {
 			echo ( $post ) ? Permalink_Manager_UI_Elements::display_uri_box( $post, true ) : '';
 		}
 
-		if ( wp_doing_ajax() ) {
+		if ( wp_doing_ajax() && isset( $_GET['action'] ) && $_GET['action'] == 'pm_get_uri_editor' ) {
 			die();
 		}
 	}

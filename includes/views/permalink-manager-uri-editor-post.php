@@ -88,7 +88,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 
 		if ( Permalink_Manager_Helper_Functions::is_front_page( $item['ID'] ) ) {
 			$uri           = '';
-			$permalink     = Permalink_Manager_Helper_Functions::get_permalink_base( $item['ID'] );
+			$permalink     = Permalink_Manager_Permastructure_Functions::get_permalink_base( $item['ID'] );
 			$is_front_page = true;
 		} else {
 			$is_draft      = ( $item["post_status"] == 'draft' ) ? true : false;

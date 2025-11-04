@@ -136,4 +136,15 @@ class Permalink_Manager_Permastructure_Functions {
 
 		return trim( $default_uri, "/" );
 	}
+
+	/**
+	 * Get the permalink base (home URL) for custom permalink
+	 *
+	 * @param string|int|WP_Post|WP_Term $element
+	 *
+	 * @return string
+	 */
+	public static function get_permalink_base( $element = null ) {
+		return apply_filters( 'permalink_manager_filter_permalink_base', trim( get_option( 'home' ), "/" ), $element );
+	}
 }

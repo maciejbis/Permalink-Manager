@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager Lite
  * Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
  * Description:       Advanced plugin that allows to set up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
- * Version:           2.5.1.4
+ * Version:           2.5.2
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -12,7 +12,7 @@
  * Text Domain:       permalink-manager
  * Domain Path:       /languages
  * WC requires at least: 3.0.0
- * WC tested up to:      10.1.2
+ * WC tested up to:      10.3.4
  */
 
 // If this file is called directly or plugin is already defined, abort
@@ -25,12 +25,13 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 	// Define the directories used to load plugin files.
 	define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 	define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-	define( 'PERMALINK_MANAGER_VERSION', '2.5.1.4' );
+	define( 'PERMALINK_MANAGER_VERSION', '2.5.2' );
 	define( 'PERMALINK_MANAGER_FILE', __FILE__ );
 	define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 	define( 'PERMALINK_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
 	define( 'PERMALINK_MANAGER_URL', untrailingslashit( plugins_url( '', __FILE__ ) ) );
 	define( 'PERMALINK_MANAGER_WEBSITE', 'https://permalinkmanager.pro?utm_source=plugin' );
+	define( 'PERMALINK_MANAGER_PROMO', 'https://permalinkmanager.pro/features/?utm_source=plugin' );
 
 	/**
 	 * The base class responsible for loading the plugin data as well as any plugin subclasses and additional functions
@@ -57,7 +58,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 			}
 
 			$classes = array(
-				'core' => array(
+				'core'         => array(
 					'helper-functions'          => 'Permalink_Manager_Helper_Functions',
 					'uri-functions'             => 'Permalink_Manager_URI_Functions',
 					'uri-functions-post'        => 'Permalink_Manager_URI_Functions_Post',
@@ -68,6 +69,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 					'permastructures-functions' => 'Permalink_Manager_Permastructure_Functions',
 					'gutenberg'                 => 'Permalink_Manager_Gutenberg',
 					'debug'                     => 'Permalink_Manager_Debug_Functions',
+					'pro-license'               => 'Permalink_Manager_Pro_License',
 					'pro-functions'             => 'Permalink_Manager_Pro_Functions'
 				),
 				'integrations' => array(
@@ -76,7 +78,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 					'seo-plugins'      => 'Permalink_Manager_SEO_Plugins',
 					'language-plugins' => 'Permalink_Manager_Language_Plugins'
 				),
-				'views' => array(
+				'views'        => array(
 					'ui-elements'     => 'Permalink_Manager_UI_Elements',
 					'uri-editor'      => 'Permalink_Manager_URI_Editor',
 					'tools'           => 'Permalink_Manager_Tools',
@@ -207,7 +209,8 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 					),
 					'partial_disable_strict'    => 1,
 					'ignore_drafts'             => 1,
-					'edit_uris_cap'             => 'publish_posts'
+					'edit_uris_cap'             => 'publish_posts',
+					'force_unique_uris'         => 0
 				),
 				'licence'        => array()
 			) );

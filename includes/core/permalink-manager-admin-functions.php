@@ -192,7 +192,7 @@ class Permalink_Manager_Admin_Functions {
 			);
 
 			if ( ! defined( 'PERMALINK_MANAGER_PRO' ) ) {
-				$new_links['upgrade'] = sprintf( '<a href="%s?utm_source=plugin_admin_page" target="_blank"><strong>%s</strong></a>', PERMALINK_MANAGER_WEBSITE, __( 'Buy Permalink Manager Pro', 'permalink-manager' ) );
+				$new_links['upgrade'] = sprintf( '<a href="%s?utm_source=plugin_admin_page" target="_blank"><strong>%s</strong></a>', PERMALINK_MANAGER_PROMO, __( 'Buy Permalink Manager Pro', 'permalink-manager' ) );
 			}
 
 			$links = array_merge( $links, $new_links );
@@ -306,9 +306,9 @@ class Permalink_Manager_Admin_Functions {
 	 * @return bool
 	 */
 	public static function is_pro_active() {
-		if ( defined( 'PERMALINK_MANAGER_PRO' ) && class_exists( 'Permalink_Manager_Pro_Functions' ) ) {
+		if ( defined( 'PERMALINK_MANAGER_PRO' ) && class_exists( 'Permalink_Manager_Pro_License' ) ) {
 			// Check if license is active
-			$exp_date = Permalink_Manager_Pro_Functions::get_expiration_date( true );
+			$exp_date = Permalink_Manager_Pro_License::get_expiration_date( true );
 
 			$is_pro = ( $exp_date > 2 ) ? false : true;
 		} else {

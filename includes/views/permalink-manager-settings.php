@@ -273,6 +273,11 @@ class Permalink_Manager_Settings {
 						/* translators: %s: WordPress.org docs reference */
 						'description' => sprintf( __( 'Only the users who have selected capability will be able to access URI Editor.<br />The list of capabilities <a href="%s" target="_blank">can be found here</a>.', 'permalink-manager' ), 'https://wordpress.org/support/article/roles-and-capabilities/#capability-vs-role-table' )
 					),
+					'force_unique_uris'          => array(
+						'type'        => 'single_checkbox',
+						'label'       => __( 'Force unique custom permalinks', 'permalink-manager' ),
+						'description' => __( 'Enable this option if you want the plugin to automatically append a numeric suffix (e.g. -2, -3) to duplicated permalinks.', 'permalink-manager' )
+					),
 					'auto_fix_duplicates'       => array(
 						'type'        => 'single_checkbox',
 						'label'       => __( 'Automatically fix broken URIs', 'permalink-manager' ),

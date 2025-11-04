@@ -13,12 +13,20 @@ class Permalink_Manager_Helper_Functions {
 	 * Add hooks used by plugin to filter the custom permalinks
 	 */
 	public function init() {
+		global $permalink_manager_options;
+
 		// Clear the final default URIs
 		add_filter( 'permalink_manager_filter_default_term_uri', array( $this, 'clear_single_uri' ), 20 );
 		add_filter( 'permalink_manager_filter_default_post_uri', array( $this, 'clear_single_uri' ), 20 );
 
 		// Reload the globals when the blog is switched (multisite)
 		add_action( 'switch_blog', array( $this, 'reload_globals_in_network' ), 9 );
+
+		// Force unique URIs when saving them
+		if ( ! empty( $permalink_manager_options['general']['force_unique_uris'] ) ) {
+			add_filter( 'permalink_manager_pre_update_post_uri', array( $this, 'force_unique_uri' ), 100, 3 );
+			add_filter( 'permalink_manager_filter_default_post_uri', array( $this, 'force_unique_uri' ), 100, 3 );
+		}
 	}
 
 	/**
@@ -597,17 +605,6 @@ class Permalink_Manager_Helper_Functions {
 	}
 
 	/**
-	 * Get the permalink base (home URL) for custom permalink
-	 *
-	 * @param string|int|WP_Post|WP_Term $element
-	 *
-	 * @return string
-	 */
-	public static function get_permalink_base( $element = null ) {
-		return apply_filters( 'permalink_manager_filter_permalink_base', trim( get_option( 'home' ), "/" ), $element );
-	}
-
-	/**
 	 * Check if the specific post is selected as a front-page
 	 *
 	 * @param int $page_id
@@ -825,10 +822,12 @@ class Permalink_Manager_Helper_Functions {
 	 * @param string $slug
 	 * @param WP_Post|WP_Term $object
 	 * @param bool $flat
+	 * @param null $force_custom_slugs
+	 * @param bool $allow_inherit
 	 *
 	 * @return string
 	 */
-	public static function force_custom_slugs( $slug, $object, $flat = false, $force_custom_slugs = null ) {
+	public static function force_custom_slugs( $slug, $object, $flat = false, $force_custom_slugs = null, $allow_inherit = true ) {
 		global $permalink_manager_options;
 
 		if ( empty( $force_custom_slugs ) ) {
@@ -852,8 +851,8 @@ class Permalink_Manager_Helper_Functions {
 
 				$new_slug = self::sanitize_title( $title );
 
-			} // B. Custom slug (custom permalink)
-			else {
+			} // B. Custom slug (inherit custom permalink from the parent object)
+			else if ( $allow_inherit ) {
 				$new_slug = basename( Permalink_Manager_URI_Functions::get_single_uri( $object, false, true ) );
 			}
 
@@ -865,6 +864,51 @@ class Permalink_Manager_Helper_Functions {
 		}
 
 		return $slug;
+	}
+
+	/**
+	 * Ensures that a permalink is unique by appending a numeric suffix if needed
+	 *
+	 * @param string $new_uri
+	 * @param string|int $post_id
+	 * @param string|WP_Post $post
+	 *
+	 * @return string A unique custom permalink string.
+	 */
+	function force_unique_uri( $new_uri, $post_id, $post = '' ) {
+		global $permalink_manager_uris;
+
+		// Determine post ID
+		if ( is_a( $post, 'WP_Post' ) ) {
+			$post_id = $post->ID;
+		} elseif ( ! is_numeric( $post_id ) ) {
+			return $new_uri;
+		}
+
+		// Copy URIs and exclude current element
+		$uris = $permalink_manager_uris;
+		unset( $uris[ $post_id ] );
+
+		$uris = array_flip( $uris );
+
+		// Prepare base + extension
+		if ( ! preg_match( '/^(.+?)(?:-([\d]+))?(\.[^\.]+$|$)/', $new_uri, $parts ) ) {
+			return $new_uri; // fallback if regex fails
+		}
+
+		$base      = $parts[1];
+		$index     = empty( $parts[2] ) ? 1 : (int) $parts[2];
+		$extension = $parts[3];
+
+		$unique_uri = $new_uri;
+
+		// Increment suffix until URI is unique
+		while ( isset( $uris[ $unique_uri ] ) ) {
+			$index ++;
+			$unique_uri = "{$base}-{$index}{$extension}";
+		}
+
+		return $unique_uri;
 	}
 
 	/**

@@ -44,8 +44,8 @@ class Permalink_Manager_Debug_Functions {
 			$debug_info['content_type']   = ( ! empty( $content_type ) ) ? $content_type : "-";
 
 			// License key info
-			if ( class_exists( 'Permalink_Manager_Pro_Functions' ) ) {
-				$license_key = $permalink_manager->functions['pro-functions']->get_license_key();
+			if ( class_exists( 'Permalink_Manager_Pro_License' ) ) {
+				$license_key = $permalink_manager->functions['pro-license']->get_license_key();
 
 				// Mask the license key
 				$debug_info['license_key'] = preg_replace( '/([^-]+)-([^-]+)-([^-]+)-([^-]+)$/', '***-***-$3', $license_key );

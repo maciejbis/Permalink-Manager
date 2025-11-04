@@ -382,7 +382,7 @@ class Permalink_Manager_UI_Elements {
 		global $permalink_manager_after_sections_html;
 
 		$html = "<div id=\"permalink-manager\" class=\"wrap\">";
-		$html .= sprintf( '<h2 id="plugin-name-heading">%1$s <a href="%2$s" class="author-link" target="_blank">%3$s</a></h2>', PERMALINK_MANAGER_PLUGIN_NAME, esc_attr( PERMALINK_MANAGER_WEBSITE ), PERMALINK_MANAGER_VERSION );
+		$html .= sprintf( '<h2 id="plugin-name-heading">%1$s <a href="%2$s" class="author-link" target="_blank">%3$s</a></h2>', PERMALINK_MANAGER_PLUGIN_NAME, esc_attr( PERMALINK_MANAGER_PROMO ), PERMALINK_MANAGER_VERSION );
 
 		// Display the tab navigation
 		$html .= "<div id=\"permalink-manager-tab-nav\" class=\"nav-tab-wrapper\">";
@@ -394,7 +394,7 @@ class Permalink_Manager_UI_Elements {
 		}
 
 		// Upgrade to Pro version
-		$html .= ( ! Permalink_Manager_Admin_Functions::is_pro_active() ) ? sprintf( "<a href=\"%s\" target=\"_blank\" class=\"nav-tab section_upgrade\">%s</a>", 'https://permalinkmanager.pro/buy-permalink-manager-pro/?utm_source=plugin_upgrade', __( 'Upgrade to PRO', 'permalink-manager' ) ) : '';
+		$html .= ( ! Permalink_Manager_Admin_Functions::is_pro_active() ) ? sprintf( "<a href=\"%s\" target=\"_blank\" class=\"nav-tab section_upgrade\"><i class=\"dashicons dashicons-external\"></i> %s</a>", PERMALINK_MANAGER_PROMO, __( 'Upgrade to PRO', 'permalink-manager' ) ) : '';
 		$html .= "</div>";
 
 		// Now display the active section
@@ -690,7 +690,7 @@ class Permalink_Manager_UI_Elements {
 
 				// 8. Native permalink info
 				if ( ! empty( $permalink_manager_options['general']['redirect'] ) && ! ( ! empty( $element->post_status ) && in_array( $element->post_status, array( 'auto-draft', 'trash', 'draft' ) ) ) ) {
-					$native_permalink = trim( Permalink_Manager_Helper_Functions::get_permalink_base( $element ), "/" ) . "/";
+					$native_permalink = trim( Permalink_Manager_Permastructure_Functions::get_permalink_base( $element ), "/" ) . "/";
 					$native_permalink .= $native_uri;
 
 					$native_permalink_label = ( $native_uri === $uri ) ? __( "Original WordPress permalink:", "permalink-manager" ) : __( "Original WordPress permalink (redirected):", "permalink-manager" );
@@ -829,11 +829,11 @@ class Permalink_Manager_UI_Elements {
 	 * @return string
 	 */
 	static function pro_text( $text_only = false ) {
-		if ( class_exists( 'Permalink_Manager_Pro_Functions' ) ) {
-			$text = Permalink_Manager_Pro_Functions::get_expiration_date( false, true );
+		if ( class_exists( 'Permalink_Manager_Pro_License' ) ) {
+			$text = Permalink_Manager_Pro_License::get_expiration_date( false, true );
 		} else {
 			/* translators: Permalink Manager Pro website */
-			$text = sprintf( __( 'This functionality is available only in <a href="%s" target="_blank">Permalink Manager Pro</a>.', 'permalink-manager' ), PERMALINK_MANAGER_WEBSITE );
+			$text = sprintf( __( 'This functionality is available only in <a href="%s" target="_blank">Permalink Manager Pro</a>.', 'permalink-manager' ), PERMALINK_MANAGER_PROMO );
 		}
 
 		return ( $text_only ) ? $text : sprintf( "<div class=\"alert info\"> %s</div>", wpautop( $text, 'alert' ) );

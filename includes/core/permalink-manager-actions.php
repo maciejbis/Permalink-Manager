@@ -639,7 +639,7 @@ class Permalink_Manager_Actions {
 			}
 
 			// Get homepage URL and ensure that it ends with slash
-			$home_url = Permalink_Manager_Helper_Functions::get_permalink_base() . "/";
+			$home_url = Permalink_Manager_Permastructure_Functions::get_permalink_base() . "/";
 
 			// Process the variables from $_POST object
 			$old_string = ( ! empty( $_POST['old_string'] ) ) ? str_replace( $home_url, '', esc_sql( $_POST['old_string'] ) ) : '';
