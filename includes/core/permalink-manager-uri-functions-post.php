@@ -111,16 +111,16 @@ class Permalink_Manager_URI_Functions_Post {
 			} else {
 				$permalink = "{$home_url}/" . Permalink_Manager_Helper_Functions::encode_uri( "{$permalink_manager_uris[$post->ID]}" );
 			}
+
+			// Keep the slug editor in Block Editor wherever it may help
+			if ( $leavename && is_admin() ) {
+				$placeholder   = Permalink_Manager_Permastructure_Functions::get_post_tag( $post->post_type );
+				$post_name_esc = preg_quote( get_page_uri( $post->ID ), '/' );
+
+				$permalink = preg_replace( "/\/({$post_name_esc})\/?$/", "/{$placeholder}/", $permalink );
+			}
 		} else if ( $post->post_type == 'attachment' && $post->post_parent > 0 && $post->post_parent != $post->ID && ! empty( $permalink_manager_uris[ $post->post_parent ] ) ) {
 			$permalink = "{$home_url}/{$permalink_manager_uris[$post->post_parent]}/attachment/{$post->post_name}";
-		}
-
-		// Keep the slug editor in Block Editor wherever it may help
-		if ( $leavename ) {
-			$placeholder   = Permalink_Manager_Permastructure_Functions::get_post_tag( $post->post_type );
-			$post_name_esc = preg_quote( $post->post_name, '/' );
-
-			$permalink = preg_replace("/\/({$post_name_esc})\/?$/", "/{$placeholder}/", $permalink);
 		}
 
 		return apply_filters( 'permalink_manager_filter_final_post_permalink', $permalink, $post, $old_permalink );
@@ -514,9 +514,10 @@ class Permalink_Manager_URI_Functions_Post {
 		if ( $posts_to_update ) {
 			foreach ( $posts_to_update as $row ) {
 				// Get default & native URL
-				$native_uri  = self::get_default_post_uri( $row['ID'], true );
-				$default_uri = self::get_default_post_uri( $row['ID'] );
-				$old_uri     = Permalink_Manager_URI_Functions::get_single_uri( $row['ID'], true, false );
+				$native_uri     = self::get_default_post_uri( $row['ID'], true );
+				$default_uri    = self::get_default_post_uri( $row['ID'] );
+				$old_custom_uri = Permalink_Manager_URI_Functions::get_single_uri( $row['ID'], true, true );
+				$old_uri        = ( ! empty( $old_custom_uri ) ) ? $old_custom_uri : $native_uri;
 
 				$old_post_name = $row['post_name'];
 
@@ -542,8 +543,8 @@ class Permalink_Manager_URI_Functions_Post {
 
 				$new_uri = apply_filters( 'permalink_manager_pre_update_post_uri', $new_uri, $row['ID'], $old_uri, $native_uri, $default_uri );
 
-				if ( ! ( empty( $new_uri ) ) && ( $old_uri !== $new_uri ) || ( $old_post_name !== $new_post_name ) ) {
-					if ( ! $preview_mode && ( $old_uri !== $new_uri ) ) {
+				if ( ! ( empty( $new_uri ) ) && ( $old_custom_uri !== $new_uri ) || ( $old_post_name !== $new_post_name ) ) {
+					if ( ! $preview_mode && ( $old_custom_uri !== $new_uri ) ) {
 						Permalink_Manager_URI_Functions::save_single_uri( $row['ID'], $new_uri, false, false );
 						do_action( 'permalink_manager_updated_post_uri', $row['ID'], $new_uri, $old_uri, $native_uri, $default_uri );
 					}

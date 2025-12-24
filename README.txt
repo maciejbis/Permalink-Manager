@@ -7,13 +7,13 @@ Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, url edit
 Requires at least: 4.4.0
 Requires PHP: 5.4
 Tested up to: 6.9
-Stable tag: 2.5.2
+Stable tag: 2.5.2.2
 
-Permalink Manager enhances WordPress’s built-in URL system, allowing you to change the URLs of native and custom post types and taxonomies, without modifying any core files.
+Permalink Manager enhances WordPress’s built-in URL system, allowing you to change the URLs of native and custom post types and taxonomies.
 
 == Description ==
 
-Out of the box, WordPress comes with only a few basic permalink settings. Permalink Manager expands them, giving you **complete control over your WordPress URLs**, letting you <a href="https://permalinkmanager.pro/docs/basics/uri-editor/">change permalink</a> exactly the way you want. 
+Out of the box, WordPress comes with only a few basic permalink settings. Permalink Manager expands them, giving you **complete control over your WordPress URLs**, letting you <a href="https://permalinkmanager.pro/docs/basics/uri-editor/">change permalink</a> exactly the way you want.
 
 The free version lets you manage URLs for **posts, pages, and custom post types**, while the Pro version also includes support for **categories, tags, and custom taxonomies**.
 
@@ -91,6 +91,14 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 8.	Permalink Manager settings.
 
 == Changelog ==
+
+= 2.5.2.2 (November 25, 2025) =
+* Fix - Hotfix for "View Page" link in Block (Gutenberg) Editor
+* Fix - PHP 8.4 warnings fixed (deprecated methods)
+* Dev - Minor code improvements
+
+= 2.5.2.1 (November 7, 2025) =
+* Fix - Hotfix for Rankmath sitemap support (broken URLs)
 
 = 2.5.2 (November 3, 2025) =
 * Dev - New setting field - "Force unique custom permalinks"

@@ -192,7 +192,7 @@ class Permalink_Manager_Admin_Functions {
 			);
 
 			if ( ! defined( 'PERMALINK_MANAGER_PRO' ) ) {
-				$new_links['upgrade'] = sprintf( '<a href="%s?utm_source=plugin_admin_page" target="_blank"><strong>%s</strong></a>', PERMALINK_MANAGER_PROMO, __( 'Buy Permalink Manager Pro', 'permalink-manager' ) );
+				$new_links['upgrade'] = sprintf( '<a href="%s" target="_blank"><strong>%s</strong></a>', PERMALINK_MANAGER_PROMO, __( 'Buy Permalink Manager Pro', 'permalink-manager' ) );
 			}
 
 			$links = array_merge( $links, $new_links );
