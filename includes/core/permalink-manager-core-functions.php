@@ -401,9 +401,9 @@ class Permalink_Manager_Core_Functions {
 				// Overwrite the detect function and decide whether to exclude the detected item
 				$excluded = apply_filters( 'permalink_manager_excluded_element_id', $excluded, $element_object, $old_query, $pm_query );
 
-				// Make sure the loop does not execute infinitely (limit it to 10 iterations)
+				// Make sure the loop does not execute infinitely (limit it to 20 iterations)
 				$uri_query_iteration ++;
-				if ( $uri_query_iteration === 10 ) {
+				if ( $uri_query_iteration === 25 ) {
 					break;
 				}
 			} // If the detected element was excluded repeat the URI query and try to find a new one

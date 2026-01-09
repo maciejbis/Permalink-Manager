@@ -333,8 +333,9 @@ class Permalink_Manager_URI_Functions_Post {
 				// 3B. Get the first assigned term to this taxonomy
 				if ( empty( $replacement_term ) ) {
 					$replacement_term = ( ! is_wp_error( $terms ) && ! empty( $terms ) && is_object( $terms[0] ) ) ? Permalink_Manager_Helper_Functions::get_lowest_element( $terms[0], $terms ) : '';
-					$replacement_term = apply_filters( 'permalink_manager_filter_post_terms', $replacement_term, $post, $terms, $taxonomy, $native_uri );
 				}
+
+				$replacement_term = apply_filters( 'permalink_manager_filter_post_terms', $replacement_term, $post, $terms, $taxonomy, $native_uri );
 
 				// 4A. Custom URI as term base
 				if ( ! empty( $replacement_term->term_id ) && strpos( $default_uri, "%{$taxonomy}_custom_uri%" ) !== false && ! empty( $permalink_manager_uris["tax-{$replacement_term->term_id}"] ) ) {

@@ -7,13 +7,13 @@ Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, url edit
 Requires at least: 4.4.0
 Requires PHP: 5.4
 Tested up to: 6.9
-Stable tag: 2.5.2.2
+Stable tag: 2.5.2.3
 
 Permalink Manager enhances WordPress’s built-in URL system, allowing you to change the URLs of native and custom post types and taxonomies.
 
 == Description ==
 
-Out of the box, WordPress comes with only a few basic permalink settings. Permalink Manager expands them, giving you **complete control over your WordPress URLs**, letting you <a href="https://permalinkmanager.pro/docs/basics/uri-editor/">change permalink</a> exactly the way you want.
+The native WordPress permalink system is designed to be simple and easy to configure. Permalink Manager extends it and allows you to define custom URL structures and edit individual permalinks exactly the way you want.
 
 The free version lets you manage URLs for **posts, pages, and custom post types**, while the Pro version also includes support for **categories, tags, and custom taxonomies**.
 
@@ -25,7 +25,7 @@ Permalink Manager **automatically redirects original and duplicate URLs** to the
 
 = Features =
 
-* **Change Single Permalinks**<br/>For a consistent and SEO-friendly URL structure, you may customize and <a href="https://permalinkmanager.pro/docs/basics/change-permalinks/">change the permalink</a> of each post, page, and custom post type item.  *Categories, tags & custom taxonomies terms permalinks can be edited in Permalink Manager Pro.*
+* **Change Single Permalinks**<br/>For a consistent and SEO-friendly URL structure, you may customize and <a href="https://permalinkmanager.pro/docs/basics/uri-editor/">change the permalink</a> of each post, page, and custom post type item.  *Categories, tags & custom taxonomies terms permalinks can be edited in Permalink Manager Pro.*
 * **Customize URL Formats**<br/>Using the “Permastructures” settings, you can choose the default format for custom URLs using "Permastructures" settings. The new format will be applied automatically when a new post/term is added or once the old permalinks are regenerated.
 * **Custom Post Types Support**<br/>Choose the post types and taxonomies you want to customize and exclude the rest of them. The plugin supports post types and taxonomies managed with ACF, Pods, JetEngine, Toolset Types, and other plugins.
 * **Translate Permalinks**<br/>With WPML or Polylang active, Permalink Manager allows you to translate the slug and customize the URL structure for every language separately.
@@ -91,6 +91,10 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 8.	Permalink Manager settings.
 
 == Changelog ==
+
+= 2.5.2.3 (January 7, 2026) =
+* Fix - Hotfix for "Admin Columns Pro" - the custom permalinks are no longer overwritten
+* Dev - Minor code improvements
 
 = 2.5.2.2 (November 25, 2025) =
 * Fix - Hotfix for "View Page" link in Block (Gutenberg) Editor
