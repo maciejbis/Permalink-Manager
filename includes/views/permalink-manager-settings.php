@@ -246,7 +246,7 @@ class Permalink_Manager_Settings {
 						'type'  => 'single_checkbox',
 						'label' => __( 'Show "Native slug" field in URI Editor', 'permalink-manager' )
 					),
-					'pagination_redirect' => array(
+					'pagination_redirect'       => array(
 						'type'        => 'select',
 						'label'       => __( 'Handling non-existent pagination pages', 'permalink-manager' ),
 						'choices'     => array( 0 => __( 'Stop canonical redirect without forcing "404" status code', 'permalink-manager' ), 1 => __( 'Stop canonical redirect and force "404" status code', 'permalink-manager' ), 2 => __( 'Allow canonical redirect without forcing "404" status code', 'permalink-manager' ) ),
@@ -267,13 +267,12 @@ class Permalink_Manager_Settings {
 						'description' => __( 'If enabled, all the accented letters will be replaced with their non-accented equivalent (eg. Å => A, Æ => AE, Ø => O, Ć => C).', 'permalink-manager' )
 					),
 					'edit_uris_cap'             => array(
-						'type'        => 'select',
-						'label'       => __( 'URI Editor role capability', 'permalink-manager' ),
-						'choices'     => array( 'edit_theme_options' => __( 'Administrator (edit_theme_options)', 'permalink-manager' ), 'publish_pages' => __( 'Editor (publish_pages)', 'permalink-manager' ), 'publish_posts' => __( 'Author (publish_posts)', 'permalink-manager' ), 'edit_posts' => __( 'Contributor (edit_posts)', 'permalink-manager' ) ),
-						/* translators: %s: WordPress.org docs reference */
-						'description' => sprintf( __( 'Only the users who have selected capability will be able to access URI Editor.<br />The list of capabilities <a href="%s" target="_blank">can be found here</a>.', 'permalink-manager' ), 'https://wordpress.org/support/article/roles-and-capabilities/#capability-vs-role-table' )
+						'type'                                                            => 'select',
+						'label'                                                           => __( 'URI Editor role capability', 'permalink-manager' ),
+						'choices'                                                         => array( 'edit_theme_options' => __( 'Administrator (edit_theme_options)', 'permalink-manager' ), 'publish_pages' => __( 'Editor (publish_pages)', 'permalink-manager' ), 'publish_posts' => __( 'Author (publish_posts)', 'permalink-manager' ), 'edit_posts' => __( 'Contributor (edit_posts)', 'permalink-manager' ) ),
+						/* translators: %s: WordPress.org docs reference */ 'description' => sprintf( __( 'Only the users who have selected capability will be able to access URI Editor.<br />The list of capabilities <a href="%s" target="_blank">can be found here</a>.', 'permalink-manager' ), 'https://wordpress.org/support/article/roles-and-capabilities/#capability-vs-role-table' )
 					),
-					'force_unique_uris'          => array(
+					'force_unique_uris'         => array(
 						'type'        => 'single_checkbox',
 						'label'       => __( 'Force unique custom permalinks', 'permalink-manager' ),
 						'description' => __( 'Enable this option if you want the plugin to automatically append a numeric suffix (e.g. -2, -3) to duplicated permalinks.', 'permalink-manager' )
@@ -282,6 +281,11 @@ class Permalink_Manager_Settings {
 						'type'        => 'single_checkbox',
 						'label'       => __( 'Automatically fix broken URIs', 'permalink-manager' ),
 						'description' => sprintf( '%s', __( 'Enable this option if you would like to automatically remove redundant permalinks & duplicated redirects during page load.', 'permalink-manager' ) )
+					),
+					'debug_mode'                => array(
+						'type'        => 'single_checkbox',
+						'label'       => __( 'Debug mode', 'permalink-manager' ),
+						'description' => __( 'Debug mode allows access to extra debug info by adding <em>?debug_url</em> to the URL for plugin troubleshooting.', 'permalink-manager' )
 					)
 				)
 			)

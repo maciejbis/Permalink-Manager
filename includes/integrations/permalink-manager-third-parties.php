@@ -439,6 +439,7 @@ class Permalink_Manager_Third_Parties {
 		$html .= sprintf( '<input type="checkbox" id="is_update_custom_uri" name="is_update_custom_uri" value="1" %s class="switcher" /> ', checked( 1, $default_value, false ) );
 		$html .= sprintf( '<label for="is_import_custom_permalink">%s (%s)</label>', esc_html__( 'Custom permalink', 'permalink-manager' ), esc_html__( 'Permalink Manager', 'permalink-manager' ) );
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo sprintf( '<div class="input">%s</div>', $html );
 	}
 
@@ -534,7 +535,7 @@ class Permalink_Manager_Third_Parties {
 			}
 
 			foreach ( $tmp_files as $file ) {
-				unlink( $file );
+				wp_delete_file( $file );
 			}
 		}
 

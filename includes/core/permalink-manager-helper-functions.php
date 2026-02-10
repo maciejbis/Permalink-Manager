@@ -6,7 +6,16 @@
 class Permalink_Manager_Helper_Functions {
 
 	public function __construct() {
-		add_action( 'plugins_loaded', array( $this, 'init' ), 5 );
+		add_action( 'plugins_loaded', array( $this, 'early_init' ), 5 );
+		add_action( 'plugins_loaded', array( $this, 'init' ), 20 );
+	}
+
+	/**
+	 * Add early hooks used by plugin to filter the custom permalinks
+	 */
+	public function early_init() {
+		// Reload the globals when the blog is switched (multisite)
+		add_action( 'switch_blog', array( $this, 'reload_globals_in_network' ), 9 );
 	}
 
 	/**
@@ -18,9 +27,6 @@ class Permalink_Manager_Helper_Functions {
 		// Clear the final default URIs
 		add_filter( 'permalink_manager_filter_default_term_uri', array( $this, 'clear_single_uri' ), 20 );
 		add_filter( 'permalink_manager_filter_default_post_uri', array( $this, 'clear_single_uri' ), 20 );
-
-		// Reload the globals when the blog is switched (multisite)
-		add_action( 'switch_blog', array( $this, 'reload_globals_in_network' ), 9 );
 
 		// Force unique URIs when saving them
 		if ( ! empty( $permalink_manager_options['general']['force_unique_uris'] ) ) {
@@ -53,7 +59,7 @@ class Permalink_Manager_Helper_Functions {
 			$yoast_primary_term_label = sprintf( 'yoast_wpseo_primary_%s_term', $taxonomy );
 
 			// Hotfix: Yoast SEO saves the primary term using 'save_post' hook with the highest priority, so the primary term ID is taken directly from $_POST
-			if ( ! empty( $_POST[ $yoast_primary_term_label ] ) ) {
+			if ( ! empty( $_POST[ $yoast_primary_term_label ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$yoast_primary_term_id = filter_input( INPUT_POST, $yoast_primary_term_label, FILTER_SANITIZE_NUMBER_INT );
 			} else {
 				$yoast_primary_term    = new WPSEO_Primary_Term( $taxonomy, $post_id );
@@ -77,7 +83,7 @@ class Permalink_Manager_Helper_Functions {
 			$primary_cat_id = get_post_meta( $post_id, '_seopress_robots_primary_cat', true );
 			$primary_term   = ( ! empty( $primary_cat_id ) ) ? get_term( $primary_cat_id, 'category' ) : '';
 		} // E. SmartCrawler
-		else if ( class_exists( '\SmartCrawl\SmartCrawl' )  ) {
+		else if ( class_exists( '\SmartCrawl\SmartCrawl' ) ) {
 			$primary_cat_id = get_post_meta( $post_id, "wds_primary_{$taxonomy}", true );
 			$primary_term   = ( ! empty( $primary_cat_id ) ) ? get_term( $primary_cat_id, $taxonomy ) : '';
 		} // F. All In One SEO Pro
@@ -638,14 +644,14 @@ class Permalink_Manager_Helper_Functions {
 	 *
 	 * @return array
 	 */
-	static function sanitize_array( $data = array() ) {
+	static function sanitize_array( $data = array(), $sanitize = false ) {
 		if ( ! is_array( $data ) || ! count( $data ) ) {
 			return array();
 		}
 
 		foreach ( $data as $k => $v ) {
 			if ( ! is_array( $v ) && ! is_object( $v ) ) {
-				$data[ $k ] = htmlspecialchars( trim( $v ) );
+				$data[ $k ] = ( $sanitize ) ? sanitize_text_field( trim( $v ) ) : htmlspecialchars( trim( $v ) );
 			}
 			if ( is_array( $v ) ) {
 				$data[ $k ] = self::sanitize_array( $v );
@@ -653,6 +659,38 @@ class Permalink_Manager_Helper_Functions {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Prepare an array of strings for use in SQL IN clause
+	 *
+	 * @param array $array Array of strings to prepare
+	 * @param bool $sanitize
+	 *
+	 * @return string Comma-separated string with quoted values, e.g., "'value1','value2','value3'"
+	 */
+	static function prepare_array_for_sql_in( $array, $sanitize = true ) {
+		// Ensure we have an array
+		if ( ! is_array( $array ) ) {
+			$array = (array) $array;
+		}
+
+		// Remove empty values and sanitize
+		$array = array_filter( $array );
+		$array = ( $sanitize ) ? array_map( 'sanitize_text_field', $array ) : $array;
+
+		// Return empty string if array is empty
+		if ( empty( $array ) ) {
+			return '';
+		}
+
+		// Escape and wrap each value with quotes
+		$escaped = array_map( function ( $value ) {
+			return "'" . esc_sql( $value ) . "'";
+		}, $array );
+
+		// Join with comma
+		return implode( ',', $escaped );
 	}
 
 	/**
@@ -677,7 +715,7 @@ class Permalink_Manager_Helper_Functions {
 					$ids[] = $group;
 				} else if ( preg_match( '/([\d]+)-([\d]+)/', $group, $range_limits ) ) {
 					$range_start = (int) $range_limits[1];
-					$range_end = (int) $range_limits[2];
+					$range_end   = (int) $range_limits[2];
 
 					if ( $range_start < $range_end ) {
 						$ids = array_merge( $ids, range( $range_start, $range_end ) );
@@ -732,7 +770,17 @@ class Permalink_Manager_Helper_Functions {
 		$percent_sign   = ( $keep_percent_sign ) ? "\%" : "";
 		$sanitize_regex = apply_filters( "permalink_manager_sanitize_regex", "/[^\p{Xan}a-zA-Z0-9{$percent_sign}\/_\.|+, -]/ui", $percent_sign );
 		$clean          = preg_replace( $sanitize_regex, '', $clean );
-		$clean          = ( $force_lowercase ) ? strtolower( $clean ) : $clean;
+
+		if ( empty( $clean ) ) {
+			return $str;
+		}
+
+		// Lowercase with non-ASCII characters support
+		if ( $force_lowercase && seems_utf8( $clean ) && function_exists( 'mb_strtolower' ) ) {
+			$clean = mb_strtolower( $clean, 'UTF-8' );
+		} else if ( $force_lowercase ) {
+			$clean = strtolower( $clean );
+		}
 
 		// Remove ampersand
 		$clean = str_replace( array( '%26', '&' ), '', $clean );
@@ -846,7 +894,7 @@ class Permalink_Manager_Helper_Functions {
 					return $slug;
 				}
 
-				$title = strip_tags( $title );
+				$title = wp_strip_all_tags( $title );
 				$title = self::remove_slashes( $title, '-' );
 
 				$new_slug = self::sanitize_title( $title );

@@ -15,8 +15,8 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 			'plural'   => 'slugs'
 		) );
 
-		$this->displayed_post_statuses = ( isset( $permalink_manager_options['screen-options']['post_statuses'] ) ) ? "'" . implode( "', '", $permalink_manager_options['screen-options']['post_statuses'] ) . "'" : "'no-post-status'";
-		$this->displayed_post_types    = ( $active_subsection == 'all' ) ? "'" . implode( "', '", $permalink_manager_options['screen-options']['post_types'] ) . "'" : "'{$active_subsection}'";
+		$this->displayed_post_statuses = ( isset( $permalink_manager_options['screen-options']['post_statuses'] ) ) ? Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $permalink_manager_options['screen-options']['post_statuses'] ) : "'no-post-status'";
+		$this->displayed_post_types    = ( $active_subsection == 'all' ) ? Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $permalink_manager_options['screen-options']['post_types'] ) : "'{$active_subsection}'";
 	}
 
 	/**
@@ -26,7 +26,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	 */
 	public function display_admin_section() {
 		$output = "<form id=\"permalinks-post-types-table\" class=\"slugs-table\" method=\"post\">";
-		$output .= wp_nonce_field( 'permalink-manager', 'uri_editor' );
+		$output .= wp_nonce_field( 'permalink-manager', 'uri_editor_nonce' );
 		$output .= Permalink_Manager_UI_Elements::generate_option_field( 'pm_session_id', array( 'value' => uniqid(), 'type' => 'hidden' ) );
 
 		// Bypass
@@ -178,6 +178,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 
 		if ( $which == "top" ) {
 			// Filter by date
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$months = $wpdb->get_results( "SELECT DISTINCT month(post_date) AS m, year(post_date) AS y FROM {$wpdb->posts} WHERE post_status IN ($this->displayed_post_statuses) AND post_type IN ($this->displayed_post_types) ORDER BY post_date DESC", ARRAY_A );
 
 			if ( $months ) {
@@ -191,7 +192,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 				$select_field = Permalink_Manager_UI_Elements::generate_option_field( 'month', array(
 					'type'    => 'select',
 					'choices' => $choices,
-					'value'   => ( isset( $_REQUEST['month'] ) ) ? esc_attr( $_REQUEST['month'] ) : ''
+					'value'   => ( isset( $_REQUEST['month'] ) ) ? sanitize_key( $_REQUEST['month'] ) : ''
 				) );
 
 				$html .= sprintf( '<div id=\"months-filter\" class="alignleft actions">%s</div>', $select_field );
@@ -222,7 +223,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	 * @return string
 	 */
 	public function search_box( $text = '', $input_id = '' ) {
-		$search_query = ( ! empty( $_REQUEST['s'] ) ) ? esc_attr( $_REQUEST['s'] ) : "";
+		$search_query = ( ! empty( $_REQUEST['s'] ) ) ? sanitize_key( $_REQUEST['s'] ) : "";
 
 		$output = "<p class=\"search-box\">";
 		$output .= "<label class=\"screen-reader-text\" for=\"{$input_id}\">{$text}:</label>";
@@ -245,15 +246,15 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		$current_page = $this->get_pagenum();
 
 		// SQL query parameters
-		$order        = ( isset( $_REQUEST['order'] ) && in_array( $_REQUEST['order'], array( 'asc', 'desc' ) ) ) ? sanitize_sql_orderby( $_REQUEST['order'] ) : 'desc';
-		$orderby      = ( isset( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( $_REQUEST['orderby'] ) : 'ID';
-		$search_query = ( ! empty( $_REQUEST['s'] ) ) ? esc_sql( $_REQUEST['s'] ) : "";
+		$order        = ( isset( $_REQUEST['order'] ) && in_array( $_REQUEST['order'], array( 'asc', 'desc' ) ) ) ? sanitize_sql_orderby( wp_unslash( $_REQUEST['order'] ) ) : 'desc';
+		$orderby      = ( isset( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( wp_unslash( $_REQUEST['orderby'] ) ) : 'ID';
+		$search_query = ( ! empty( $_REQUEST['s'] ) ) ? esc_sql( sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) ) : "";
 
 		// Extra filters
 		$extra_filters = $attachment_support = '';
 		if ( ! empty( $_GET['month'] ) ) {
-			$month = date( "n", strtotime( $_GET['month'] ) );
-			$year  = date( "Y", strtotime( $_GET['month'] ) );
+			$month = gmdate( "n", strtotime( sanitize_key( $_GET['month'] ) ) );
+			$year  = gmdate( "Y", strtotime( sanitize_key( $_GET['month'] ) ) );
 
 			$extra_filters .= "AND month(post_date) = {$month} AND year(post_date) = {$year}";
 		}
@@ -281,7 +282,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		// Do not display excluded posts in Bulk URI Editor
 		$excluded_posts = Permalink_Manager_Helper_Functions::get_excluded_post_ids();
 		if ( ! empty( $excluded_posts ) && is_array( $excluded_posts ) ) {
-			$sql_parts['where'] .= sprintf( "AND ID NOT IN ('%s') ", implode( "', '", $excluded_posts ) );
+			$sql_parts['where'] .= sprintf( "AND ID NOT IN (%s) ", Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $excluded_posts ) );
 		}
 
 		$sql_parts['end'] = "ORDER BY {$orderby} {$order}";
@@ -316,8 +317,8 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	 */
 	private function sort_data( $a, $b ) {
 		// Set defaults
-		$orderby = ( ! empty( $_GET['orderby'] ) ) ? sanitize_sql_orderby( $_GET['orderby'] ) : 'post_title';
-		$order   = ( ! empty( $_GET['order'] ) ) ? sanitize_sql_orderby( $_GET['order'] ) : 'asc';
+		$orderby = ( ! empty( $_GET['orderby'] ) ) ? sanitize_sql_orderby( wp_unslash( $_GET['orderby'] ) ) : 'post_title';
+		$order   = ( ! empty( $_GET['order'] ) ) ? sanitize_sql_orderby( wp_unslash( $_GET['order'] ) ) : 'asc';
 		$result  = strnatcasecmp( $a[ $orderby ], $b[ $orderby ] );
 
 		return ( $order === 'asc' ) ? $result : - $result;

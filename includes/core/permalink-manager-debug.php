@@ -13,12 +13,16 @@ class Permalink_Manager_Debug_Functions {
 	 * Map the debug functions to specific hooks
 	 */
 	public function debug_data() {
-		add_filter( 'permalink_manager_filter_query', array( $this, 'debug_query' ), 9, 5 );
-		add_filter( 'permalink_manager_filter_redirect', array( $this, 'debug_redirect' ), 9, 3 );
-		add_filter( 'wp_redirect', array( $this, 'debug_wp_redirect' ), 9, 2 );
+		global $permalink_manager_options;
 
-		if ( current_user_can( 'manage_options' ) ) {
-			self::debug_custom_fields();
+		if ( ! empty( $permalink_manager_options['general']['debug_mode'] ) || current_user_can( 'manage_options' ) ) {
+			add_filter( 'permalink_manager_filter_query', array( $this, 'debug_query' ), 9, 5 );
+			add_filter( 'permalink_manager_filter_redirect', array( $this, 'debug_redirect' ), 9, 3 );
+			add_filter( 'wp_redirect', array( $this, 'debug_wp_redirect' ), 9, 2 );
+
+			if ( current_user_can( 'manage_options' ) ) {
+				self::debug_custom_fields();
+			}
 		}
 	}
 
@@ -36,7 +40,7 @@ class Permalink_Manager_Debug_Functions {
 	public function debug_query( $query, $old_query = null, $uri_parts = null, $pm_query = null, $content_type = null ) {
 		global $permalink_manager;
 
-		if ( isset( $_REQUEST['debug_url'] ) ) {
+		if ( isset( $_REQUEST['debug_url'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No data is saved here
 			$debug_info['uri_parts']      = $uri_parts;
 			$debug_info['old_query_vars'] = $old_query;
 			$debug_info['new_query_vars'] = $query;
@@ -70,7 +74,7 @@ class Permalink_Manager_Debug_Functions {
 	 * @return string
 	 */
 	public function debug_redirect( $correct_permalink, $redirect_type, $queried_object ) {
-		if ( isset( $_REQUEST['debug_redirect'] ) ) {
+		if ( isset( $_REQUEST['debug_redirect'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No data is saved here
 			$debug_info['redirect_url']  = ( ! empty( $correct_permalink ) ) ? $correct_permalink : '-';
 			$debug_info['redirect_type'] = ( ! empty( $redirect_type ) ) ? $redirect_type : "-";
 
@@ -89,10 +93,10 @@ class Permalink_Manager_Debug_Functions {
 	 * @return string
 	 */
 	public function debug_wp_redirect( $url, $status ) {
-		if ( isset( $_GET['debug_wp_redirect'] ) ) {
+		if ( isset( $_GET['debug_wp_redirect'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No data is saved here
 			$debug_info['url']       = $url;
 			$debug_info['status']    = $status;
-			$debug_info['backtrace'] = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 10 );
+			$debug_info['backtrace'] = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 10 ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- Backtrace is a part of debug tools
 
 			self::display_debug_data( $debug_info );
 		}
@@ -106,6 +110,7 @@ class Permalink_Manager_Debug_Functions {
 	public static function debug_custom_fields() {
 		global $pagenow;
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- No data is saved here
 		if ( ! isset( $_GET['debug_custom_fields'] ) ) {
 			return;
 		}
@@ -116,10 +121,11 @@ class Permalink_Manager_Debug_Functions {
 		}
 
 		if ( $pagenow == 'term.php' && isset( $_GET['tag_ID'] ) ) {
-			$term_id       = intval( $_GET['tag_ID'] );
+			$term_id = intval( $_GET['tag_ID'] );
 
 			$custom_fields = get_term_meta( $term_id );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( isset ( $custom_fields ) ) {
 			self::display_debug_data( $custom_fields );
@@ -132,6 +138,7 @@ class Permalink_Manager_Debug_Functions {
 	 * @param mixed $debug_info
 	 */
 	public static function display_debug_data( $debug_info ) {
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- print_r() is a part of debug tool
 		$debug_txt = print_r( $debug_info, true );
 		$debug_txt = sprintf( "<pre style=\"display:block;\">%s</pre>", esc_html( $debug_txt ) );
 
@@ -144,7 +151,7 @@ class Permalink_Manager_Debug_Functions {
 	 * @param array $array
 	 * @param string $filename
 	 */
-	public static function output_csv( $array, $filename = 'debug.csv', $separator = ',' ) {
+	public static function output_csv( $array, $filename = 'debug.csv', $delimiter = ',' ) {
 		if ( count( $array ) == 0 ) {
 			return null;
 		}
@@ -159,24 +166,22 @@ class Permalink_Manager_Debug_Functions {
 		header( "Content-Type: application/force-download" );
 		header( "Content-Type: application/octet-stream" );
 		header( "Content-Type: application/download" );
-		header( 'Content-Type: text/csv' );
+		header( 'Content-Type: text/csv; charset=utf-8' );
 
 		// Disposition / encoding on response body
 		header( "Content-Disposition: attachment;filename={$filename}" );
 		header( "Content-Transfer-Encoding: binary" );
 
-		ob_start();
-
 		$df = fopen( "php://output", 'w' );
 
-		fputcsv( $df, array_keys( reset( $array ) ) );
+		// Use the same delimiter for headers and data
+		fputcsv( $df, array_keys( reset( $array ) ), $delimiter );
 		foreach ( $array as $row ) {
-			fputcsv( $df, $row, $separator );
+			fputcsv( $df, $row, $delimiter );
 		}
-		fclose( $df );
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo ob_get_clean();
+		fclose( $df ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+
 		die();
 	}
 

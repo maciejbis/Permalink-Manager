@@ -145,7 +145,7 @@ class Permalink_Manager_URI_Functions_Post {
 		$new_slug = wp_unique_post_slug( $slug, $id, get_post_status( $id ), get_post_type( $id ), 0 );
 
 		if ( ! $preview_mode ) {
-			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->posts} SET post_name = %s WHERE ID = %d", $new_slug, $id ) );
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->posts} SET post_name = %s WHERE ID = %d", $new_slug, $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			clean_post_cache( $id );
 		}
 
@@ -436,8 +436,8 @@ class Permalink_Manager_URI_Functions_Post {
 
 		$post_types_array    = array_map( 'sanitize_key', $_POST['post_types'] );
 		$post_statuses_array = array_map( 'sanitize_key', $_POST['post_statuses'] );
-		$post_types          = implode( "', '", $post_types_array );
-		$post_statuses       = implode( "', '", $post_statuses_array );
+		$post_types_in       = Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $post_types_array, false );
+		$post_statuses_in    = Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $post_statuses_array, false );
 
 		// Filter the posts by IDs
 		$where = '';
@@ -465,7 +465,7 @@ class Permalink_Manager_URI_Functions_Post {
 		// Get excluded items
 		$excluded_posts = (array) apply_filters( 'permalink_manager_excluded_post_ids', array() );
 		if ( ! empty( $excluded_posts ) ) {
-			$where .= sprintf( " AND ID NOT IN ('%s') ", implode( "', '", $excluded_posts ) );
+			$where .= sprintf( " AND ID NOT IN (%s) ", Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $excluded_posts ) );
 		}
 
 		// Support for attachments
@@ -474,17 +474,17 @@ class Permalink_Manager_URI_Functions_Post {
 		// Check the auto-update mode
 		// A. Allow only user-approved posts
 		if ( ! empty( $permalink_manager_options["general"]["auto_update_uris"] ) && $permalink_manager_options["general"]["auto_update_uris"] == 2 ) {
-			$where .= " AND meta_value IN (1, -1) ";
+			$where .= " AND pm.meta_value IN (1, -1) ";
 		} // B. Allow all posts not disabled by the user
 		else {
-			$where .= " AND (meta_value IS NULL OR meta_value IN (1, -1)) ";
+			$where .= " AND (pm.meta_value IS NULL OR pm.meta_value IN (1, -1)) ";
 		}
 
 		// Get the rows before they are altered
-		$query = "SELECT post_type, post_title, post_name, ID FROM {$wpdb->posts} AS p LEFT JOIN {$wpdb->postmeta} AS pm ON pm.post_ID = p.ID AND pm.meta_key = 'auto_update_uri' WHERE ((post_status IN ('{$post_statuses}') AND post_type IN ('{$post_types}')){$attachment_support}) {$where}";
+		$query = "SELECT post_type, post_title, post_name, ID FROM {$wpdb->posts} AS p LEFT JOIN {$wpdb->postmeta} AS pm ON pm.post_ID = p.ID AND pm.meta_key = 'auto_update_uri' WHERE ((post_status IN ({$post_statuses_in}) AND post_type IN ({$post_types_in})){$attachment_support}) {$where}";
 		$query = apply_filters( 'permalink_manager_get_items_query', $query, $where, 'post_types' );
 
-		return $wpdb->get_results( $query, ARRAY_A );
+		return $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
 	}
 
 	/**

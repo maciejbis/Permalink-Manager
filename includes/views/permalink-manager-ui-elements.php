@@ -190,7 +190,7 @@ class Permalink_Manager_UI_Elements {
 
 			default :
 				$input_type = ( in_array( $field_type, array( 'text', 'password', 'number', 'hidden' ) ) ) ? $field_type : 'text';
-				$fields     .= sprintf( "<%s type='%s' %s value='%s' name='%s' />", 'input', $input_type, $input_atts, $value, $input_name );
+				$fields     .= sprintf( "<%s type='%s' %s value='%s' name='%s' />", 'input', $input_type, $input_atts, esc_attr( $value ), $input_name );
 		}
 
 		// Get the final HTML output
@@ -277,7 +277,7 @@ class Permalink_Manager_UI_Elements {
 		// 4. Display settings tabs
 		if ( $container == 'tabs' ) {
 			// Get active section
-			$active_tab = ( ! empty( $_POST['pm_active_tab'] ) ) ? esc_attr( $_POST['pm_active_tab'] ) : key( array_slice( $fields, 0, 1, true ) );
+			$active_tab = ( ! empty( $_POST['pm_active_tab'] ) ) ? sanitize_key( $_POST['pm_active_tab'] ) : key( array_slice( $fields, 0, 1, true ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
 			$html .= "<ul class=\"subsubsub\">";
 			foreach ( $fields as $tab_name => $tab ) {
@@ -375,10 +375,10 @@ class Permalink_Manager_UI_Elements {
 	 * @param array $sections
 	 * @param string $active_section
 	 * @param string $active_subsection
-	 * 
+	 *
 	 * @return string
 	 */
-	static public function get_plugin_sections_html($sections, $active_section = '', $active_subsection = '') {
+	static public function get_plugin_sections_html( $sections, $active_section = '', $active_subsection = '' ) {
 		global $permalink_manager_after_sections_html;
 
 		$html = "<div id=\"permalink-manager\" class=\"wrap\">";
@@ -460,12 +460,12 @@ class Permalink_Manager_UI_Elements {
 		$html                = $main_content = $alert = "";
 
 		// Disable "Adjust IDs for multilingual functionality" in WPML to make sure that the correct URLs are displayed in the results table
-		$adjust_id_url_filter_off = true;
+		$adjust_id_url_filter_off = true; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 
 		if ( is_array( $updated_array ) ) {
 			// Check if slugs should be displayed
 			$first_slug = reset( $updated_array );
-			$show_slugs = ( ! empty( $_POST['mode'] ) && $_POST['mode'] == 'slugs' ) ? true : false;
+			$show_slugs = ( ! empty( $_POST['mode'] ) && $_POST['mode'] == 'slugs' ) ? true : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
 			$header_footer = '<tr>';
 			$header_footer .= sprintf( '<th class="column-primary">%s</th>', __( 'Title', 'permalink-manager' ) );
@@ -527,12 +527,12 @@ class Permalink_Manager_UI_Elements {
 				// translators: %d is the number of items where custom permalinks were updated
 				$alert_content = sprintf( _n( '<strong class="updated_count">%d</strong> item was updated!', '<strong class="updated_count">%d</strong> items were updated!', $updated_slugs_count, 'permalink-manager' ), $updated_slugs_count ) . ' ';
 				// translators: %s is the anchor link to the updated items' table
-				$alert_content .= sprintf( __( '<a %s>Click here</a> to go to the list of affected items', 'permalink-manager' ), "href=\"#updated-list\"" );
+				$alert_content .= sprintf( __( '<a %s>Click here</a> to go to the list of processed items', 'permalink-manager' ), "href=\"#updated-list\"" );
 
 				$alert = self::get_alert_message( $alert_content, 'updated updated_slugs' );
 			} else {
 				$alert_content = ( $preview_mode ) ? sprintf( '[%s] ', __( 'Preview mode', 'permalink-manager' ) ) : '';
-				$alert_content .= __( '<strong>No items</strong> were affected!', 'permalink-manager' );
+				$alert_content .= __( '<strong>No items</strong> were processed!', 'permalink-manager' );
 
 				$alert = self::get_alert_message( $alert_content, 'error updated_slugs' );
 			}
@@ -567,8 +567,8 @@ class Permalink_Manager_UI_Elements {
 		}
 
 		if ( ! empty( $element->ID ) ) {
-			$id                = $element_id = $element->ID;
-			$native_slug       = $element->post_name;
+			$id          = $element_id = $element->ID;
+			$native_slug = $element->post_name;
 
 			$auto_update_val = get_post_meta( $id, "auto_update_uri", true );
 

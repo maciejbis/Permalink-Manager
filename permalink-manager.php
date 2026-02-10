@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager Lite
  * Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
  * Description:       Advanced plugin that allows to set up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
- * Version:           2.5.2.4
+ * Version:           2.5.3
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -12,7 +12,7 @@
  * Text Domain:       permalink-manager
  * Domain Path:       /languages
  * WC requires at least: 3.0.0
- * WC tested up to:      10.4.3
+ * WC tested up to:      10.5.0
  */
 
 // If this file is called directly or plugin is already defined, abort
@@ -25,7 +25,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 	// Define the directories used to load plugin files.
 	define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 	define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-	define( 'PERMALINK_MANAGER_VERSION', '2.5.2.4' );
+	define( 'PERMALINK_MANAGER_VERSION', '2.5.3' );
 	define( 'PERMALINK_MANAGER_FILE', __FILE__ );
 	define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 	define( 'PERMALINK_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
@@ -136,6 +136,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 		 * Localize this plugin
 		 */
 		function localize_me() {
+			// phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- Make sure that the same textdomain is loaded for both Lite and Pro versions
 			load_plugin_textdomain( 'permalink-manager', false, basename( dirname( __FILE__ ) ) . "/languages" );
 		}
 
@@ -210,7 +211,8 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 					'partial_disable_strict'    => 1,
 					'ignore_drafts'             => 1,
 					'edit_uris_cap'             => 'publish_posts',
-					'force_unique_uris'         => 0
+					'force_unique_uris'         => 0,
+					'debug_mode'                => 0
 				),
 				'licence'        => array()
 			) );
@@ -356,10 +358,10 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 
 			if ( isset( $deprecated_filters[ $filter ] ) ) {
 				if ( has_filter( $deprecated_filters[ $filter ] ) ) {
-					do_action( 'deprecated_function_run', $deprecated_filters[ $filter ], $filter, '2.4.3' );
+					do_action( 'deprecated_function_run', $deprecated_filters[ $filter ], $filter, '2.4.3' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Use built-in mechanism for flagging
 
 					$args = func_get_args();
-					$data = apply_filters_ref_array( $deprecated_filters[ $filter ], $args );
+					$data = apply_filters_ref_array( $deprecated_filters[ $filter ], $args ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound
 				}
 			}
 
@@ -384,6 +386,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 		global $permalink_manager;
 
 		// Do not run when Elementor is opened
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- No data is processed here
 		if ( ( ! empty( $_REQUEST['action'] ) && is_string( $_REQUEST['action'] ) && strpos( $_REQUEST['action'], 'elementor' ) !== false ) || isset( $_REQUEST['elementor-preview'] ) || isset( $_REQUEST['disable-pm'] ) ) {
 			return;
 		}

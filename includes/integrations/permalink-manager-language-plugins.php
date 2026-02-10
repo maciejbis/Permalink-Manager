@@ -13,7 +13,7 @@ class Permalink_Manager_Language_Plugins {
 	 * Register hooks adding support for WPML and Polylang
 	 */
 	function init_hooks() {
-		global $sitepress_settings, $polylang, $translate_press_settings;
+		global $sitepress_settings, $polylang;
 
 		// 1. WPML, Polylang & TranslatePress
 		if ( $sitepress_settings || ! empty( $polylang->links_model->options ) || class_exists( 'TRP_Translate_Press' ) ) {
@@ -34,6 +34,10 @@ class Permalink_Manager_Language_Plugins {
 
 			// Provide the language code for specific post/term
 			add_filter( 'permalink_manager_get_language_code', array( $this, 'filter_get_language_code' ), 9, 2 );
+
+			// Regenerate/reset + Find & replace tools
+			add_filter( 'permalink_manager_get_items_query', array( $this, 'filter_query_by_language' ), 10, 2 );
+			add_filter( 'permalink_manager_tools_fields', array( $this, 'add_language_field' ), 10, 2 );
 
 			// Get translation mode
 			$mode = 0;
@@ -56,8 +60,6 @@ class Permalink_Manager_Language_Plugins {
 				}
 			} // C. TranslatePress
 			else if ( class_exists( 'TRP_Translate_Press' ) ) {
-				$translate_press_settings = get_option( 'trp_settings' );
-
 				$mode = 'prepend';
 			}
 
@@ -134,8 +136,10 @@ class Permalink_Manager_Language_Plugins {
 		global $TRP_LANGUAGE, $icl_adjust_id_url_filter_off, $sitepress, $polylang, $wpml_post_translations, $wpml_term_translations;
 
 		// Disable WPML adjust ID filter
+		// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 		$icl_adjust_id_url_filter_off_prior = $icl_adjust_id_url_filter_off;
 		$icl_adjust_id_url_filter_off       = true;
+		// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 
 		// Fallback
 		if ( is_string( $element ) && strpos( $element, 'tax-' ) !== false ) {
@@ -183,11 +187,11 @@ class Permalink_Manager_Language_Plugins {
 				}
 			}
 
-			$lang_code = ( ! empty( $force_current_lang ) ) ? $force_current_lang : apply_filters( 'wpml_element_language_code', null, array( 'element_id' => $element_id, 'element_type' => $element_type ) );
+			$lang_code = ( ! empty( $force_current_lang ) ) ? $force_current_lang : apply_filters( 'wpml_element_language_code', null, array( 'element_id' => $element_id, 'element_type' => $element_type ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		}
 
 		// Enable WPML adjust ID filter
-		$icl_adjust_id_url_filter_off = $icl_adjust_id_url_filter_off_prior;
+		$icl_adjust_id_url_filter_off = $icl_adjust_id_url_filter_off_prior; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 
 		// Use default language if nothing detected
 		return ( ! empty( $lang_code ) ) ? $lang_code : self::get_default_language();
@@ -206,6 +210,111 @@ class Permalink_Manager_Language_Plugins {
 	}
 
 	/**
+	 * Extends an SQL query to filter results by specific WPML/Polylang language codes.
+	 *
+	 * @param string $query Original SQL query string.
+	 * @param string $where WHERE clause of the query.
+	 *
+	 * @return string Modified SQL query with WPML filtering applied.
+	 */
+	public function filter_query_by_language( $query, $where ) {
+		global $wpdb, $polylang, $sitepress_settings;
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is already verified in parent/enclosing method
+		$language_codes = ( ! empty( $_POST['language_filter'] ) && is_array( $_POST['language_filter'] ) ) ? array_map( 'sanitize_key', $_POST['language_filter'] ) : array();
+		if ( empty( $language_codes ) ) {
+			return $query;
+		}
+
+		$is_terms_query = strpos( $query, "{$wpdb->terms}" ) !== false;
+
+		if ( ! empty( $polylang->links_model->options ) ) {
+			// 1. Prepare the slugs based on the condition
+			if ( $is_terms_query ) {
+				$all_slugs = array_merge( $language_codes, array_map( function ( $code ) {
+					return 'pll_' . $code;
+				}, $language_codes ) );
+
+				$taxonomy = 'term_language';
+				$join_on  = 't.term_id';
+			} else {
+				$all_slugs = $language_codes;
+				$taxonomy  = 'language';
+				$join_on   = 'p.ID';
+			}
+
+			$language_term_ids = get_terms( array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => false,
+				'slug'       => $all_slugs,
+				'fields'     => 'ids'
+			) );
+
+			$join = " JOIN {$wpdb->term_relationships} tr_lang ON tr_lang.object_id = {$join_on}";
+
+			if ( ! empty( $language_term_ids ) ) {
+				$language_ids_in_sql = Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $language_term_ids );
+				$where_sql           = " AND tr_lang.term_taxonomy_id IN ({$language_ids_in_sql})";
+			} else {
+				$where_sql = " AND 1=0"; // Force no results if no terms found
+			}
+		} else if ( ! empty( $sitepress_settings ) ) {
+			$language_codes_in_sql = Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $language_codes );
+
+			if ( $is_terms_query ) {
+				$element_type = '"tax_%"';
+				$element_id   = 'tt.term_taxonomy_id';
+			} else {
+				$element_type = "CONCAT('post_', p.post_type)";
+				$element_id   = "p.ID";
+			}
+
+			$join = " JOIN {$wpdb->prefix}icl_translations AS icl ON icl.element_id = {$element_id} AND icl.element_type LIKE {$element_type}";
+
+			if ( ! empty( $language_codes_in_sql ) ) {
+				$where_sql = " AND icl.language_code IN ({$language_codes_in_sql})";
+			} else {
+				$where_sql = " AND 1=0"; // Force no results if no terms found
+			}
+		} else {
+			return $where;
+		}
+
+		if ( stripos( $query, ' WHERE' ) !== false ) {
+			$query = str_ireplace( ' WHERE', $join . ' WHERE', $query );
+		} else {
+			$query .= ' ' . $join;
+		}
+
+		return str_replace( $where, $where . $where_sql, $query );
+	}
+
+	/**
+	 * Adds a WPML language filter field to the Permalink Manager Tools UI.
+	 *
+	 * @param array $fields Existing fields array.
+	 *
+	 * @return array Modified fields array.
+	 */
+	public function add_language_field( $fields, $tool_name ) {
+		$languages = $this->get_all_languages();
+
+		if ( empty( $languages ) || ! is_array( $fields ) || ! in_array( $tool_name, array( 'regenerate', 'find_and_replace' ) ) ) {
+			return $fields;
+		}
+
+		$fields['language_filter'] = array(
+			'label'       => __( 'Select by language', 'permalink-manager' ),
+			'type'        => 'checkbox',
+			'container'   => 'row',
+			'description' => __( 'Select languages to filter by, or leave blank for all.', 'permalink-manager' ),
+			'choices'     => $languages
+		);
+
+		return $fields;
+	}
+
+	/**
 	 * Return the language URL prefix code for TranslatePress
 	 *
 	 * @param string $lang
@@ -213,13 +322,28 @@ class Permalink_Manager_Language_Plugins {
 	 * @return false|string
 	 */
 	public static function get_translatepress_language_code( $lang ) {
-		global $translate_press_settings;
+		$translatepress_settings = self::get_translatepress_settings();
 
-		if ( ! empty( $translate_press_settings['url-slugs'] ) ) {
-			$lang_code = ( ! empty( $translate_press_settings['url-slugs'][ $lang ] ) ) ? $translate_press_settings['url-slugs'][ $lang ] : '';
+		if ( ! empty( $translatepress_settings['url-slugs'] ) ) {
+			$lang_code = ( ! empty( $translatepress_settings['url-slugs'][ $lang ] ) ) ? $translatepress_settings['url-slugs'][ $lang ] : '';
 		}
 
 		return ( ! empty( $lang_code ) ) ? $lang_code : false;
+	}
+
+	/**
+	 * Get TranslatePress settings
+	 *
+	 * @return array
+	 */
+	private static function get_translatepress_settings() {
+		static $settings = null;
+
+		if ( $settings === null ) {
+			$settings = ( class_exists( 'TRP_Translate_Press' ) ) ? get_option( 'trp_settings', array() ) : array();
+		}
+
+		return $settings;
 	}
 
 	/**
@@ -228,14 +352,16 @@ class Permalink_Manager_Language_Plugins {
 	 * @return false|string
 	 */
 	public static function get_default_language() {
-		global $sitepress, $translate_press_settings;
+		global $sitepress;
 
 		if ( function_exists( 'pll_default_language' ) ) {
 			$def_lang = pll_default_language( 'slug' );
 		} else if ( is_object( $sitepress ) ) {
 			$def_lang = $sitepress->get_default_language();
-		} else if ( ! empty( $translate_press_settings['default-language'] ) ) {
-			$def_lang = self::get_translatepress_language_code( $translate_press_settings['default-language'] );
+		} else if ( class_exists( 'TRP_Translate_Press' ) ) {
+			$translatepress_settings = self::get_translatepress_settings();
+
+			$def_lang = ( ! empty( $translatepress_settings['default-language'] ) ) ? self::get_translatepress_language_code( $translatepress_settings['default-language'] ) : '';
 		} else {
 			$def_lang = '';
 		}
@@ -261,10 +387,6 @@ class Permalink_Manager_Language_Plugins {
 		} elseif ( function_exists( 'pll_languages_list' ) ) {
 			$languages_array = pll_languages_list( array( 'fields' => null ) );
 		}
-
-		/*if ( ! empty( $translate_press_settings['url-slugs'] ) ) {
-			$languages_array = $translate_press_settings['url-slugs'];
-		}*/
 
 		// Get native language names as value
 		if ( $languages_array ) {
@@ -308,8 +430,10 @@ class Permalink_Manager_Language_Plugins {
 		$mode = ( ! empty( $permalink_manager_options['general']['fix_language_mismatch'] ) ) ? $permalink_manager_options['general']['fix_language_mismatch'] : 0;
 
 		// Stop WPML from changing the output of the get_term() and get_post() functions
+		// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 		$icl_adjust_id_url_filter_off_prior = $icl_adjust_id_url_filter_off;
 		$icl_adjust_id_url_filter_off       = true;
+		// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 
 		if ( $is_term ) {
 			$element = get_term( $item_id );
@@ -363,9 +487,9 @@ class Permalink_Manager_Language_Plugins {
 
 					$item_id = ( isset( $translated_item_id ) ) ? $translated_item_id : $item_id;
 				} else if ( ! empty( $no_query_set ) ) {
-					$item_id = apply_filters( 'wpml_object_id', $element_id, $element_type, false, $detected_language_code );
+					$item_id = apply_filters( 'wpml_object_id', $element_id, $element_type, false, $detected_language_code ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 				} else {
-					$item_id = apply_filters( 'wpml_object_id', $element_id, $element_type );
+					$item_id = apply_filters( 'wpml_object_id', $element_id, $element_type ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 				}
 
 				// Compare the URIs to prevent the redirect loop
@@ -374,17 +498,16 @@ class Permalink_Manager_Language_Plugins {
 					$translated_element_uri = Permalink_Manager_URI_Functions::get_single_uri( $item_id, false, false, $is_term );
 
 					if ( ! empty( $detected_element_uri ) && ! empty( $translated_element_uri ) && $detected_element_uri !== $translated_element_uri ) {
-						$pm_query['flag'] = 'language_mismatch';
+						$pm_query['flag'] = 'language_mismatch'; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 					}
 				}
-			}
-			 // C. Display "404 error"
+			} // C. Display "404 error"
 			else {
 				$item_id = 0;
 			}
 		}
 
-		$icl_adjust_id_url_filter_off = $icl_adjust_id_url_filter_off_prior;
+		$icl_adjust_id_url_filter_off = $icl_adjust_id_url_filter_off_prior; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 
 		return $item_id;
 	}
@@ -405,8 +528,10 @@ class Permalink_Manager_Language_Plugins {
 			return $query;
 		}
 
+		// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		$blog_page_id = apply_filters( 'wpml_object_id', get_option( 'page_for_posts' ), 'page' );
 		$element_id   = apply_filters( 'wpml_object_id', $pm_query['id'], 'page' );
+		// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 		if ( ! empty( $blog_page_id ) && ( $blog_page_id == $element_id ) && ! isset( $query['page'] ) ) {
 			$query['page'] = '';
@@ -425,15 +550,17 @@ class Permalink_Manager_Language_Plugins {
 	 * @return array
 	 */
 	function detect_uri_language( $uri_parts, $request_url, $endpoints ) {
-		global $sitepress_settings, $polylang, $translate_press_settings;
+		global $sitepress_settings, $polylang;
 
 		if ( ! empty( $sitepress_settings['active_languages'] ) ) {
 			$languages_list = (array) $sitepress_settings['active_languages'];
-		} elseif ( function_exists( 'pll_languages_list' ) ) {
+		} else if ( function_exists( 'pll_languages_list' ) ) {
 			$languages_array = pll_languages_list();
 			$languages_list  = ( is_array( $languages_array ) ) ? $languages_array : "";
-		} elseif ( ! empty( $translate_press_settings['url-slugs'] ) ) {
-			$languages_list = $translate_press_settings['url-slugs'];
+		} else if ( class_exists( 'TRP_Translate_Press' ) ) {
+			$translatepress_settings = self::get_translatepress_settings();
+
+			$languages_list = $translatepress_settings['url-slugs'];
 		}
 
 		if ( ! empty( $languages_list ) && is_array( $languages_list ) ) {
@@ -445,7 +572,7 @@ class Permalink_Manager_Language_Plugins {
 		// Fix for multidomain language configuration
 		if ( ( isset( $sitepress_settings['language_negotiation_type'] ) && $sitepress_settings['language_negotiation_type'] == 2 ) || ( ! empty( $polylang->options['force_lang'] ) && $polylang->options['force_lang'] == 3 ) ) {
 			if ( ! empty( $polylang->options['domains'] ) ) {
-				$domains          = (array) $polylang->options['domains'];
+				$domains = (array) $polylang->options['domains'];
 			} else if ( ! empty( $sitepress_settings['language_domains'] ) ) {
 				$domains = (array) $sitepress_settings['language_domains'];
 			}
@@ -485,22 +612,26 @@ class Permalink_Manager_Language_Plugins {
 	 * @return string
 	 */
 	static function prepend_lang_prefix( $base, $element, $language_code = '' ) {
-		global $sitepress_settings, $polylang, $translate_press_settings;
+		global $sitepress_settings, $polylang;
 
 		if ( ! empty( $element ) && empty( $language_code ) ) {
 			$language_code = self::get_language_code( $element );
 
 			// Last instance - use language parameter from &_GET array
-			$language_code = ( is_admin() && empty( $language_code ) && ! empty( $_GET['lang'] ) ) ? sanitize_key( $_GET['lang'] ) : $language_code;
+			$language_code = ( is_admin() && empty( $language_code ) && ! empty( $_GET['lang'] ) ) ? sanitize_key( $_GET['lang'] ) : $language_code; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		}
 
 		// Adjust URL base
 		if ( ! empty( $language_code ) ) {
-			$default_language_code = self::get_default_language();
-			$home_url              = get_home_url();
+			$default_language_code   = self::get_default_language();
+			$home_url                = get_home_url();
+			$translatepress_settings = self::get_translatepress_settings();
 
 			// Hide language code if "Use directory for default language" option is enabled
-			$hide_prefix_for_default_lang = ( ( isset( $sitepress_settings['urls']['directory_for_default_language'] ) && $sitepress_settings['urls']['directory_for_default_language'] != 1 ) || ! empty( $polylang->links_model->options['hide_default'] ) || ( ! empty( $translate_press_settings ) && $translate_press_settings['add-subdirectory-to-default-language'] !== 'yes' ) ) ? true : false;
+			$hide_prefix_in_translatepress = ( ! empty( $translatepress_settings['add-subdirectory-to-default-language'] ) && $translatepress_settings['add-subdirectory-to-default-language'] !== 'yes' ) ? true : false;
+			$hide_prefix_in_wpml           = ( isset( $sitepress_settings['urls']['directory_for_default_language'] ) && $sitepress_settings['urls']['directory_for_default_language'] != 1 ) ? true : false;
+			$hide_prefix_in_polylang       = ( ! empty( $polylang->links_model->options['hide_default'] ) ) ? true : false;
+			$hide_prefix_for_default_lang  = ( $hide_prefix_in_wpml || $hide_prefix_in_polylang || $hide_prefix_in_translatepress ) ? true : false;
 
 			// A. Different domain per language
 			if ( ( isset( $sitepress_settings['language_negotiation_type'] ) && $sitepress_settings['language_negotiation_type'] == 2 ) || ( ! empty( $polylang->options['force_lang'] ) && $polylang->options['force_lang'] == 3 ) ) {
@@ -516,7 +647,7 @@ class Permalink_Manager_Language_Plugins {
 
 					// Append URL scheme
 					if ( ! preg_match( "~^(?:f|ht)tps?://~i", $base ) ) {
-						$scheme = parse_url( $home_url, PHP_URL_SCHEME );
+						$scheme = wp_parse_url( $home_url, PHP_URL_SCHEME );
 						$base   = "{$scheme}://{$base}";
 					}
 				}
@@ -556,7 +687,7 @@ class Permalink_Manager_Language_Plugins {
 
 		// Last instance - use language parameter from &_GET array
 		if ( is_admin() ) {
-			$language_code = ( empty( $language_code ) && ! empty( $_GET['lang'] ) ) ? $_GET['lang'] : $language_code;
+			$language_code = ( empty( $language_code ) && ! empty( $_GET['lang'] ) ) ? sanitize_key( $_GET['lang'] ) : $language_code; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		}
 
 		// Append ?lang query parameter
@@ -596,10 +727,10 @@ class Permalink_Manager_Language_Plugins {
 	 * @return mixed|string
 	 */
 	function uri_editor_filter_lang( $html, $content_type ) {
-		$choices   = array();
+		$choices = array();
 
 		if ( class_exists( 'SitePress' ) ) {
-			$languages = apply_filters( 'wpml_active_languages', '' );
+			$languages = apply_filters( 'wpml_active_languages', '' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Using WPML API
 
 			foreach ( $languages as $l ) {
 				$choices[ $l['language_code'] ] = $l['translated_name'];
@@ -618,7 +749,7 @@ class Permalink_Manager_Language_Plugins {
 			$select_field = Permalink_Manager_UI_Elements::generate_option_field( 'langcode', array(
 				'type'    => 'select',
 				'choices' => $choices,
-				'value'   => ( isset( $_REQUEST['langcode'] ) ) ? esc_attr( $_REQUEST['langcode'] ) : ''
+				'value'   => ( isset( $_REQUEST['langcode'] ) ) ? esc_attr( sanitize_key( $_REQUEST['langcode'] ) ) : '' // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			) );
 
 			$html = sprintf( '<div class="alignleft actions">%s</div>', $select_field );
@@ -639,17 +770,17 @@ class Permalink_Manager_Language_Plugins {
 	function uri_editor_filter_sql_query( $sql_query, $sql_parts, $is_taxonomy ) {
 		global $wpdb;
 
-		if ( isset( $_GET['langcode'] ) ) {
-			$lang = esc_sql( $_GET['langcode'] );
+		$language_code = ( isset( $_GET['langcode'] ) ) ? esc_sql( sanitize_key( $_GET['langcode'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Data is used for filtering only, no state change.
 
+		if ( ! empty( $language_code ) ) {
 			if ( class_exists( 'SitePress' ) ) {
 				if ( $is_taxonomy ) {
-					$join = "{$sql_parts['start']} INNER JOIN {$wpdb->prefix}icl_translations AS icl ON tt.term_taxonomy_id = icl.element_id AND icl.element_type = CONCAT('tax_', tt.taxonomy) AND icl.language_code = '{$lang}' ";
+					$join = "{$sql_parts['start']} INNER JOIN {$wpdb->prefix}icl_translations AS icl ON tt.term_taxonomy_id = icl.element_id AND icl.element_type = CONCAT('tax_', tt.taxonomy) AND icl.language_code = '{$language_code}' ";
 				} else {
-					$join = "{$sql_parts['start']} JOIN {$wpdb->prefix}icl_translations icl ON p.ID = icl.element_id AND icl.element_type = CONCAT('post_', p.post_type) AND icl.language_code = '{$lang}' ";
+					$join = "{$sql_parts['start']} JOIN {$wpdb->prefix}icl_translations icl ON p.ID = icl.element_id AND icl.element_type = CONCAT('post_', p.post_type) AND icl.language_code = '{$language_code}' ";
 				}
 			} else if ( class_exists( 'Polylang' ) && function_exists( 'PLL' ) ) {
-				$lang_term      = PLL()->model->get_language( $lang );
+				$lang_term      = PLL()->model->get_language( $language_code );
 				$lang_term_ttid = ( $is_taxonomy ) ? $lang_term->get_tax_prop( 'term_language', 'term_taxonomy_id' ) : $lang_term->get_tax_prop( 'language', 'term_taxonomy_id' );
 
 				if ( $is_taxonomy ) {
@@ -677,8 +808,10 @@ class Permalink_Manager_Language_Plugins {
 	function wpml_is_front_page( $bool, $page_id, $front_page_id ) {
 		if ( $bool === false ) {
 			$default_language_code = self::get_default_language();
-			$page_id               = apply_filters( 'wpml_object_id', $page_id, 'page', true, $default_language_code );
-			$front_page_id         = apply_filters( 'wpml_object_id', $front_page_id, 'page', true, $default_language_code );
+			// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+			$page_id       = apply_filters( 'wpml_object_id', $page_id, 'page', true, $default_language_code );
+			$front_page_id = apply_filters( 'wpml_object_id', $front_page_id, 'page', true, $default_language_code );
+			// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		}
 
 		return ( ! empty( $page_id ) && $page_id == $front_page_id ) ? true : $bool;
@@ -723,18 +856,20 @@ class Permalink_Manager_Language_Plugins {
 	function translate_permastructure( $permastructure, $element ) {
 		global $permalink_manager_permastructs, $pagenow;
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Data is used for filtering only, no state change.
 		// Get element language code
 		if ( ! empty( $_REQUEST['data'] ) && is_string( $_REQUEST['data'] ) && strpos( $_REQUEST['data'], "target_lang" ) ) {
-			$language_code = preg_replace( '/(.*target_lang=)([^=&]+)(.*)/', '$2', $_REQUEST['data'] );
+			$language_code = sanitize_key( preg_replace( '/(.*target_lang=)([^=&]+)(.*)/', '$2', $_REQUEST['data'] ) );
 		} else if ( in_array( $pagenow, array( 'post.php', 'post-new.php' ) ) && ! empty( $_GET['lang'] ) ) {
-			$language_code = $_GET['lang'];
+			$language_code = sanitize_key( $_GET['lang'] );
 		} else if ( ! empty( $_REQUEST['icl_post_language'] ) ) {
-			$language_code = $_REQUEST['icl_post_language'];
+			$language_code = sanitize_key( $_REQUEST['icl_post_language'] );
 		} else if ( ! empty( $_POST['action'] ) && $_POST['action'] == 'pm_save_permalink' && defined( 'ICL_LANGUAGE_CODE' ) ) {
 			$language_code = ICL_LANGUAGE_CODE;
 		} else {
 			$language_code = self::get_language_code( $element );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( ! empty( $element->ID ) ) {
 			$translated_permastructure = ( ! empty( $permalink_manager_permastructs["post_types"]["{$element->post_type}_{$language_code}"] ) ) ? $permalink_manager_permastructs["post_types"]["{$element->post_type}_{$language_code}"] : '';
@@ -758,7 +893,7 @@ class Permalink_Manager_Language_Plugins {
 		$post          = ( is_integer( $element ) ) ? get_post( $element ) : $element;
 		$language_code = self::get_language_code( $post );
 
-		return apply_filters( 'wpml_get_translated_slug', $post_type_slug, $post_type, $language_code );
+		return apply_filters( 'wpml_get_translated_slug', $post_type_slug, $post_type, $language_code ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Using WPML API
 	}
 
 	/**
@@ -774,7 +909,7 @@ class Permalink_Manager_Language_Plugins {
 		$term          = ( is_integer( $element ) ) ? get_term( $element ) : $element;
 		$language_code = self::get_language_code( $term );
 
-		return apply_filters( 'wpml_get_translated_slug', $taxonomy_slug, $taxonomy, $language_code, 'taxonomy' );
+		return apply_filters( 'wpml_get_translated_slug', $taxonomy_slug, $taxonomy, $language_code, 'taxonomy' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Using WPML API
 	}
 
 	/**
@@ -788,10 +923,8 @@ class Permalink_Manager_Language_Plugins {
 		global $woocommerce, $wpdb;
 
 		if ( ! empty( $woocommerce->query->query_vars ) ) {
-			// Get WooCommerce original endpoints
-			// $endpoints = $woocommerce->query->query_vars;
-
 			// Get all endpoint translations
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$endpoint_translations = $wpdb->get_results( "SELECT t.value AS translated_endpoint, t.language, s.value AS endpoint FROM {$wpdb->prefix}icl_string_translations AS t LEFT JOIN {$wpdb->prefix}icl_strings AS s ON t.string_id = s.id WHERE context = 'WP Endpoints'" );
 
 			// Replace translate endpoint with its original name
@@ -825,8 +958,8 @@ class Permalink_Manager_Language_Plugins {
 
 		if ( is_array( $elements ) ) {
 			// Get job element
-			$job_query = $wpdb->prepare( "SELECT editor, job_id, element_id, element_type, language_code, source_language_code FROM {$wpdb->prefix}icl_translate_job AS tj LEFT JOIN {$wpdb->prefix}icl_translation_status AS ts ON tj.rid = ts.rid LEFT JOIN {$wpdb->prefix}icl_translations AS t ON t.translation_id = ts.translation_id WHERE job_id = %d", $job_id );
-			$job       = $wpdb->get_row( $job_query );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$job = $wpdb->get_row( $wpdb->prepare( "SELECT editor, job_id, element_id, element_type, language_code, source_language_code FROM {$wpdb->prefix}icl_translate_job AS tj LEFT JOIN {$wpdb->prefix}icl_translation_status AS ts ON tj.rid = ts.rid LEFT JOIN {$wpdb->prefix}icl_translations AS t ON t.translation_id = ts.translation_id WHERE job_id = %d", $job_id ) );
 
 			// Check if the translated element is post or term
 			if ( ! empty( $job->element_type ) ) {
@@ -841,18 +974,18 @@ class Permalink_Manager_Language_Plugins {
 					$uri_translation_complete = 0;
 				}
 
-				$custom_uri_element                         = new stdClass();
-				$custom_uri_element->tid                    = 999999;
-				$custom_uri_element->job_id                 = $job_id;
-				$custom_uri_element->content_id             = 0;
-				$custom_uri_element->timestamp              = date( 'Y-m-d H:i:s' );
-				$custom_uri_element->field_type             = 'Custom URI';
-				$custom_uri_element->field_wrap_tag         = '';
-				$custom_uri_element->field_format           = 'base64';
-				$custom_uri_element->field_translate        = 1;
-				$custom_uri_element->field_data             = base64_encode( $original_custom_uri );
-				$custom_uri_element->field_data_translated  = base64_encode( $translation_custom_uri );
-				$custom_uri_element->field_finished         = $uri_translation_complete;
+				$custom_uri_element                        = new stdClass();
+				$custom_uri_element->tid                   = 999999;
+				$custom_uri_element->job_id                = $job_id;
+				$custom_uri_element->content_id            = 0;
+				$custom_uri_element->timestamp             = gmdate( 'Y-m-d H:i:s' );
+				$custom_uri_element->field_type            = 'Custom URI';
+				$custom_uri_element->field_wrap_tag        = '';
+				$custom_uri_element->field_format          = 'base64';
+				$custom_uri_element->field_translate       = 1;
+				$custom_uri_element->field_data            = base64_encode( $original_custom_uri );
+				$custom_uri_element->field_data_translated = base64_encode( $translation_custom_uri );
+				$custom_uri_element->field_finished        = $uri_translation_complete;
 
 				$elements[] = $custom_uri_element;
 			}
@@ -915,9 +1048,8 @@ class Permalink_Manager_Language_Plugins {
 			$original_id  = $in['job_post_id'];
 			$element_type = ( strpos( $in['job_post_type'], 'post_' ) !== false ) ? preg_replace( '/^(post_)/', '', $in['job_post_type'] ) : '';
 
-			$translation_id = apply_filters( 'wpml_object_id', $original_id, $element_type, false, $in['target_lang'] );
-		}
-		else if ( is_numeric( $in ) ) {
+			$translation_id = apply_filters( 'wpml_object_id', $original_id, $element_type, false, $in['target_lang'] ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Using WPML API
+		} else if ( is_numeric( $in ) ) {
 			$translation_id = $in;
 			$data           = $postdata;
 		} else {
@@ -972,7 +1104,7 @@ class Permalink_Manager_Language_Plugins {
 	 */
 	function wpml_duplicate_uri( $master_post_id, $lang, $post_array, $id ) {
 		// Trigger the function only if duplicate is created in the metabox
-		if ( empty( $_POST['action'] ) || $_POST['action'] !== 'make_duplicates' ) {
+		if ( empty( $_POST['action'] ) || $_POST['action'] !== 'make_duplicates' ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			return;
 		}
 

@@ -703,7 +703,7 @@ class Permalink_Manager_Core_Functions {
 					// Allow redirect
 					$wp_query->query_vars['do_not_redirect'] = 0;
 
-					wp_redirect( $external_url, 301, PERMALINK_MANAGER_PLUGIN_NAME );
+					wp_redirect( $external_url, 301, PERMALINK_MANAGER_PLUGIN_NAME ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- By design, the users can redirect the post/term to any external URL here
 					exit();
 				}
 			}
@@ -795,6 +795,7 @@ class Permalink_Manager_Core_Functions {
 			if ( $old_slug_redirect && ! empty( $pm_query['uri'] ) && empty( $wp_query->query_vars['do_not_redirect'] ) && is_404() && empty( $correct_permalink ) ) {
 				$slug = basename( $pm_query['uri'] );
 
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct SQL query is faster here
 				$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT post_id from {$wpdb->postmeta} WHERE meta_key = '_wp_old_slug' AND meta_value = %s", $slug ) );
 				if ( ! empty( $post_id ) && Permalink_Manager_Helper_Functions::is_post_excluded( $post_id, true, true ) !== true ) {
 					$correct_permalink = get_permalink( $post_id );

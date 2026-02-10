@@ -7,6 +7,14 @@ class Permalink_Manager_Tools {
 
 	public function __construct() {
 		add_filter( 'permalink_manager_sections', array( $this, 'add_admin_section' ), 1 );
+		add_action( 'plugins_loaded', array( $this, 'init' ) );
+	}
+
+	/**
+	 * Register hooks
+	 */
+	public function init() {
+		add_filter( 'permalink_manager_tools_fields', array( $this, 'add_preview_mode_toggle' ), 50, 2 );
 	}
 
 	/**
@@ -216,12 +224,6 @@ class Permalink_Manager_Tools {
 				'description' => __( 'To narrow the above filters you can type the post IDs (or ranges) here. E.g. <strong>1-8, 10, 25</strong>.', 'permalink-manager' ),
 				//'pro' => true,
 				'input_class' => 'widefat'
-			),
-			'preview_mode' => array(
-				'label'       => __( 'Preview mode', 'permalink-manager' ),
-				'type'        => 'single_checkbox',
-				'container'   => 'row',
-				'description' => __( 'Enable this option if you want to review the changes in "read mode" before saving them in the database.', 'permalink-manager' )
 			)
 		), 'find_and_replace' );
 
@@ -302,12 +304,6 @@ class Permalink_Manager_Tools {
 				'description' => __( 'To narrow the above filters you can type the post IDs (or ranges) here. E.g. <strong>1-8, 10, 25</strong>.', 'permalink-manager' ),
 				//'pro' => true,
 				'input_class' => 'widefat'
-			),
-			'preview_mode'  => array(
-				'label'       => __( 'Preview mode', 'permalink-manager' ),
-				'type'        => 'single_checkbox',
-				'container'   => 'row',
-				'description' => __( 'Enable this option if you want to review the changes in "read mode" before saving them in the database.', 'permalink-manager' )
 			)
 		), 'regenerate' );
 
@@ -315,5 +311,26 @@ class Permalink_Manager_Tools {
 		$sidebar .= self::display_instructions();
 
 		return Permalink_Manager_UI_Elements::get_the_form( $fields, 'columns-3', array( 'text' => __( 'Regenerate', 'permalink-manager' ), 'class' => 'primary margin-top' ), $sidebar, array( 'action' => 'permalink-manager', 'name' => 'regenerate' ), true, 'form-ajax' );
+	}
+
+	/**
+	 * Add "Preview mode" toggle to the end of options list in "Regenerate/rest" and "Find & replace"
+	 *
+	 * @param $fields
+	 * @param $tool_name
+	 *
+	 * @return array
+	 */
+	public function add_preview_mode_toggle( $fields, $tool_name ) {
+		if ( is_array( $fields ) && in_array( $tool_name, array( 'regenerate', 'find_and_replace' ) ) ) {
+			$fields['preview_mode'] = array(
+				'label'       => __( 'Preview mode', 'permalink-manager' ),
+				'type'        => 'single_checkbox',
+				'container'   => 'row',
+				'description' => __( 'Enable this option if you want to review the changes in "read mode" before saving them in the database.', 'permalink-manager' )
+			);
+		}
+
+		return $fields;
 	}
 }
