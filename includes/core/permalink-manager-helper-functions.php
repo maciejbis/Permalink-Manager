@@ -32,6 +32,8 @@ class Permalink_Manager_Helper_Functions {
 		if ( ! empty( $permalink_manager_options['general']['force_unique_uris'] ) ) {
 			add_filter( 'permalink_manager_pre_update_post_uri', array( $this, 'force_unique_uri' ), 100, 3 );
 			add_filter( 'permalink_manager_filter_default_post_uri', array( $this, 'force_unique_uri' ), 100, 3 );
+			add_filter( 'permalink_manager_pre_update_term_uri', array( $this, 'force_unique_uri' ), 100, 3 );
+			add_filter( 'permalink_manager_filter_default_term_uri', array( $this, 'force_unique_uri' ), 100, 3 );
 		}
 	}
 
@@ -776,7 +778,7 @@ class Permalink_Manager_Helper_Functions {
 		}
 
 		// Lowercase with non-ASCII characters support
-		if ( $force_lowercase && seems_utf8( $clean ) && function_exists( 'mb_strtolower' ) ) {
+		if ( $force_lowercase && function_exists( 'mb_strtolower' ) && function_exists( 'wp_is_valid_utf8' ) && wp_is_valid_utf8( $clean ) ) {
 			$clean = mb_strtolower( $clean, 'UTF-8' );
 		} else if ( $force_lowercase ) {
 			$clean = strtolower( $clean );
@@ -918,26 +920,27 @@ class Permalink_Manager_Helper_Functions {
 	 * Ensures that a permalink is unique by appending a numeric suffix if needed
 	 *
 	 * @param string $new_uri
-	 * @param string|int $post_id
-	 * @param string|WP_Post $post
+	 * @param string|int $element_id
+	 * @param string|WP_Post|WP_Term $element
 	 *
 	 * @return string A unique custom permalink string.
 	 */
-	function force_unique_uri( $new_uri, $post_id, $post = '' ) {
-		global $permalink_manager_uris;
+	function force_unique_uri( $new_uri, $element_id, $element = '' ) {
+		// Determine the ID based on the object type
+		if ( is_a( $element, 'WP_Term' ) && strpos( current_action(), "_term_" ) !== false ) {
+			$element_id = $element->term_id;
+			$is_tax     = true;
+		} elseif ( is_a( $element, 'WP_Post' ) ) {
+			$element_id = $element->ID;
+		}
 
-		// Determine post ID
-		if ( is_a( $post, 'WP_Post' ) ) {
-			$post_id = $post->ID;
-		} elseif ( ! is_numeric( $post_id ) ) {
+		if ( empty( $element_id ) || ! is_numeric( $element_id ) ) {
 			return $new_uri;
 		}
 
-		// Copy URIs and exclude current element
-		$uris = $permalink_manager_uris;
-		unset( $uris[ $post_id ] );
-
-		$uris = array_flip( $uris );
+		if ( ! empty( $is_tax ) ) {
+			$element_id = "tax-{$element_id}";
+		}
 
 		// Prepare base + extension
 		if ( ! preg_match( '/^(.+?)(?:-([\d]+))?(\.[^\.]+$|$)/', $new_uri, $parts ) ) {
@@ -951,7 +954,7 @@ class Permalink_Manager_Helper_Functions {
 		$unique_uri = $new_uri;
 
 		// Increment suffix until URI is unique
-		while ( isset( $uris[ $unique_uri ] ) ) {
+		while ( Permalink_Manager_URI_Functions::is_uri_duplicated( $unique_uri, $element_id ) ) {
 			$index ++;
 			$unique_uri = "{$base}-{$index}{$extension}";
 		}

@@ -574,6 +574,10 @@ class Permalink_Manager_Third_Parties {
 
 			if ( ! empty( $new_uri ) ) {
 				if ( ! empty( $is_term ) ) {
+					if ( ! class_exists( 'Permalink_Manager_URI_Functions_Tax' ) ) {
+						return;
+					}
+
 					$default_uri = Permalink_Manager_URI_Functions_Tax::get_default_term_uri( $pid );
 					$native_uri  = Permalink_Manager_URI_Functions_Tax::get_default_term_uri( $pid, true );
 					$custom_uri  = Permalink_Manager_URI_Functions_Tax::get_term_uri( $pid, false, true );
@@ -722,6 +726,10 @@ class Permalink_Manager_Third_Parties {
 			$is_term = false;
 		}
 
+		if ( $is_term && ! class_exists( 'Permalink_Manager_URI_Functions_Tax' ) ) {
+			return $articles;
+		}
+
 		foreach ( $articles as &$article ) {
 			if ( ! empty( $article['id'] ) ) {
 				$item_id = $article['id'];
@@ -843,7 +851,7 @@ class Permalink_Manager_Third_Parties {
 				$listing_categories    = $listing_object->get_field( 'category' );
 				$listing_category_term = $listing_categories[0];
 			} else {
-				$listing_category_term  = ( ! is_wp_error( $listing_category_terms ) && ! empty( $listing_category_terms ) && is_object( $listing_category_terms[0] ) ) ? Permalink_Manager_Helper_Functions::get_lowest_element( $listing_category_terms[0], $listing_category_terms ) : "";
+				$listing_category_term = ( ! is_wp_error( $listing_category_terms ) && ! empty( $listing_category_terms ) && is_object( $listing_category_terms[0] ) ) ? Permalink_Manager_Helper_Functions::get_lowest_element( $listing_category_terms[0], $listing_category_terms ) : "";
 			}
 
 			if ( ! empty( $listing_category_term ) && is_a( $listing_category_term, 'WP_Term' ) ) {
@@ -1231,7 +1239,7 @@ class Permalink_Manager_Third_Parties {
 			return $query;
 		}
 
-		$boards = WPF()->board->get_boards_pageids();
+		$boards   = WPF()->board->get_boards_pageids();
 		$boards[] = wpforo_get_option( 'wpforo_pageid2', 0 );
 
 		if ( ! empty( $element_object->ID ) ) {
