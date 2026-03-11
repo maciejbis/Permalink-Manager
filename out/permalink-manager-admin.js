@@ -502,18 +502,12 @@ jQuery(document).ready(function () {
                     if (data.hasOwnProperty('alert')) {
                         jQuery('#plugin-name-heading').after(jQuery(data.alert).hide());
                     }
-                } else {
-                    if (data.hasOwnProperty('alert')) {
-                        jQuery('#plugin-name-heading').after(jQuery(data.alert));
-                    }
+                } // Check if the iteration and total count were correctly set in the first AJAX request
+                else if (total_iterations === 0 || total === 0) {
+                    console.log('No items have been processed.');
+                    jQuery('#permalink-manager #tools').LoadingOverlay("hide", true);
 
-                    // Check if the iteration and total count were correctly set in the first AJAX request
-                    if (total_iterations === 0 || total === 0) {
-                        console.log('No items have been processed.');
-                        jQuery('#permalink-manager #tools').LoadingOverlay("hide", true);
-
-                        return true;
-                    }
+                    return true;
                 }
 
                 // Display the table

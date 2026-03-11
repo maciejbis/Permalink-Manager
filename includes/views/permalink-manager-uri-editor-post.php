@@ -1,5 +1,7 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * Use WP_List_Table to display the "Bulk URI Editor" for post items
  */

@@ -1,5 +1,7 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * Core functions
  */
@@ -497,7 +499,7 @@ class Permalink_Manager_Core_Functions {
 				}
 
 				// If language mismatch is detected do not set 'do_not_redirect' to allow canonical redirect
-				if ( empty( $pm_query['flag'] ) || $pm_query['flag'] !== 'language_mismatch' ) {
+				if ( is_array( $query ) && ( empty( $pm_query['flag'] ) || $pm_query['flag'] !== 'language_mismatch' ) ) {
 					$query['do_not_redirect'] = 1;
 				}
 			}

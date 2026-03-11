@@ -3,11 +3,11 @@ Contributors: mbis
 Donate link: https://www.paypal.me/Bismit
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, url editor
+Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, custom permalink
 Requires at least: 4.4.0
 Requires PHP: 5.4
 Tested up to: 6.9
-Stable tag: 2.5.3.1
+Stable tag: 2.5.3.2
 
 Permalink Manager enhances WordPress’s built-in URL system, allowing you to change the URLs of native and custom post types and taxonomies.
 
@@ -25,7 +25,7 @@ Permalink Manager **automatically redirects original and duplicate URLs** to the
 
 = Features =
 
-* **Change Single Permalinks**<br/>For a consistent and SEO-friendly URL structure, you may customize and <a href="https://permalinkmanager.pro/docs/basics/uri-editor/">change the permalink</a> of each post, page, and custom post type item.  *Categories, tags & custom taxonomies terms permalinks can be edited in Permalink Manager Pro.*
+* **Change Single Permalinks**<br/>For a consistent and SEO-friendly URL structure, you may customize and <a href="https://permalinkmanager.pro/docs/basics/change-permalink/">change the permalink</a> of each post, page, and custom post type item.  *Categories, tags & custom taxonomies terms permalinks can be edited in Permalink Manager Pro.*
 * **Customize URL Formats**<br/>Using the “Permastructures” settings, you can choose the default format for custom URLs using "Permastructures" settings. The new format will be applied automatically when a new post/term is added or once the old permalinks are regenerated.
 * **Custom Post Types Support**<br/>Choose the post types and taxonomies you want to customize and exclude the rest of them. The plugin supports post types and taxonomies managed with ACF, Pods, JetEngine, Toolset Types, and other plugins.
 * **Translate Permalinks**<br/>With WPML or Polylang active, Permalink Manager allows you to translate the slug and customize the URL structure for every language separately.
@@ -91,6 +91,10 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 8.	Permalink Manager settings.
 
 == Changelog ==
+
+= 2.5.3.2 (March 11, 2026) =
+* Fix - The progress alert is no longer duplicated in "Regenerate/reset" tool
+* Fix - Addressed a PHP deprecated warning when CLI is used
 
 = 2.5.3.1 (February 16, 2026) =
 * Dev - Updated "Force unique custom permalinks" function to respect language codes

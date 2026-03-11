@@ -1,5 +1,7 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * Additional UI functions related to WordPress Admin Dashboard UI
  */
