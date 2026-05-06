@@ -197,7 +197,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 					'value'   => ( isset( $_REQUEST['month'] ) ) ? sanitize_key( $_REQUEST['month'] ) : ''
 				) );
 
-				$html .= sprintf( '<div id=\"months-filter\" class="alignleft actions">%s</div>', $select_field );
+				$html .= sprintf( '<div id="months-filter" class="alignleft actions">%s</div>', $select_field );
 			}
 
 			$extra_fields = apply_filters( 'permalink_manager_uri_editor_extra_fields', '', 'posts' );

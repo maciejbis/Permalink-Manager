@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Helper functions used in classes and another subclasses
@@ -603,7 +605,7 @@ class Permalink_Manager_Helper_Functions {
 		$pagination_endpoint = ( ! empty( $wp_rewrite->pagination_base ) ) ? $wp_rewrite->pagination_base : 'page';
 
 		// Start with default endpoints
-		$endpoints = "{$pagination_endpoint}|feed|embed|attachment|trackback|filter";
+		$endpoints = "{$pagination_endpoint}|feed|embed|attachment|trackback";
 
 		if ( ! empty( $wp_rewrite->endpoints ) ) {
 			foreach ( $wp_rewrite->endpoints as $endpoint ) {

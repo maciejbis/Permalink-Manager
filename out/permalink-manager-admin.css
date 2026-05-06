@@ -128,7 +128,7 @@
 
 #permalink-manager .restore-default{display:inline-block;border-radius:0;color:#959595;text-decoration:none}
 #permalink-manager .restore-default{text-align:right;width:100%}
-#permalink-manager .widefat,#permalink-manager #redirect-panel-inside,#permalink-manager #redirect-panel-inside table{width:100%!important;max-width:none;min-height:0!important;box-sizing:border-box;height:32px}
+#permalink-manager .widefat,#permalink-manager #redirect-panel-inside,#permalink-manager #redirect-panel-inside table{width:100%!important;max-width:none;min-height:0!important;box-sizing:border-box}
 #permalink-manager textarea.widefat,#permalink-manager #redirect-panel-inside table{height:auto}
 #permalink-manager .heading,#permalink-manager .heading a{margin:0;line-height:1.4;font-weight:600;text-decoration:none;color:#777}
 #permalink-manager.permalink-manager-edit-term .permalink-manager-edit-uri-box{display:block!important;margin:0}

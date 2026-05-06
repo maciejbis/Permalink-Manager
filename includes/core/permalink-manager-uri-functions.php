@@ -1,13 +1,16 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Functions used to create, edit and remove custom permalinks
  */
 class Permalink_Manager_URI_Functions {
 
-	public function __construct() {}
+	public function __construct() {
+	}
 
 	/**
 	 * Get the custom permalink's array key for specific post or term
@@ -29,7 +32,7 @@ class Permalink_Manager_URI_Functions {
 			$element_id = preg_replace( '/[^0-9]/', '', $element );
 		} else {
 			$element_id = "";
-			$is_term = null;
+			$is_term    = null;
 		}
 
 		$array_index = ( $is_term && ! empty( $element_id ) ) ? sprintf( 'tax-%s', $element_id ) : $element_id;
@@ -122,7 +125,7 @@ class Permalink_Manager_URI_Functions {
 
 			$found = ( ! empty( $all_uris[ $search_query ] ) ) ? $all_uris[ $search_query ] : false;
 		} else {
-			$found = array();
+			$found        = array();
 			$search_query = preg_quote( $search_query, '/' );
 
 			foreach ( $custom_permalinks as $id => $uri ) {

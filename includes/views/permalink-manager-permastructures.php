@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Display the page where the slugs could be regenerated or replaced
@@ -89,25 +91,6 @@ class Permalink_Manager_Permastructs {
 			$fields["taxonomies"]["fields"][ $taxonomy_name ] = self::get_single_permastructure_field( $taxonomy, true, isset( $pro_text ) );
 		}
 
-		// 4. Separate WooCommerce CPT & custom taxonomies
-		if ( class_exists( 'WooCommerce' ) ) {
-			$woocommerce_fields     = array( 'product' => 'post_types', 'product_tag' => 'taxonomies', 'product_cat' => 'taxonomies' );
-			$woocommerce_attributes = wc_get_attribute_taxonomies();
-
-			foreach ( $woocommerce_attributes as $woocommerce_attribute ) {
-				$woocommerce_fields["pa_{$woocommerce_attribute->attribute_name}"] = 'taxonomies';
-			}
-
-			foreach ( $woocommerce_fields as $field => $field_type ) {
-				if ( empty( $fields[ $field_type ]["fields"][ $field ] ) ) {
-					continue;
-				}
-
-				$fields["woocommerce"]["fields"][ $field ] = $fields[ $field_type ]["fields"][ $field ];
-				unset( $fields[ $field_type ]["fields"][ $field ] );
-			}
-		}
-
 		return apply_filters( 'permalink_manager_permastructs_fields', $fields );
 	}
 
@@ -149,7 +132,7 @@ class Permalink_Manager_Permastructs {
 			'extra_atts'  => " data-default=\"{$default_permastruct}\""
 		);
 
-		$field_name = sprintf( '%s[%s]', $content_group, $content_type_name );
+		$field_name        = sprintf( '%s[%s]', $content_group, $content_type_name );
 		$permastruct_field = sprintf( "<div class=\"permastruct-field-container\"><span><code>%s/</code></span><span>%s</span></div>", $siteurl, Permalink_Manager_UI_Elements::generate_option_field( $field_name, $field_atts ) );
 
 		$buttons = sprintf( "<p class=\"permastruct-buttons\">
@@ -266,7 +249,7 @@ class Permalink_Manager_Permastructs {
 				$tags_groups['taxonomies']['tags'] = array();
 
 				foreach ( $post_type_taxonomies as $post_type_taxonomy ) {
-					$tags_groups['taxonomies']['tags'][] = sprintf('%%%s%%', $post_type_taxonomy->name);
+					$tags_groups['taxonomies']['tags'][] = sprintf( '%%%s%%', $post_type_taxonomy->name );
 				}
 			}
 		} else {

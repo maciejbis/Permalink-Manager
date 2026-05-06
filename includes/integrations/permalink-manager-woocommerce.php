@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * WooCommerce plugins integration
@@ -19,6 +21,7 @@ class Permalink_Manager_WooCommerce {
 		if ( class_exists( 'WooCommerce' ) ) {
 			add_filter( 'permalink_manager_filter_query', array( $this, 'woocommerce_detect' ), 8, 5 );
 			add_filter( 'template_redirect', array( $this, 'woocommerce_checkout_fix' ), 9 );
+			add_filter( 'permalink_manager_permastructs_fields', array( $this, 'woocommerce_permastructs_fields' ), 9 );
 
 			if ( class_exists( 'Permalink_Manager_Pro_Functions' ) ) {
 				if ( empty( $permalink_manager_options['general']['partial_disable']['post_types'] ) || ! in_array( 'shop_coupon', $permalink_manager_options['general']['partial_disable']['post_types'] ) ) {
@@ -130,6 +133,35 @@ class Permalink_Manager_WooCommerce {
 		if ( is_checkout() || ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url() ) ) {
 			$wp_query->query_vars['do_not_redirect'] = 1;
 		}
+	}
+
+	/**
+	 * Separate WooCommerce custom post types & taxonomies in "Permastructures" screen
+	 *
+	 * @param array $fields
+	 *
+	 * @return array
+	 */
+	public function woocommerce_permastructs_fields( $fields ) {
+		if ( is_array( $fields ) ) {
+			$woocommerce_fields     = array( 'product' => 'post_types', 'product_tag' => 'taxonomies', 'product_cat' => 'taxonomies', 'product_brand' => 'taxonomies' );
+			$woocommerce_attributes = wc_get_attribute_taxonomies();
+
+			foreach ( $woocommerce_attributes as $woocommerce_attribute ) {
+				$woocommerce_fields["pa_{$woocommerce_attribute->attribute_name}"] = 'taxonomies';
+			}
+
+			foreach ( $woocommerce_fields as $field => $field_type ) {
+				if ( empty( $fields[ $field_type ]["fields"][ $field ] ) ) {
+					continue;
+				}
+
+				$fields["woocommerce"]["fields"][ $field ] = $fields[ $field_type ]["fields"][ $field ];
+				unset( $fields[ $field_type ]["fields"][ $field ] );
+			}
+		}
+
+		return $fields;
 	}
 
 	/**
@@ -351,7 +383,7 @@ class Permalink_Manager_WooCommerce {
 		$features_util_class = '\Automattic\WooCommerce\Utilities\FeaturesUtil';
 
 		if ( class_exists( $features_util_class ) && method_exists( $features_util_class, 'declare_compatibility' ) ) {
-			$features    = method_exists( $features_util_class, 'get_features' ) ? $features_util_class::get_features( true ) : array();
+			$features = method_exists( $features_util_class, 'get_features' ) ? $features_util_class::get_features( true ) : array();
 
 			foreach ( array_keys( $features ) as $feature ) {
 				$features_util_class::declare_compatibility( $feature, PERMALINK_MANAGER_BASENAME );
@@ -372,7 +404,7 @@ class Permalink_Manager_WooCommerce {
 		$wishlist_pid = function_exists( 'tinv_get_option' ) ? tinv_get_option( 'general', 'page_wishlist' ) : '';
 
 		// Find the Wishlist page URI
-		if ( is_numeric( $wishlist_pid )) {
+		if ( is_numeric( $wishlist_pid ) ) {
 			$current_uri = Permalink_Manager_URI_Functions::get_single_uri( $wishlist_pid, false, true );
 
 			if ( ! empty( $current_uri ) ) {
