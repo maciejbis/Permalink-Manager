@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Additional functions related to WordPress Admin Dashboard UI
@@ -230,6 +232,11 @@ class Permalink_Manager_Admin_Functions {
 
 				// Check if alert was dismissed
 				if ( empty( $dismissed ) ) {
+					// Hide notice in Permalink Manager Pro
+					if ( defined( 'PERMALINK_MANAGER_PRO' ) && $alert['show'] == 'pro_hide' ) {
+						continue;
+					}
+
 					// Display the notice only on the plugin pages
 					if ( empty( $active_section ) && ! empty( $alert['plugin_only'] ) ) {
 						continue;

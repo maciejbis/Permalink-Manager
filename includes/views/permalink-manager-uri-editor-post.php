@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Use WP_List_Table to display the "Bulk URI Editor" for post items
@@ -140,7 +142,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 				return $output;
 
 			case 'item_title':
-				$output = $post_title;
+				$output = esc_html( $post_title );
 				$output .= '<div class="extra-info small">';
 				$output .= sprintf( "<span><strong>%s:</strong> %s</span>", __( "Slug", "permalink-manager" ), urldecode( $item['post_name'] ) );
 				$output .= sprintf( " | <span><strong>%s:</strong> {$post_statuses_array[$item["post_status"]]}</span>", __( "Post status", "permalink-manager" ) );
@@ -148,9 +150,9 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 				$output .= '</div>';
 
 				$output .= '<div class="row-actions">';
-				$output .= sprintf( "<span class=\"edit\"><a href=\"%s\" title=\"%s\">%s</a> | </span>", get_edit_post_link( $item['ID'] ), __( 'Edit', 'permalink-manager' ), __( 'Edit', 'permalink-manager' ) );
-				$output .= '<span class="view"><a target="_blank" href="' . $permalink . '" title="' . __( 'View', 'permalink-manager' ) . ' ' . $post_title . '" rel="permalink">' . __( 'View', 'permalink-manager' ) . '</a> | </span>';
-				$output .= '<span class="id">#' . $item['ID'] . '</span>';
+				$output .= sprintf( '<span class="edit"><a href="%1$s" title="%2$s">%2$s</a> | </span>', esc_url( get_edit_post_link( $item['ID'] ) ), __( 'Edit', 'permalink-manager' ) );
+				$output .= sprintf( '<span class="view"><a target="_blank" href="%1$s" title="%2$s %3$s" rel="permalink">%2$s</a> | </span>', esc_attr( $permalink ), __( 'View', 'permalink-manager' ), esc_html( $post_title ) );
+				$output .= sprintf( '<span class="id">#%s</span>', esc_html( $item['ID'] ) );
 				$output .= '</div>';
 
 				return $output;
