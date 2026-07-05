@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Additional UI functions related to WordPress Admin Dashboard UI
@@ -36,7 +38,7 @@ class Permalink_Manager_UI_Elements {
 		$description    = ( isset( $args['before_description'] ) ) ? $args['before_description'] : "";
 		$description    .= ( isset( $args['description'] ) ) ? "<p class=\"field-description description\">{$args['description']}</p>" : "";
 		$description    .= ( isset( $args['after_description'] ) ) ? $args['after_description'] : "";
-		$description    .= ( isset( $args['pro'] ) ) ? sprintf( "<p class=\"field-description description alert info\">%s</p>", ( self::pro_text( true ) ) ) : "";
+		$description    .= ( !empty( $args['pro'] ) ) ? sprintf( "<p class=\"field-description description alert info\">%s</p>", ( self::pro_text( true ) ) ) : "";
 		$append_content = ( isset( $args['append_content'] ) ) ? "{$args['append_content']}" : "";
 
 		// Input attributes
@@ -660,7 +662,7 @@ class Permalink_Manager_UI_Elements {
 			// 4. Custom URI
 			if ( ! empty( $is_front_page ) ) {
 				$custom_uri_field = self::generate_option_field( "custom_uri", array( "type" => "hidden", "extra_atts" => "data-default=\"{$default_uri}\" data-element-id=\"{$element_id}\"", "input_class" => "widefat custom_uri", "value" => rawurldecode( $uri ) ) );
-				$custom_uri_field .= __( "The custom URI cannot be edited on frontpage.", "permalink-manager" );
+				$custom_uri_field .= __( "The custom permalink cannot be edited on frontpage.", "permalink-manager" );
 			} else {
 				$custom_uri_field = self::generate_option_field( "custom_uri", array( "extra_atts" => "data-default=\"{$default_uri}\" data-element-id=\"{$element_id}\"", "input_class" => "widefat custom_uri", "value" => rawurldecode( $uri ) ) );
 				$custom_uri_field .= sprintf( '<p class="uri_locked hidden">%s %s</p>', '<span class="dashicons dashicons-lock"></span>', __( 'The URL above is displayed in read-only mode. To enable editing, change the "<strong>Permalink update</strong>" setting to <em>Don\'t auto-update "Custom permalink"</em>.', 'permalink-manager' ) );
@@ -703,6 +705,10 @@ class Permalink_Manager_UI_Elements {
 
 			// 9. Custom redirects
 			$html .= ( $element->ID ) ? self::display_redirect_panel( $id ) : self::display_redirect_panel( "tax-{$id}" );
+
+			if ( defined( 'PERMALINK_MANAGER_PRO' ) && class_exists( 'Permalink_Manager_Pro_License' ) ) {
+				$html .= Permalink_Manager_Pro_License::license_info_uri_editor();
+			}
 
 			// 10. Extra save button for Gutenberg
 			if ( $gutenberg ) {

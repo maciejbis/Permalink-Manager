@@ -72,14 +72,15 @@ class Permalink_Manager_Admin_Functions {
 	 * Get current section of Permalink Manager admin panel
 	 */
 	public function get_current_section() {
-		global $active_section, $active_subsection, $current_admin_tax;
+		global $permalink_manager_active_section, $permalink_manager_active_subsection, $permalink_manager_admin_tax;
 
 		// 1. Get current section
+		// phpcs:disable WordPress.Security.NonceVerification -- Read-only admin section routing; no data mutated.
 		if ( isset( $_GET['page'] ) && $_GET['page'] == PERMALINK_MANAGER_PLUGIN_SLUG ) {
 			if ( isset( $_POST['section'] ) ) {
-				$this->active_section = sanitize_title_with_dashes( $_POST['section'] );
+				$this->active_section = sanitize_title_with_dashes( wp_unslash( $_POST['section'] ) );
 			} else if ( isset( $_GET['section'] ) ) {
-				$this->active_section = sanitize_title_with_dashes( $_GET['section'] );
+				$this->active_section = sanitize_title_with_dashes( wp_unslash( $_GET['section'] ) );
 			} else {
 				$sections_names       = array_keys( $this->sections );
 				$this->active_section = $sections_names[0];
@@ -89,25 +90,26 @@ class Permalink_Manager_Admin_Functions {
 		// 2. Get current subsection
 		if ( $this->active_section && isset( $this->sections[ $this->active_section ]['subsections'] ) ) {
 			if ( isset( $_POST['subsection'] ) ) {
-				$this->active_subsection = sanitize_title_with_dashes( $_POST['subsection'] );
+				$this->active_subsection = sanitize_title_with_dashes( wp_unslash( $_POST['subsection'] ) );
 			} else if ( isset( $_GET['subsection'] ) ) {
-				$this->active_subsection = sanitize_title_with_dashes( $_GET['subsection'] );
+				$this->active_subsection = sanitize_title_with_dashes( wp_unslash( $_GET['subsection'] ) );
 			} else {
 				$subsections_names       = array_keys( $this->sections[ $this->active_section ]['subsections'] );
 				$this->active_subsection = $subsections_names[0];
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		// 3. Check if current admin page is related to taxonomies
 		if ( ! empty( $this->active_subsection ) && substr( $this->active_subsection, 0, 4 ) == 'tax_' ) {
-			$current_admin_tax = substr( $this->active_subsection, 4, strlen( $this->active_subsection ) );
+			$permalink_manager_admin_tax = substr( $this->active_subsection, 4, strlen( $this->active_subsection ) );
 		} else {
-			$current_admin_tax = false;
+			$permalink_manager_admin_tax = false;
 		}
 
 		// Set globals
-		$active_section    = $this->active_section;
-		$active_subsection = $this->active_subsection;
+		$permalink_manager_active_section    = $this->active_section;
+		$permalink_manager_active_subsection = $this->active_subsection;
 	}
 
 	/**
@@ -137,6 +139,7 @@ class Permalink_Manager_Admin_Functions {
 		wp_enqueue_script( 'permalink-manager-plugins', PERMALINK_MANAGER_URL . '/out/permalink-manager-plugins.js', array( 'jquery', ), PERMALINK_MANAGER_VERSION, array( 'in_footer' => false ) );
 		wp_enqueue_script( 'permalink-manager', PERMALINK_MANAGER_URL . '/out/permalink-manager-admin.js', array( 'jquery', 'permalink-manager-plugins' ), PERMALINK_MANAGER_VERSION, array( 'in_footer' => false ) );
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check to decide whether to enqueue Thickbox assets; no data mutated.
 		if ( isset( $_GET['section'] ) && $_GET['section'] === 'permastructs' ) {
 			wp_enqueue_script( 'thickbox' );
 			wp_enqueue_style( 'thickbox' );
@@ -222,7 +225,7 @@ class Permalink_Manager_Admin_Functions {
 	 * Display global notices (throughout wp-admin dashboard)
 	 */
 	function display_global_notices() {
-		global $permalink_manager_alerts, $active_section;
+		global $permalink_manager_alerts, $permalink_manager_active_section;
 
 		$html = "";
 		if ( ! empty( $permalink_manager_alerts ) && is_array( $permalink_manager_alerts ) ) {
@@ -233,12 +236,12 @@ class Permalink_Manager_Admin_Functions {
 				// Check if alert was dismissed
 				if ( empty( $dismissed ) ) {
 					// Hide notice in Permalink Manager Pro
-					if ( defined( 'PERMALINK_MANAGER_PRO' ) && $alert['show'] == 'pro_hide' ) {
+					if ( defined( 'PERMALINK_MANAGER_PRO' ) && ( ! empty( $alert['show'] ) ) && $alert['show'] == 'pro_hide' ) {
 						continue;
 					}
 
 					// Display the notice only on the plugin pages
-					if ( empty( $active_section ) && ! empty( $alert['plugin_only'] ) ) {
+					if ( empty( $permalink_manager_active_section ) && ! empty( $alert['plugin_only'] ) ) {
 						continue;
 					}
 

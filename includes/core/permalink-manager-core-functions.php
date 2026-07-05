@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Core functions
@@ -82,7 +84,8 @@ class Permalink_Manager_Core_Functions {
 		/**
 		 * 1. Prepare URL and check if it is correct (make sure that both requested URL & home_url share the same protocol and get rid of www prefix)
 		 */
-		$request_url = ( ! empty( $request_url ) ) ? parse_url( $request_url, PHP_URL_PATH ) : $_SERVER['REQUEST_URI'];
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Ignored because superglobals are only read for internal URL string comparison, not output or DB execution.
+		$request_url = ( ! empty( $request_url ) ) ? wp_parse_url( $request_url, PHP_URL_PATH ) : $_SERVER['REQUEST_URI'];
 		$request_url = ( ! empty( $request_url ) ) ? strtok( $request_url, "?" ) : $request_url;
 
 		// Make sure that either $_SERVER['SERVER_NAME'] or $_SERVER['HTTP_HOST'] are set
@@ -94,8 +97,9 @@ class Permalink_Manager_Core_Functions {
 		$request_url  = sprintf( "http://%s%s", str_replace( "www.", "", $http_host ), $request_url );
 		$raw_home_url = trim( get_option( 'home' ) );
 		$home_url     = preg_replace( "/http(s)?:\/\/(www\.)?(.+?)\/?$/", "http://$3", $raw_home_url );
+		// phpcs:enable
 
-		if ( parse_url( $request_url, PHP_URL_HOST ) ) {
+		if ( wp_parse_url( $request_url, PHP_URL_HOST ) ) {
 			// Check if "Deep Detect" is enabled
 			$deep_detect_enabled = apply_filters( 'permalink_manager_deep_uri_detect', true );
 
@@ -107,7 +111,7 @@ class Permalink_Manager_Core_Functions {
 
 			// Hotfix for language plugins
 			if ( filter_var( $request_url, FILTER_VALIDATE_URL ) ) {
-				$request_url = parse_url( $request_url, PHP_URL_PATH );
+				$request_url = wp_parse_url( $request_url, PHP_URL_PATH );
 			}
 
 			$request_url = trim( $request_url, "/" );
@@ -145,7 +149,7 @@ class Permalink_Manager_Core_Functions {
 			}
 
 			// Store the URI parts in a separate global variable
-			$pm_query = $uri_parts;
+			$pm_query = $uri_parts; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 
 			// Get the URI parts from REGEX parts
 			// $lang           = $uri_parts['lang'];
@@ -465,6 +469,7 @@ class Permalink_Manager_Core_Functions {
 			/**
 			 * 3B. Endpoints - check if any endpoint is set with $_GET parameter
 			 */
+			// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Front-end request routing based on query vars; no form is processed here.
 			if ( ! empty( $element_id ) && $deep_detect_enabled && ! empty( $_GET ) ) {
 				$get_endpoints = array_intersect( $wp->public_query_vars, array_keys( $_GET ) );
 
@@ -472,9 +477,10 @@ class Permalink_Manager_Core_Functions {
 					// Append query vars from $_GET parameters
 					foreach ( $get_endpoints as $endpoint ) {
 						// Numeric endpoints
-						$endpoint_value = ( in_array( $endpoint, array( 'page', 'paged', 'attachment_id' ) ) ) ? filter_var( $_GET[ $endpoint ], FILTER_SANITIZE_NUMBER_INT ) : $_GET[ $endpoint ];
+						$endpoint_value = isset( $_GET[ $endpoint ] ) ? wp_unslash( $_GET[ $endpoint ] ) : '';
+						$endpoint_value = ( in_array( $endpoint, array( 'page', 'paged', 'attachment_id' ) ) ) ? filter_var( $endpoint_value, FILTER_SANITIZE_NUMBER_INT ) : $endpoint_value;
 
-						// Ignore page endpoint if its value is empty or equal to 1
+						// Ignore the page endpoint if its value is empty or equal to 1
 						if ( in_array( $endpoint, array( 'page', 'paged' ) ) && ( empty( $endpoint_value ) || $endpoint_value == 1 ) ) {
 							continue;
 						}
@@ -485,16 +491,17 @@ class Permalink_Manager_Core_Functions {
 					}
 				}
 			}
+			// phpcs:enable
 
 			/**
 			 * 4. Set global with detected item id
 			 */
 			if ( ! empty( $element_id ) && empty( $disabled ) && empty( $excluded ) ) {
 				if ( ! empty( $element_object->taxonomy ) ) {
-					$pm_query['id'] = $element_object->term_id;
+					$pm_query['id'] = $element_object->term_id; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 					$content_type   = "Taxonomy: {$element_object->taxonomy}";
 				} else if ( ! empty( $element_object->post_type ) ) {
-					$pm_query['id'] = $element_object->ID;
+					$pm_query['id'] = $element_object->ID; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 					$content_type   = "Post type: {$element_object->post_type}";
 				}
 
@@ -539,7 +546,7 @@ class Permalink_Manager_Core_Functions {
 
 		// Keep the original permalink in a separate variable
 		$original_permalink = $permalink;
-		$permalink_path     = parse_url( $original_permalink, PHP_URL_PATH );
+		$permalink_path     = wp_parse_url( $original_permalink, PHP_URL_PATH );
 		$permalink_path     = ( ! empty( $permalink_path ) ) ? trim( $permalink_path, '/' ) : $permalink_path;
 
 		$trailing_slash_mode = ( ! empty( $permalink_manager_options['general']['trailing_slashes'] ) ) ? $permalink_manager_options['general']['trailing_slashes'] : "";
@@ -626,13 +633,13 @@ class Permalink_Manager_Core_Functions {
 			if ( $pagination_mode == 2 ) {
 				$wp_query->query_vars['do_not_redirect'] = 0;
 			} else {
-				$wp_query->query = $wp_query->queried_object = $wp_query->queried_object_id = $pm_query = $post = null;
+				$wp_query->query = $wp_query->queried_object = $wp_query->queried_object_id = $pm_query = $post = null; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 				$wp_query->set_404();
 				status_header( 404 );
 				nocache_headers();
 			}
 
-			$pm_query = '';
+			$pm_query = ''; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 		}
 	}
 
@@ -655,7 +662,7 @@ class Permalink_Manager_Core_Functions {
 
 		// Get home URL
 		$home_url = rtrim( get_option( 'home' ), "/" );
-		$home_dir = parse_url( $home_url, PHP_URL_PATH );
+		$home_dir = wp_parse_url( $home_url, PHP_URL_PATH );
 
 		// Set up $correct_permalink variable
 		$correct_permalink = '';
@@ -665,9 +672,12 @@ class Permalink_Manager_Core_Functions {
 			return;
 		}
 
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Ignored because superglobals are only read for internal URL string comparison, not output or DB execution.
 		$query_string = ( $copy_query_redirect && ! empty( $_SERVER['QUERY_STRING'] ) ) ? $_SERVER['QUERY_STRING'] : '';
-		$old_uri      = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
+		$old_uri      = wp_parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
 		$old_uri      = $old_uri_abs = ( empty( $old_uri ) ) ? strtok( $_SERVER["REQUEST_URI"], '?' ) : $old_uri;
+		$http_host    = ( ! empty( $_SERVER['HTTP_HOST'] ) ) ? $_SERVER['HTTP_HOST'] : '';
+		// phpcs:enable
 
 		// Fix for WP installed in directories (remove the directory name from the URI)
 		if ( ! empty( $home_dir ) ) {
@@ -682,7 +692,7 @@ class Permalink_Manager_Core_Functions {
 		}
 
 		// Do not use custom redirects on author pages, search & front page
-		if ( ! is_author() && ! $is_front_page && ! is_home() && ! is_feed() && ! is_search() && empty( $_GET['s'] ) ) {
+		if ( ! is_author() && ! $is_front_page && ! is_home() && ! is_feed() && ! is_search() && empty( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Front-end redirect handling; no form is processed here.
 			// Sometimes $wp_query indicates the wrong object if requested directly
 			$queried_object = get_queried_object();
 
@@ -755,6 +765,7 @@ class Permalink_Manager_Core_Functions {
 			}
 
 			// Ignore WP-Content links
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Ignored because superglobals are only read for internal URL string comparison, not output or DB execution.
 			if ( strpos( $_SERVER['REQUEST_URI'], '/wp-content' ) !== false ) {
 				return;
 			}
@@ -810,7 +821,7 @@ class Permalink_Manager_Core_Functions {
 			 */
 			if ( ! empty( $correct_permalink ) && is_string( $correct_permalink ) && ! empty( $wp->request ) && $redirect_type != 'slash_redirect' ) {
 				$current_uri  = trim( $wp->request, "/" );
-				$redirect_uri = trim( parse_url( $correct_permalink, PHP_URL_PATH ), "/" );
+				$redirect_uri = trim( wp_parse_url( $correct_permalink, PHP_URL_PATH ), "/" );
 
 				$correct_permalink = ( $redirect_uri == $current_uri ) ? null : $correct_permalink;
 			}
@@ -840,6 +851,7 @@ class Permalink_Manager_Core_Functions {
 		/**
 		 * 4. Check trailing & duplicated slashes (ignore links with query parameters)
 		 */
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Front-end redirect handling; presence of $_POST is checked only to avoid interfering with form submissions.
 		if ( ( ( $trailing_slashes_mode && $trailing_slashes_redirect ) || preg_match( '/\/{2,}/', $old_uri ) ) && empty( $is_front_page ) && empty( $_POST ) && empty( $correct_permalink ) && empty( $query_string ) && ! empty( $old_uri ) && $old_uri !== "/" ) {
 			$trailing_slash = ( substr( $old_uri, - 1 ) == "/" ) ? true : false;
 			$obsolete_slash = ( preg_match( '/\/{2,}/', $old_uri ) || preg_match( "/.*\.([a-zA-Z]{3,4})\/$/", $old_uri ) );
@@ -857,9 +869,9 @@ class Permalink_Manager_Core_Functions {
 		/**
 		 * 5. WWW prefix | SSL mismatch redirect
 		 */
-		if ( ! empty( $permalink_manager_options['general']['sslwww_redirect'] ) && ! empty( $_SERVER['HTTP_HOST'] ) ) {
+		if ( ! empty( $permalink_manager_options['general']['sslwww_redirect'] ) && ! empty( $http_host ) ) {
 			$home_url_has_www      = ( strpos( $home_url, 'www.' ) !== false ) ? true : false;
-			$requested_url_has_www = ( strpos( $_SERVER['HTTP_HOST'], 'www.' ) !== false ) ? true : false;
+			$requested_url_has_www = ( strpos( $http_host, 'www.' ) !== false ) ? true : false;
 			$home_url_has_ssl      = ( strpos( $home_url, 'https' ) !== false ) ? true : false;
 
 			if ( ( $home_url_has_www !== $requested_url_has_www ) || ( ! is_ssl() && $home_url_has_ssl !== false ) ) {
@@ -929,6 +941,7 @@ class Permalink_Manager_Core_Functions {
 		if ( ( ! empty( $wp->query_vars['paged'] ) && $wp->query_vars['paged'] == 1 ) || ( ! empty( $wp->query_vars['page'] ) && $wp->query_vars['page'] == 1 ) ) {
 			$wp_query->query_vars['do_not_redirect'] = 0;
 		} // Allow canonical redirect for URL with specific query parameters
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Front-end canonical redirect handling; no form is processed here.
 		else if ( ( is_single() && ( ! empty( $_GET['p'] ) || ! empty( $_GET['name'] ) ) ) || ( is_page() && ! empty( $_GET['page_id'] ) ) ) {
 			$wp_query->query_vars['do_not_redirect'] = 0;
 		}
@@ -971,8 +984,8 @@ class Permalink_Manager_Core_Functions {
 	function case_insensitive_permalinks() {
 		global $permalink_manager_uris;
 
-		if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
-			$_SERVER['REQUEST_URI'] = strtolower( $_SERVER['REQUEST_URI'] );
+		if ( isset( $_SERVER['REQUEST_URI'] ) ) {
+			$_SERVER['REQUEST_URI'] = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) );
 			$permalink_manager_uris = array_map( 'strtolower', $permalink_manager_uris );
 		}
 	}

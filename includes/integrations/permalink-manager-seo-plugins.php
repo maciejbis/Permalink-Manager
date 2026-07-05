@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * SEO plugins integration
@@ -45,9 +47,10 @@ class Permalink_Manager_SEO_Plugins {
 	function yoast_fix_sitemap_urls( $permalink ) {
 		if ( class_exists( 'WPSEO_Utils' ) ) {
 			$home_url      = WPSEO_Utils::home_url();
-			$home_protocol = parse_url( $home_url, PHP_URL_SCHEME );
+			$home_protocol = wp_parse_url( $home_url, PHP_URL_SCHEME );
 
-			$permalink = preg_replace( "/^http(s)?/", $home_protocol, $permalink );
+			// Use the built-in WordPress function to safely swap the protocol
+			$permalink = set_url_scheme( $permalink, $home_protocol );
 		}
 
 		return $permalink;
@@ -72,9 +75,17 @@ class Permalink_Manager_SEO_Plugins {
 				$object_type = 'post';
 			}
 
-			if ( ! empty( $permalink ) ) {
+			if ( ! empty( $permalink ) && ! is_wp_error( $permalink ) ) {
 				$permalink_hash = strlen( $permalink ) . ':' . md5( $permalink );
-				$wpdb->update( "{$wpdb->prefix}yoast_indexable", array( 'permalink' => $permalink, 'permalink_hash' => $permalink_hash ), array( 'object_id' => $element_id, 'object_type' => $object_type ), array( '%s', '%s' ), array( '%d', '%s' ) );
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Updating a custom 3rd party table where core functions cannot be used.
+				$wpdb->update( "{$wpdb->prefix}yoast_indexable", array(
+						'permalink'      => $permalink,
+						'permalink_hash' => $permalink_hash
+					), array(
+						'object_id'   => $element_id,
+						'object_type' => $object_type
+					), array( '%s', '%s' ), array( '%d', '%s' ) );
 			}
 		}
 	}
@@ -214,16 +225,18 @@ class Permalink_Manager_SEO_Plugins {
 
 			// 1B. Try to get term
 			if ( empty( $element ) && ! empty( $available_taxonomies ) ) {
-				$sql = sprintf( "SELECT t.term_id, t.name, tt.taxonomy FROM {$wpdb->terms} AS t LEFT JOIN {$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id WHERE slug = '%s' AND tt.taxonomy IN ('%s') LIMIT 1", esc_sql( $slug ), implode( "','", array_keys( $available_taxonomies ) ) );
+				$tax_in_clause = \Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( array_keys( $available_taxonomies ) );
 
-				$element = $wpdb->get_row( $sql );
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safely escaped by helper function.
+				$element = $wpdb->get_row( $wpdb->prepare( "SELECT t.term_id, t.name, tt.taxonomy FROM {$wpdb->terms} AS t LEFT JOIN {$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id WHERE t.slug = %s AND tt.taxonomy IN ($tax_in_clause) LIMIT 1", $slug ) );
 			}
 
 			// 1C. Try to get page/post
 			if ( empty( $element ) && ! empty( $available_post_types ) ) {
-				$sql = sprintf( "SELECT ID, post_title, post_type FROM {$wpdb->posts} WHERE post_name = '%s' AND post_status = 'publish' AND post_type IN ('%s') AND post_type != 'attachment' LIMIT 1", esc_sql( $slug ), implode( "','", array_keys( $available_post_types ) ) );
+				$cpt_in_clause = \Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( array_keys( $available_post_types ) );
 
-				$element = $wpdb->get_row( $sql );
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safely escaped by helper function.
+				$element = $wpdb->get_row( $wpdb->prepare( "SELECT ID, post_title, post_type FROM {$wpdb->posts} WHERE post_name = %s AND post_status = 'publish' AND post_type IN ($cpt_in_clause) AND post_type != 'attachment' LIMIT 1", $slug ) );
 			}
 
 			// 1D. Try to get post type archive
@@ -234,7 +247,7 @@ class Permalink_Manager_SEO_Plugins {
 
 			// 2A. When the term is found, we can add it to the breadcrumbs
 			if ( ! empty( $element->term_id ) ) {
-				$term_id = apply_filters( 'wpml_object_id', $element->term_id, $element->taxonomy, true );
+				$term_id = apply_filters( 'wpml_object_id', $element->term_id, $element->taxonomy, true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 				$term    = ( ( $element->term_id !== $term_id ) || $is_aioseo ) ? get_term( $term_id ) : $element;
 
 				// Alternative title
@@ -264,7 +277,7 @@ class Permalink_Manager_SEO_Plugins {
 				}
 			} // 2B. When the post/page is found, we can add it to the breadcrumbs
 			else if ( ! empty( $element->ID ) ) {
-				$page_id = apply_filters( 'wpml_object_id', $element->ID, $element->post_type, true );
+				$page_id = apply_filters( 'wpml_object_id', $element->ID, $element->post_type, true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 				$page    = ( ( $element->ID !== $page_id ) || $is_aioseo ) ? get_post( $page_id ) : $element;
 
 				// Alternative title
@@ -296,7 +309,7 @@ class Permalink_Manager_SEO_Plugins {
 			else if ( ! empty( $element->rewrite ) && ( ! empty( $element->labels->name ) ) ) {
 				if ( $is_aioseo ) {
 					$breadcrumbs[] = array(
-						$breadcrumb_key_text => apply_filters( 'post_type_archive_title', $element->labels->name, $element->name ),
+						$breadcrumb_key_text => apply_filters( 'post_type_archive_title', $element->labels->name, $element->name ), // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 						$breadcrumb_key_url  => get_post_type_archive_link( $element->name ),
 						'type'               => 'postTypeArchive',
 						'subType'            => '',
@@ -304,7 +317,7 @@ class Permalink_Manager_SEO_Plugins {
 					);
 				} else {
 					$breadcrumbs[] = array(
-						$breadcrumb_key_text => apply_filters( 'post_type_archive_title', $element->labels->name, $element->name ),
+						$breadcrumb_key_text => apply_filters( 'post_type_archive_title', $element->labels->name, $element->name ), // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 						$breadcrumb_key_url  => get_post_type_archive_link( $element->name )
 					);
 				}

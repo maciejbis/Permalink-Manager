@@ -1,13 +1,13 @@
-=== Permalink Manager Lite ===
+=== Permalink Manager Pro ===
 Contributors: mbis
 Donate link: https://www.paypal.me/Bismit
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, custom permalink
-Requires at least: 4.4.0
+Requires at least: 5.3.0
 Requires PHP: 5.4
-Tested up to: 7.0
-Stable tag: 2.5.3.4
+Tested up to: 7.1
+Stable tag: 2.5.4
 
 Permalink Manager enhances WordPress’s built-in URL system, allowing you to change the URLs of native and custom post types and taxonomies.
 
@@ -91,6 +91,18 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 8.	Permalink Manager settings.
 
 == Changelog ==
+
+= 2.5.4 (July 6, 2026) =
+* Dev - Added "quick setup" wizard for first-time configuration
+
+= 2.5.3.6 (July 2, 2026) =
+* Fix - "Coupon Link" metabox is now hidden if "Coupons" post type is disabled in the plugin settings
+* Fix - Fixed 'Warning: Undefined array key "show" in permalink-manager-admin-functions.php' file
+* Dev - Sanitized and unslashed request inputs and resolved Plugin Check (PHPCS) warnings
+
+= 2.5.3.5 (June 4, 2026) =
+* Fix - Fixed 'Warning: Undefined array key "ID"' PHP warning in URI Editor for taxonomies
+* Dev - "URI Editor" UI changes
 
 = 2.5.3.4 (May 13, 2026) =
 * Security - Patched a XSS vulnerability (CVE-2026-8494) in the "URI Editor" admin section

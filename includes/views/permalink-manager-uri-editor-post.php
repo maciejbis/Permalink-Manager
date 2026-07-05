@@ -12,7 +12,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	public $displayed_post_types, $displayed_post_statuses;
 
 	public function __construct() {
-		global $permalink_manager_options, $active_subsection;
+		global $permalink_manager_options, $permalink_manager_active_subsection;
 
 		parent::__construct( array(
 			'singular' => 'slug',
@@ -20,7 +20,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		) );
 
 		$this->displayed_post_statuses = ( isset( $permalink_manager_options['screen-options']['post_statuses'] ) ) ? Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $permalink_manager_options['screen-options']['post_statuses'] ) : "'no-post-status'";
-		$this->displayed_post_types    = ( $active_subsection == 'all' ) ? Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $permalink_manager_options['screen-options']['post_types'] ) : "'{$active_subsection}'";
+		$this->displayed_post_types    = ( $permalink_manager_active_subsection == 'all' ) ? Permalink_Manager_Helper_Functions::prepare_array_for_sql_in( $permalink_manager_options['screen-options']['post_types'] ) : "'{$permalink_manager_active_subsection}'";
 	}
 
 	/**
@@ -166,7 +166,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	 * The button that allows to save updated slugs
 	 */
 	function extra_tablenav( $which ) {
-		global $wpdb, $active_section, $active_subsection;
+		global $wpdb;
 
 		if ( $which == "top" ) {
 			$button_text = __( 'Save all the permalinks below', 'permalink-manager' );
@@ -196,7 +196,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 				$select_field = Permalink_Manager_UI_Elements::generate_option_field( 'month', array(
 					'type'    => 'select',
 					'choices' => $choices,
-					'value'   => ( isset( $_REQUEST['month'] ) ) ? sanitize_key( $_REQUEST['month'] ) : ''
+					'value'   => ( isset( $_REQUEST['month'] ) ) ? sanitize_key( $_REQUEST['month'] ) : '' // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only WP_List_Table month filter
 				) );
 
 				$html .= sprintf( '<div id="months-filter" class="alignleft actions">%s</div>', $select_field );
@@ -227,7 +227,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	 * @return string
 	 */
 	public function search_box( $text = '', $input_id = '' ) {
-		$search_query = ( ! empty( $_REQUEST['s'] ) ) ? esc_attr( sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) ) : "";
+		$search_query = ( ! empty( $_REQUEST['s'] ) ) ? esc_attr( sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) ) : ""; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only WP_List_Table search value; no state change.
 
 		$output = "<p class=\"search-box\">";
 		$output .= "<label class=\"screen-reader-text\" for=\"{$input_id}\">{$text}:</label>";
@@ -250,6 +250,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 		$current_page = $this->get_pagenum();
 
 		// SQL query parameters
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only WP_List_Table search value; no state change.
 		$order        = ( isset( $_REQUEST['order'] ) && in_array( $_REQUEST['order'], array( 'asc', 'desc' ) ) ) ? sanitize_sql_orderby( wp_unslash( $_REQUEST['order'] ) ) : 'desc';
 		$orderby      = ( isset( $_REQUEST['orderby'] ) ) ? sanitize_sql_orderby( wp_unslash( $_REQUEST['orderby'] ) ) : 'ID';
 		$search_query = ( ! empty( $_REQUEST['s'] ) ) ? esc_sql( sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) ) : "";
@@ -262,6 +263,7 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 
 			$extra_filters .= "AND month(post_date) = {$month} AND year(post_date) = {$year}";
 		}
+		// phpcs:enable
 
 		// Support for attachments
 		if ( strpos( $this->displayed_post_types, 'attachment' ) !== false ) {
@@ -321,9 +323,11 @@ class Permalink_Manager_URI_Editor_Post extends WP_List_Table {
 	 */
 	private function sort_data( $a, $b ) {
 		// Set defaults
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only WP_List_Table sort column; no state change.
 		$orderby = ( ! empty( $_GET['orderby'] ) ) ? sanitize_sql_orderby( wp_unslash( $_GET['orderby'] ) ) : 'post_title';
 		$order   = ( ! empty( $_GET['order'] ) ) ? sanitize_sql_orderby( wp_unslash( $_GET['order'] ) ) : 'asc';
 		$result  = strnatcasecmp( $a[ $orderby ], $b[ $orderby ] );
+		// phpcs:enable
 
 		return ( $order === 'asc' ) ? $result : - $result;
 	}

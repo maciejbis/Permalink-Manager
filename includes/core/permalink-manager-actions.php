@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Additional hooks for "Permalink Manager Pro"
@@ -734,7 +736,9 @@ class Permalink_Manager_Actions {
 	function ajax_detect_duplicates() {
 		$duplicate_alert = __( "Permalink is already in use, please select another one!", "permalink-manager" );
 		$duplicates_data = array();
-		$custom_uris     = ( ! empty( $_REQUEST['custom_uris'] ) ) ? Permalink_Manager_Helper_Functions::sanitize_array( $_REQUEST['custom_uris'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended -- No data is saved here
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- No data is saved here; the array is recursively sanitized via sanitize_array().
+		$custom_uris = ( ! empty( $_REQUEST['custom_uris'] ) ) ? Permalink_Manager_Helper_Functions::sanitize_array( wp_unslash( $_REQUEST['custom_uris'] ) ) : array();
 
 		if ( ! empty( $custom_uris ) ) {
 			// Check each URI
@@ -742,8 +746,15 @@ class Permalink_Manager_Actions {
 				$element_id                     = sanitize_key( $raw_element_id );
 				$duplicates_data[ $element_id ] = Permalink_Manager_URI_Functions::is_uri_duplicated( $element_uri, $element_id ) ? $duplicate_alert : 0;
 			}
-		} else if ( ! empty( $_REQUEST['custom_uri'] ) && ! empty( $_REQUEST['element_id'] ) ) {
-			$duplicates_data = Permalink_Manager_URI_Functions::is_uri_duplicated( $_REQUEST['custom_uri'], sanitize_key( $_REQUEST['element_id'] ) );
+		} else {
+			// phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended -- No data is saved here
+			$single_uri = ( ! empty( $_REQUEST['custom_uri'] ) ) ? sanitize_text_field( wp_unslash( $_REQUEST['custom_uri'] ) ) : '';
+			$element_id = ( ! empty( $_REQUEST['element_id'] ) ) ? sanitize_key( $_REQUEST['element_id'] ) : '';
+			// phpcs:enable
+
+			if ( ! empty( $single_uri ) && ! empty( $element_id ) ) {
+				$duplicates_data = Permalink_Manager_URI_Functions::is_uri_duplicated( $single_uri, $element_id );
+			}
 		}
 
 		wp_send_json( $duplicates_data );
@@ -755,8 +766,8 @@ class Permalink_Manager_Actions {
 	function ajax_hide_global_notice() {
 		global $permalink_manager_alerts;
 
-		// Get the ID of the alert
-		$alert_id = ( ! empty( $_REQUEST['alert_id'] ) ) ? sanitize_title( $_REQUEST['alert_id'] ) : "";
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Low-risk cosmetic notice dismissal; authenticated admin-only AJAX action and no nonce is transmitted by the notice markup.
+		$alert_id = ( ! empty( $_REQUEST['alert_id'] ) ) ? sanitize_title( wp_unslash( $_REQUEST['alert_id'] ) ) : "";
 		if ( ! empty( $permalink_manager_alerts[ $alert_id ] ) ) {
 			$dismissed_transient_name = sprintf( 'permalink-manager-notice_%s', $alert_id );
 			$dismissed_time           = ( ! empty( $permalink_manager_alerts[ $alert_id ]['dismissed_time'] ) ) ? (int) $permalink_manager_alerts[ $alert_id ]['dismissed_time'] : DAY_IN_SECONDS;

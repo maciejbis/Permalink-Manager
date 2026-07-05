@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Third parties integration
@@ -171,7 +173,7 @@ class Permalink_Manager_Third_Parties {
 			else if ( class_exists( '\Groundhogg\Plugin' ) && ! empty( $query_vars['subpage'] ) ) {
 				$wp_query->query_vars['do_not_redirect'] = 1;
 			} // MyListing theme
-			else if ( ! empty( $query_vars['explore_tab'] ) || ! empty( $query_vars['explore_region'] ) || ! empty( $_POST['submit_job'] ) ) {
+			else if ( ! empty( $query_vars['explore_tab'] ) || ! empty( $query_vars['explore_region'] ) || ! empty( $_POST['submit_job'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- No data is processed here
 				$wp_query->query_vars['do_not_redirect'] = 1;
 			} // GeoDirectory
 			else if ( function_exists( 'geodir_location_page_id' ) && ! empty( $post->ID ) && geodir_location_page_id() == $post->ID ) {
@@ -180,7 +182,7 @@ class Permalink_Manager_Third_Parties {
 			else if ( isset( $query_vars['schema-preview'] ) ) {
 				$wp_query->query_vars['do_not_redirect'] = 1;
 			} // Theme.co - Pro Theme
-			else if ( ! empty( $_POST['_cs_nonce'] ) ) {
+			else if ( ! empty( $_POST['_cs_nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- No data is processed here
 				$wp_query->query_vars['do_not_redirect'] = 1;
 			} // Tutor LMS
 			else if ( ! empty( $query_vars['tutor_dashboard_page'] ) ) {
@@ -215,7 +217,7 @@ class Permalink_Manager_Third_Parties {
 			preg_match( "/^(.+?)\/({$amp_query_var})?\/?$/i", $uri_parts['uri'], $regex_parts );
 			if ( ! empty( $regex_parts[2] ) ) {
 				$uri_parts['uri'] = $regex_parts[1];
-				$amp_enabled      = true;
+				$amp_enabled      = true; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 			}
 		}
 
@@ -286,8 +288,9 @@ class Permalink_Manager_Third_Parties {
 		}
 
 		// List posts/pages
-		$query = "SELECT p.ID, m.meta_value FROM $wpdb->posts AS p LEFT JOIN $wpdb->postmeta AS m ON (p.ID = m.post_id)  WHERE m.meta_key = 'custom_permalink' AND m.meta_value != '';";
-		$posts = $wpdb->get_results( $query );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$posts = $wpdb->get_results( $wpdb->prepare( "SELECT p.ID, m.meta_value FROM {$wpdb->posts} AS p LEFT JOIN {$wpdb->postmeta} AS m ON (p.ID = m.post_id) WHERE m.meta_key = %s AND m.meta_value != ''", 'custom_permalink' ) );
+
 		foreach ( $posts as $post ) {
 			$custom_permalinks_uris[] = array(
 				'id'  => $post->ID,
@@ -306,6 +309,7 @@ class Permalink_Manager_Third_Parties {
 
 		$custom_permalinks_plugin = 'custom-permalinks/custom-permalinks.php';
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The nonce is already validated in enclosing function
 		if ( is_plugin_active( $custom_permalinks_plugin ) && ! empty( $_POST['disable_custom_permalinks'] ) ) {
 			deactivate_plugins( $custom_permalinks_plugin );
 		}
@@ -338,7 +342,7 @@ class Permalink_Manager_Third_Parties {
 	function tml_ignore_custom_permalinks() {
 		global $wp, $permalink_manager_ignore_permalink_filters;
 
-		if ( isset( $wp->query_vars['action'] ) || ! empty( $_GET['redirect_to'] ) ) {
+		if ( isset( $wp->query_vars['action'] ) || ! empty( $_GET['redirect_to'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended -- No data is processed here
 			$permalink_manager_ignore_permalink_filters = true;
 
 			// Allow the canonical redirect (if blocked earlier by Permalink Manager)
@@ -453,8 +457,10 @@ class Permalink_Manager_Third_Parties {
 	 * @return mixed
 	 */
 	function wpai_save_toggle_import( $post ) {
-		if ( isset( $_POST['is_update_custom_uri'] ) && is_numeric( $_POST['is_update_custom_uri'] ) ) {
-			$post['is_update_custom_uri'] = filter_var( $_POST['is_update_custom_uri'], FILTER_SANITIZE_NUMBER_INT );
+		$custom_uri = isset( $_POST['is_update_custom_uri'] ) ? wp_unslash( $_POST['is_update_custom_uri'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The nonce is already validated in enclosing function.
+
+		if ( is_numeric( $custom_uri ) ) {
+			$post['is_update_custom_uri'] = filter_var( $custom_uri, FILTER_SANITIZE_NUMBER_INT );
 		}
 
 		return $post;
@@ -626,6 +632,7 @@ class Permalink_Manager_Third_Parties {
 	function wpai_bulk_regenerate_uris_after_xml_import( $import_id ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$post_ids   = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$wpdb->prefix}pmxi_posts WHERE import_id = %d", $import_id ) );
 		$chunk_size = 200;
 
@@ -905,8 +912,11 @@ class Permalink_Manager_Third_Parties {
 	 * @return array The new query array is being returned if the explore_tab property is present. Otherwise, the original query is returned.
 	 */
 	function ml_detect_archives( $query, $old_query ) {
-		if ( function_exists( 'mylisting_custom_taxonomies' ) && empty( $_POST['submit_job'] ) ) {
+		$submit_job = isset( $_POST['submit_job'] ) ? sanitize_text_field( wp_unslash( $_POST['submit_job'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- No data is processed here
+
+		if ( function_exists( 'mylisting_custom_taxonomies' ) && empty( $submit_job ) ) {
 			$explore_page_id = get_option( 'options_general_explore_listings_page', false );
+
 			if ( empty( $explore_page_id ) ) {
 				return $query;
 			}
@@ -923,7 +933,7 @@ class Permalink_Manager_Third_Parties {
 				$ml_taxonomies = array_keys( $ml_taxonomies );
 
 				foreach ( $ml_taxonomies as $taxonomy ) {
-					if ( ! empty( $query[ $taxonomy ] ) && ! empty( $query['term'] ) && empty( $_GET[ $taxonomy ] ) ) {
+					if ( ! empty( $query[ $taxonomy ] ) && ! empty( $query['term'] ) && empty( $_GET[ $taxonomy ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No data is processed here
 						$new_query["explore_tab"]         = $taxonomy;
 						$new_query["explore_{$taxonomy}"] = $query['term'];
 					}
@@ -938,7 +948,7 @@ class Permalink_Manager_Third_Parties {
 			);
 
 			foreach ( $ml_query_vars as $query_var => $explore_tab ) {
-				if ( ! empty( $old_query[ $query_var ] ) && empty( $_GET[ $query_var ] ) ) {
+				if ( ! empty( $old_query[ $query_var ] ) && empty( $_GET[ $query_var ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No data is processed here
 					$new_query[ $query_var ]  = $old_query[ $query_var ];
 					$new_query["explore_tab"] = $explore_tab;
 				}
@@ -1141,7 +1151,7 @@ class Permalink_Manager_Third_Parties {
 			$um_page_id = UM()->config()->permalinks[ $um_page ];
 
 			// Support for WPML/Polylang
-			$um_page_id  = ( ! empty( $uri_parts['lang'] ) ) ? apply_filters( 'wpml_object_id', $um_page_id, 'page', true, $uri_parts['lang'] ) : $um_page_id;
+			$um_page_id  = ( ! empty( $uri_parts['lang'] ) ) ? apply_filters( 'wpml_object_id', $um_page_id, 'page', true, $uri_parts['lang'] ) : $um_page_id; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 			$um_page_uri = ( ! empty( $um_page_id ) ) ? Permalink_Manager_URI_Functions::get_single_uri( $um_page_id, false, true, false ) : '';
 
 			if ( ! empty( $um_page_id ) && ! empty( $um_page_uri ) ) {
@@ -1193,7 +1203,7 @@ class Permalink_Manager_Third_Parties {
 	 * @param mixed $meta_value The value of the meta key.
 	 */
 	public function wpsl_regenerate_after_import( $meta_id, $post_id, $meta_key, $meta_value ) {
-		if ( strpos( $meta_key, 'wpsl_' ) !== false && isset( $_POST['wpsl_csv_import_nonce'] ) ) {
+		if ( strpos( $meta_key, 'wpsl_' ) !== false && isset( $_POST['wpsl_csv_import_nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- No data is processed here
 			$default_uri = Permalink_Manager_URI_Functions_Post::get_default_post_uri( $post_id );
 
 			if ( $default_uri ) {
@@ -1210,10 +1220,10 @@ class Permalink_Manager_Third_Parties {
 	 * @return array
 	 */
 	function googlesitekit_fix_request( $request ) {
-		if ( ! empty( $_GET['permaLink'] ) && ! empty( $_GET['page'] ) && $_GET['page'] === 'googlesitekit-dashboard' ) {
+		if ( ! empty( $_GET['permaLink'] ) && ! empty( $_GET['page'] ) && $_GET['page'] === 'googlesitekit-dashboard' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			global $pm_query;
 
-			$old_url   = trim( esc_url_raw( $_GET['permaLink'] ), '/' );
+			$old_url   = trim( esc_url_raw( wp_unslash ( $_GET['permaLink']) ), '/' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$new_query = Permalink_Manager_Core_Functions::detect_post( array(), $old_url );
 
 			if ( ! empty( $new_query ) && ! empty( $pm_query['id'] ) ) {

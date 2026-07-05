@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Additional debug functions for "Permalink Manager Pro"
@@ -135,14 +137,24 @@ class Permalink_Manager_Debug_Functions {
 	}
 
 	/**
+	 * A helper function used to prepare the debug data
+	 *
+	 * @param mixed $debug_info
+	 */
+	public static function prepare_debug_data( $debug_info, $wrap_in_pre = false ) {
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- print_r() is a part of debug tool
+		$debug_txt = print_r( $debug_info, true );
+
+		return ( $wrap_in_pre ) ? sprintf( '<pre style="display:block;">%s</pre>', esc_html( $debug_txt ) ) : ( $debug_txt );
+	}
+
+	/**
 	 * A helper function used to display the debug data in various functions
 	 *
 	 * @param mixed $debug_info
 	 */
 	public static function display_debug_data( $debug_info ) {
-		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- print_r() is a part of debug tool
-		$debug_txt = print_r( $debug_info, true );
-		$debug_txt = sprintf( "<pre style=\"display:block;\">%s</pre>", esc_html( $debug_txt ) );
+		$debug_txt = self::prepare_debug_data( $debug_info, true );
 
 		wp_die( wp_kses_post( $debug_txt ) );
 	}

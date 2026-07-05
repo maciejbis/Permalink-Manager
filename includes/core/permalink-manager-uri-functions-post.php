@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * A set of functions for processing and applying the custom permalink to posts
@@ -53,6 +55,8 @@ class Permalink_Manager_URI_Functions_Post {
 	 */
 	static function custom_post_permalinks( $permalink, $post, $leavename = false ) {
 		global $permalink_manager_uris, $permalink_manager_options, $permalink_manager_ignore_permalink_filters;
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only context detection inside a permalink filter; no form is processed here.
 
 		// Do not filter permalinks in Customizer
 		if ( function_exists( 'is_customize_preview' ) && is_customize_preview() ) {
@@ -124,6 +128,8 @@ class Permalink_Manager_URI_Functions_Post {
 		} else if ( $post->post_type == 'attachment' && $post->post_parent > 0 && $post->post_parent != $post->ID && ! empty( $permalink_manager_uris[ $post->post_parent ] ) ) {
 			$permalink = "{$home_url}/{$permalink_manager_uris[$post->post_parent]}/attachment/{$post->post_name}";
 		}
+
+		// phpcs:enable
 
 		return apply_filters( 'permalink_manager_filter_final_post_permalink', $permalink, $post, $old_permalink );
 	}
@@ -246,7 +252,7 @@ class Permalink_Manager_URI_Functions_Post {
 		$default_base = ( ! empty( $permastructure ) ) ? trim( $permastructure, '/' ) : "";
 
 		// 2A. Get the date
-		$date      = explode( " ", date( 'Y m d H i s', strtotime( $post->post_date ) ) );
+		$date      = explode( " ", gmdate( 'Y m d H i s', strtotime( $post->post_date ) ) );
 		$monthname = sanitize_title( date_i18n( 'F', strtotime( $post->post_date ) ) );
 
 		// 2B. Get the author (if needed)
@@ -414,7 +420,7 @@ class Permalink_Manager_URI_Functions_Post {
 		// Make sure that $pm_query global is not changed
 		$old_pm_query = $pm_query;
 		$post         = Permalink_Manager_Core_Functions::detect_post( array(), $url, true );
-		$pm_query     = $old_pm_query;
+		$pm_query     = $old_pm_query; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 
 		if ( ! empty( $post->ID ) ) {
 			$native_url = "/?p={$post->ID}";
@@ -432,6 +438,7 @@ class Permalink_Manager_URI_Functions_Post {
 		global $wpdb, $permalink_manager_options;
 
 		// Check if post types & statuses are not empty
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce is verified in Permalink_Manager_Actions before this method is invoked.
 		if ( empty( $_POST['post_types'] ) || empty( $_POST['post_statuses'] ) ) {
 			return false;
 		}
@@ -445,7 +452,7 @@ class Permalink_Manager_URI_Functions_Post {
 		$where = '';
 		if ( ! empty( $_POST['ids'] ) ) {
 			// Remove whitespaces and prepare array with IDs and/or ranges
-			$ids = esc_sql( preg_replace( '/\s*/m', '', $_POST['ids'] ) );
+			$ids = esc_sql( preg_replace( '/\s*/m', '', sanitize_text_field( wp_unslash( $_POST['ids'] ) ) ) );
 			preg_match_all( "/([\d]+(?:-?[\d]+)?)/x", $ids, $groups );
 
 			// Prepare the extra ID filters
@@ -463,6 +470,7 @@ class Permalink_Manager_URI_Functions_Post {
 			}
 			$where .= ")";
 		}
+		// phpcs:enable
 
 		// Get excluded items
 		$excluded_posts = (array) apply_filters( 'permalink_manager_excluded_post_ids', array() );
@@ -486,7 +494,7 @@ class Permalink_Manager_URI_Functions_Post {
 		$query = "SELECT post_type, post_title, post_name, ID FROM {$wpdb->posts} AS p LEFT JOIN {$wpdb->postmeta} AS pm ON pm.post_ID = p.ID AND pm.meta_key = 'auto_update_uri' WHERE ((post_status IN ({$post_statuses_in}) AND post_type IN ({$post_types_in})){$attachment_support}) {$where}";
 		$query = apply_filters( 'permalink_manager_get_items_query', $query, $where, 'post_types' );
 
-		return $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		return $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared
 	}
 
 	/**
@@ -579,7 +587,8 @@ class Permalink_Manager_URI_Functions_Post {
 		$updated_slugs_count = 0;
 		$updated_array       = array();
 
-		$new_uris = isset( $_POST['uri'] ) ? $_POST['uri'] : array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified in Permalink_Manager_Actions before this method is invoked.
+		$new_uris = isset( $_POST['uri'] ) ? map_deep( wp_unslash( $_POST['uri'] ), 'sanitize_text_field' ) : array();
 
 		// Double check if the slugs and ids are stored in arrays
 		if ( ! is_array( $new_uris ) ) {
@@ -666,7 +675,7 @@ class Permalink_Manager_URI_Functions_Post {
 			$sample_permalink = sprintf( "%s/<span class=\"editable\">%s</span>", $home_url, str_replace( "//", "/", $sample_permalink_uri ) );
 		}
 
-		$sample_permalink_html = sprintf( "<span id=\"sample-permalink\"><span class=\"sample-permalink-span\"><a id=\"sample-permalink\" href=\"%s\">%s</a></span></span>&nbsp;", strip_tags( $sample_permalink ), $sample_permalink );
+		$sample_permalink_html = sprintf( "<span id=\"sample-permalink\"><span class=\"sample-permalink-span\"><a id=\"sample-permalink\" href=\"%s\">%s</a></span></span>&nbsp;", wp_strip_all_tags( $sample_permalink ), $sample_permalink );
 
 		// 1. Overwrite the sample permalink
 		if ( preg_match( '/(<span id="sample-permalink"><a.*<\/a><\/span>)/m', $html ) ) {
@@ -823,6 +832,7 @@ class Permalink_Manager_URI_Functions_Post {
 	function insert_post_hook( $post_id ) {
 		global $permalink_manager_uris;
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- Read-only context detection to skip processing during imports; no form is processed here.
 		// Do not trigger if post is a revision or imported via WP All Import (URI should be set after the post meta is added)
 		if ( empty( $post_id ) || wp_is_post_revision( $post_id ) || ( ! empty( $_REQUEST['page'] ) && $_REQUEST['page'] == 'pmxi-admin-import' ) ) {
 			return;
@@ -842,6 +852,7 @@ class Permalink_Manager_URI_Functions_Post {
 		if ( isset( $permalink_manager_uris[ $post_id ] ) || ( isset( $_POST['custom_uri'] ) ) ) {
 			return;
 		}
+		// phpcs:enable
 
 		self::save_uri( $post_id, '', true, 0 );
 	}
@@ -852,7 +863,7 @@ class Permalink_Manager_URI_Functions_Post {
 	 * @param int $post_id Term ID.
 	 */
 	static function update_post_hook( $post_id ) {
-		// Verify nonce at first
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Read-only context detection to skip processing during imports; no form is processed here.
 		if ( ! isset( $_POST['permalink-manager-nonce'] ) || ! wp_verify_nonce( $_POST['permalink-manager-nonce'], 'permalink-manager-edit-uri-box' ) ) {
 			return;
 		}
@@ -892,6 +903,7 @@ class Permalink_Manager_URI_Functions_Post {
 		}
 
 		self::save_uri( $post_id, $_POST['custom_uri'], false, $auto_update_mode );
+		// phpcs:enable
 	}
 
 	/**

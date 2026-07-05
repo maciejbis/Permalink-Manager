@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Support for Gutenberg editor
@@ -53,10 +55,11 @@ class Permalink_Manager_Gutenberg {
 	 * @param WP_Post|int $post
 	 */
 	public function get_uri_editor( $post = null ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only meta box render; access is gated by current_user_can() below.
 		if ( empty( $post->ID ) && empty( $_REQUEST['post_id'] ) ) {
 			return;
 		} else if ( ! empty( $_REQUEST['post_id'] ) && is_numeric( $_REQUEST['post_id'] ) ) {
-			$post = get_post( $_REQUEST['post_id'] );
+			$post = get_post( absint( $_REQUEST['post_id'] ) );
 		}
 
 		// Check if the user can edit this post
@@ -68,6 +71,7 @@ class Permalink_Manager_Gutenberg {
 		if ( wp_doing_ajax() && isset( $_GET['action'] ) && $_GET['action'] == 'pm_get_uri_editor' ) {
 			die();
 		}
+		// phpcs:enable
 	}
 
 }

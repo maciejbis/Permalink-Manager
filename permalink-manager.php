@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager Lite
  * Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
  * Description:       Advanced plugin that allows to set up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
- * Version:           2.5.3.4
+ * Version:           2.5.4
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -12,7 +12,7 @@
  * Text Domain:       permalink-manager
  * Domain Path:       /languages
  * WC requires at least: 3.0.0
- * WC tested up to:      10.7.0
+ * WC tested up to:      10.9.1
  */
 
 // If this file is called directly or plugin is already defined, abort
@@ -25,20 +25,21 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 	// Define the directories used to load plugin files.
 	define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 	define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-	define( 'PERMALINK_MANAGER_VERSION', '2.5.3.4' );
+	define( 'PERMALINK_MANAGER_VERSION', '2.5.4' );
 	define( 'PERMALINK_MANAGER_FILE', __FILE__ );
 	define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 	define( 'PERMALINK_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
 	define( 'PERMALINK_MANAGER_URL', untrailingslashit( plugins_url( '', __FILE__ ) ) );
 	define( 'PERMALINK_MANAGER_WEBSITE', 'https://permalinkmanager.pro?utm_source=plugin' );
 	define( 'PERMALINK_MANAGER_PROMO', 'https://permalinkmanager.pro/features/?utm_source=plugin' );
+	define( 'PERMALINK_MANAGER_DOCS', 'https://permalinkmanager.pro/get-started/?utm_source=plugin' );
 
 	/**
 	 * The base class responsible for loading the plugin data as well as any plugin subclasses and additional functions
 	 */
 	class Permalink_Manager_Class {
 		public $permalink_manager_options;
-		public $sections, $functions;
+		public $functions;
 
 		/**
 		 * Get options from DB, load subclasses & hooks
@@ -87,6 +88,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 					'debug'           => 'Permalink_Manager_Debug',
 					'pro-addons'      => 'Permalink_Manager_Pro_Addons',
 					'help'            => 'Permalink_Manager_Help',
+					'setup-wizard'    => 'Permalink_Manager_Setup_Wizard',
 					'uri-editor-tax'  => false,
 					'uri-editor-post' => false
 				)
@@ -382,7 +384,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 	/**
 	 * Begins execution of the plugin
 	 */
-	function run_permalink_manager() {
+	function permalink_manager_run() {
 		global $permalink_manager;
 
 		// Do not run when Elementor is opened
@@ -394,5 +396,5 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 		$permalink_manager = new Permalink_Manager_Class();
 	}
 
-	run_permalink_manager();
+	permalink_manager_run();
 }

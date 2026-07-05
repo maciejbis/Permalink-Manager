@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Display Bulk URI Editor
@@ -83,10 +85,10 @@ class Permalink_Manager_URI_Editor {
 	 * @return string
 	 */
 	public function screen_options( $html, $screen ) {
-		global $active_section;
+		global $permalink_manager_active_section;
 
 		// Display the screen options only in "Permalink Editor"
-		if ( $active_section != $this->this_section ) {
+		if ( $permalink_manager_active_section != $this->this_section ) {
 			return $html;
 		}
 
@@ -131,20 +133,24 @@ class Permalink_Manager_URI_Editor {
 		global $permalink_manager_options, $wpdb;
 
 		$per_page = is_numeric( $permalink_manager_options['screen-options']['per_page'] ) ? $permalink_manager_options['screen-options']['per_page'] : 10;
-		$offset   = ( $current_page - 1 ) * $per_page;
+		$offset   = (int) ( ( $current_page - 1 ) * $per_page );
 
 		// Prepare the count SQL query
 		$count_query_parts          = $sql_parts;
 		$count_query_parts['start'] = preg_replace( '/(SELECT.*FROM)/', 'SELECT COUNT(*) FROM', $count_query_parts['start'] );
 		$count_query                = apply_filters( 'permalink_manager_filter_uri_editor_query', implode( "", $count_query_parts ), $count_query_parts, $is_taxonomy );
-		$total_items_raw            = $wpdb->get_var( $count_query );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query built dynamically, sanitized upstream.
+		$total_items_raw = $wpdb->get_var( $count_query );
 
 		// Pagination support
 		$sql_query = implode( "", $sql_parts );
-		$sql_query .= sprintf( " LIMIT %d, %d", $offset, $per_page );
+		$sql_query .= sprintf( " LIMIT %d, %d", $offset, (int) $per_page );
 
 		// Get items
-		$sql_query     = apply_filters( 'permalink_manager_filter_uri_editor_query', $sql_query, $sql_parts, $is_taxonomy );
+		$sql_query = apply_filters( 'permalink_manager_filter_uri_editor_query', $sql_query, $sql_parts, $is_taxonomy );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query built dynamically, sanitized upstream.
 		$all_items_raw = $wpdb->get_results( $sql_query, ARRAY_A );
 
 		$total_items = ( is_numeric( $total_items_raw ) ) ? (int) $total_items_raw : 0;

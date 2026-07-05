@@ -858,7 +858,7 @@ class Permalink_Manager_Language_Plugins {
 	function translate_permastructure( $permastructure, $element ) {
 		global $permalink_manager_permastructs, $pagenow;
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Data is used for filtering only, no state change.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Data is used for filtering only, no state change.
 		// Get element language code
 		if ( ! empty( $_REQUEST['data'] ) && is_string( $_REQUEST['data'] ) && strpos( $_REQUEST['data'], "target_lang" ) ) {
 			$language_code = sanitize_key( preg_replace( '/(.*target_lang=)([^=&]+)(.*)/', '$2', $_REQUEST['data'] ) );
@@ -871,7 +871,7 @@ class Permalink_Manager_Language_Plugins {
 		} else {
 			$language_code = self::get_language_code( $element );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 
 		if ( ! empty( $element->ID ) ) {
 			$translated_permastructure = ( ! empty( $permalink_manager_permastructs["post_types"]["{$element->post_type}_{$language_code}"] ) ) ? $permalink_manager_permastructs["post_types"]["{$element->post_type}_{$language_code}"] : '';

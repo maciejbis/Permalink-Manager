@@ -18,6 +18,8 @@ class Permalink_Manager_WooCommerce {
 	 * Add support for SEO plugins using their hooks
 	 */
 	function init_hooks() {
+		global $permalink_manager_options;
+
 		if ( class_exists( 'WooCommerce' ) ) {
 			add_filter( 'permalink_manager_filter_query', array( $this, 'woocommerce_detect' ), 8, 5 );
 			add_filter( 'template_redirect', array( $this, 'woocommerce_checkout_fix' ), 9 );
@@ -87,7 +89,7 @@ class Permalink_Manager_WooCommerce {
 		$shop_page_id = get_option( 'woocommerce_shop_page_id' );
 
 		// WPML - translate shop page id
-		$shop_page_id = apply_filters( 'wpml_object_id', $shop_page_id, 'page', true );
+		$shop_page_id = apply_filters( 'wpml_object_id', $shop_page_id, 'page', true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 		// Fix shop page
 		if ( get_theme_support( 'woocommerce' ) && ! empty( $pm_query['id'] ) && is_numeric( $pm_query['id'] ) && $shop_page_id == $pm_query['id'] ) {
@@ -283,19 +285,21 @@ class Permalink_Manager_WooCommerce {
 			return $permalink;
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		// A. Native WooCommerce AJAX events
 		if ( ! empty( $_REQUEST['wc-ajax'] ) ) {
-			$action = sanitize_title( $_REQUEST['wc-ajax'] );
+			$action = sanitize_title( wp_unslash( $_REQUEST['wc-ajax'] ) );
 		} // B. Shoptimizer theme
 		else if ( ! empty( $_REQUEST['action'] ) ) {
-			$action = sanitize_title( $_REQUEST['action'] );
+			$action = sanitize_title( wp_unslash( $_REQUEST['action'] ) );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// Allowed action names
 		$allowed_actions = array( 'shoptimizer_pdp_ajax_atc', 'get_refreshed_fragments' );
 
 		if ( ! empty( $action ) && in_array( $action, $allowed_actions ) ) {
-			$translated_post_id = apply_filters( 'wpml_object_id', $post->ID, 'page' );
+			$translated_post_id = apply_filters( 'wpml_object_id', $post->ID, 'page' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 			$permalink          = ( $translated_post_id !== $post->ID ) ? get_permalink( $translated_post_id ) : $permalink;
 		}
 
@@ -435,8 +439,12 @@ class Permalink_Manager_WooCommerce {
 	 */
 	function wcs_fix_subscription_links( $permalink, $post, $old_permalink ) {
 		if ( ! empty( $post->post_type ) && $post->post_type == 'product' && strpos( $old_permalink, 'switch-subscription=' ) !== false ) {
-			$query_arg = parse_url( $old_permalink, PHP_URL_QUERY );
-			$permalink = "{$permalink}?{$query_arg}";
+			$query_string = wp_parse_url( $old_permalink, PHP_URL_QUERY );
+
+			if ( ! empty( $query_string ) ) {
+				wp_parse_str( $query_string, $parsed_args );
+				$permalink = add_query_arg( $parsed_args, $permalink );
+			}
 		}
 
 		return $permalink;

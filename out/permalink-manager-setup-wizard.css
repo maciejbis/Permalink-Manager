@@ -1,0 +1,31 @@
+.pm-setup-wrap{width:1200px;max-width:100%;margin:0 auto}
+.pm-setup-header{display:flex;align-content:center;justify-content:space-between;align-items:center;margin-top:24px}
+.pm-setup-header h1{padding-top:0}
+.pm-setup-box{margin-top:24px;padding:24px;background:#fff;border:1px solid #c3c4c7;border-radius:4px;box-shadow:0 1px 1px #0000000a}
+.pm-setup-progress{margin:0 0 4px;font-size:18px;font-weight:600}
+.pm-setup-box .checkboxes{margin:8px 0 4px;column-width:240px;column-gap:40px}
+.pm-setup-box .checkboxes > label{display:block;margin:0 0 8px;break-inside:avoid}
+.pm-setup-pro.notice a,.pm-setup-box .pro-alert a{font-weight:600;color:#de4130}
+.pm-setup-box .info{display:block;overflow:hidden;clear:both;border-left:4px solid #f0b849;background:#fef8ee}
+.pm-setup-box .pro-alert,.pm-setup-box .info{line-height:19px;padding:11px 15px;margin:15px 0;font-size:14px;font-weight:600}
+.pm-setup-success{max-width:700px;margin:48px auto}
+.pm-setup-success h2{font-size:28px;margin:0 0 24px;font-weight:800}
+.pm-setup-success p:first-of-type{margin-top:0}
+.pm-setup-success p{text-align:center}
+.pm-setup-success p.pm-lead{font-size:18px}
+.pm-setup-success .pm-pro-lead{font-size:15px}
+.pm-setup-success ul{margin:24px 0;display:grid;grid-template-columns:max-content max-content;justify-content:center;gap:1em 30px;padding:0;list-style-position:inside}
+.pm-setup-success ul li{margin-bottom:0;flex:0 0 50%;box-sizing:border-box;font-weight:600}
+.pm-setup-success ul li::before{content:"\f543";margin-right:16px;vertical-align:middle}
+.pm-setup-success .pm-setup-actions{margin:36px 0 0}
+.pm-setup-success .button.pm-button{font-size:18px;display:flex;align-items:center}
+.pm-setup-success .button.pm-button .dashicons{line-height:1;margin-right:10px}
+.pm-setup-success .pm-setup-pro{display:flex;align-items:center;flex-direction:column;padding-top:36px;border-top:1px solid #dcdcde;margin-top:36px}
+.pm-setup-footer{display:flex;align-content:center;justify-content:space-between;align-items:center;padding-top:24px;border-top:1px solid #dcdcde;margin-top:24px}
+.pm-setup-footer .button{margin-right:6px}
+.pm-setup-footer .button[hidden]{display:none}
+.pm-button,.pm-button:active{background-color:#de4130!important;border-color:#de4130!important;color:#fff!important}
+.pm-button:hover,.pm-button:focus{background-color:#db2b19!important;border-color:#db2b19!important;color:#fff!important}
+@media screen and (max-width: 782px) {
+    .pm-setup-footer{flex-direction:column}
+}

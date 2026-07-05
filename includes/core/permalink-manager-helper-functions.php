@@ -782,7 +782,7 @@ class Permalink_Manager_Helper_Functions {
 		}
 
 		// Lowercase with non-ASCII characters support
-		if ( $force_lowercase && function_exists( 'mb_strtolower' ) && function_exists( 'wp_is_valid_utf8' ) && wp_is_valid_utf8( $clean ) ) {
+		if ( $force_lowercase && function_exists( 'mb_strtolower' ) && function_exists( 'mb_check_encoding' ) && mb_check_encoding( $clean, 'UTF-8' ) ) {
 			$clean = mb_strtolower( $clean, 'UTF-8' );
 		} else if ( $force_lowercase ) {
 			$clean = strtolower( $clean );
