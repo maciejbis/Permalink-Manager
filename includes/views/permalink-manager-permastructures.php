@@ -40,8 +40,10 @@ class Permalink_Manager_Permastructs {
 
 		// Display additional information in Permalink Manager Lite
 		if ( ! Permalink_Manager_Admin_Functions::is_pro_active() ) {
+			$website_url = Permalink_Manager_Admin_Functions::get_plugin_website_url( 'features' );
+
 			/* translators: %s: Permalink Manager Pro website */
-			$pro_text = sprintf( __( 'To edit taxonomy permalinks, <a href="%s" target="_blank">Permalink Manager Pro</a> is required.', 'permalink-manager' ), PERMALINK_MANAGER_PROMO );
+			$pro_text = sprintf( __( 'To edit taxonomy permalinks, <a href="%s" target="_blank">Permalink Manager Pro</a> is required.', 'permalink-manager' ), $website_url );
 			$pro_text = sprintf( '<div class="alert info">%s</div>', $pro_text );
 		}
 
@@ -223,8 +225,8 @@ class Permalink_Manager_Permastructs {
 		);
 
 		if ( ! $is_taxonomy ) {
-			$post_type_tag        = Permalink_Manager_Permastructure_Functions::get_post_tag( $content_type );
-			$post_type_taxonomies = get_taxonomies( array( 'object_type' => array( $content_type ) ), 'objects' );
+			$post_type_tag = Permalink_Manager_Permastructure_Functions::get_post_tag( $content_type );
+			$post_type_taxonomies = get_object_taxonomies( $content_type, 'objects' );
 
 			$tags_groups['slug']['tags'] = array(
 				$post_type_tag,

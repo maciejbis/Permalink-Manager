@@ -77,7 +77,7 @@ class Permalink_Manager_Third_Parties {
 		// My Listing by 27collective
 		if ( class_exists( '\MyListing\Post_Types' ) ) {
 			add_filter( 'permalink_manager_filter_default_post_uri', array( $this, 'ml_listing_custom_fields' ), 5, 5 );
-			add_filter( 'permalink_manager_filter_query', array( $this, 'ml_detect_archives' ), 1, 2 );
+			add_filter( 'permalink_manager_filter_query', array( $this, 'ml_detect_archives' ), 1, 6 );
 
 			add_filter( 'mylisting/submission/save-listing-arr', array( $this, 'ml_delay_set_listing_uri' ), 0 );
 			add_filter( 'mylisting/admin/submission/fields', array( $this, 'ml_delay_set_listing_uri' ), 0 );
@@ -908,23 +908,24 @@ class Permalink_Manager_Third_Parties {
 	 *
 	 * @param array $query The query object.
 	 * @param array $old_query The original query array.
+	 * @param $uri_parts
+	 * @param $pm_query
+	 * @param $content_type
+	 * @param $element_object
 	 *
 	 * @return array The new query array is being returned if the explore_tab property is present. Otherwise, the original query is returned.
 	 */
-	function ml_detect_archives( $query, $old_query ) {
+	function ml_detect_archives( $query, $old_query, $uri_parts, $pm_query, $content_type, $element_object ) {
 		$submit_job = isset( $_POST['submit_job'] ) ? sanitize_text_field( wp_unslash( $_POST['submit_job'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- No data is processed here
 
 		if ( function_exists( 'mylisting_custom_taxonomies' ) && empty( $submit_job ) ) {
 			$explore_page_id = get_option( 'options_general_explore_listings_page', false );
 
-			if ( empty( $explore_page_id ) ) {
+			if ( empty( $explore_page_id ) || empty( $element_object ) ) {
 				return $query;
 			}
 
-			// Set-up new query array variable
-			$new_query = array(
-				"page_id" => $explore_page_id
-			);
+			$new_query = array( 'page_id' => $explore_page_id );
 
 			// Check if any custom MyListing taxonomy was detected
 			$ml_taxonomies = mylisting_custom_taxonomies();
@@ -933,24 +934,27 @@ class Permalink_Manager_Third_Parties {
 				$ml_taxonomies = array_keys( $ml_taxonomies );
 
 				foreach ( $ml_taxonomies as $taxonomy ) {
-					if ( ! empty( $query[ $taxonomy ] ) && ! empty( $query['term'] ) && empty( $_GET[ $taxonomy ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No data is processed here
+					if ( ! empty( $query[ $taxonomy ] ) && empty( $_GET[ $taxonomy ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No data is processed here
 						$new_query["explore_tab"]         = $taxonomy;
-						$new_query["explore_{$taxonomy}"] = $query['term'];
+						$new_query["explore_{$taxonomy}"] = $query[ $taxonomy ];
 					}
 				}
 			}
 
 			// Check if any MyListing query var was detected
 			$ml_query_vars = array(
-				'explore_tag'      => 'tags',
-				'explore_region'   => 'regions',
-				'explore_category' => 'categories'
+				'tags'                    => 'explore_tag',
+				'regions'                 => 'explore_region',
+				'categories'              => 'explore_category',
+				'case27_job_listing_tags' => 'explore_tag',
+				'region'                  => 'explore_region',
+				'job_listing_category'    => 'explore_category'
 			);
 
 			foreach ( $ml_query_vars as $query_var => $explore_tab ) {
-				if ( ! empty( $old_query[ $query_var ] ) && empty( $_GET[ $query_var ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No data is processed here
-					$new_query[ $query_var ]  = $old_query[ $query_var ];
-					$new_query["explore_tab"] = $explore_tab;
+				if ( ! empty( $query[ $query_var ] ) && empty( $_GET[ $query_var ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No data is processed here
+					$new_query["explore_tab"]  = $explore_tab;
+					$new_query[ $explore_tab ] = $query[ $query_var ];
 				}
 			}
 		}
@@ -1223,7 +1227,7 @@ class Permalink_Manager_Third_Parties {
 		if ( ! empty( $_GET['permaLink'] ) && ! empty( $_GET['page'] ) && $_GET['page'] === 'googlesitekit-dashboard' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			global $pm_query;
 
-			$old_url   = trim( esc_url_raw( wp_unslash ( $_GET['permaLink']) ), '/' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$old_url   = trim( esc_url_raw( wp_unslash( $_GET['permaLink'] ) ), '/' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$new_query = Permalink_Manager_Core_Functions::detect_post( array(), $old_url );
 
 			if ( ! empty( $new_query ) && ! empty( $pm_query['id'] ) ) {

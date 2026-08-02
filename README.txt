@@ -1,4 +1,4 @@
-=== Permalink Manager Pro ===
+=== Permalink Manager Lite ===
 Contributors: mbis
 Donate link: https://www.paypal.me/Bismit
 License: GPLv2
@@ -7,7 +7,7 @@ Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, custom p
 Requires at least: 5.3.0
 Requires PHP: 5.4
 Tested up to: 7.1
-Stable tag: 2.5.4
+Stable tag: 2.5.5
 
 Permalink Manager enhances WordPress’s built-in URL system, allowing you to change the URLs of native and custom post types and taxonomies.
 
@@ -91,6 +91,11 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 8.	Permalink Manager settings.
 
 == Changelog ==
+
+= 2.5.5 (August 2, 2026) =
+* Fix - Fixed a reflected XSS vulnerability in the "Regenerate/reset" tool reported by Tijmen Kivit
+* Fix - Taxonomy tags missing from "Additional Tags" in Permastructures editor when a taxonomy was registered for multiple post types
+* Fix - Custom permalinks for MyListing taxonomies correctly map to the dedicated listing templates
 
 = 2.5.4 (July 6, 2026) =
 * Dev - Added "quick setup" wizard for first-time configuration

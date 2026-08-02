@@ -35,7 +35,7 @@ class Permalink_Manager_Setup_Wizard {
         // Check if the user is being redirected from a successful setup submission.
         $is_done_redirect = ! empty( $_GET['pm_setup_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_GET['pm_setup_nonce'] ) ), 'pm_setup_done' );
 
-        //if ( self::is_unconfigured() || $is_done_redirect ) {
+        if ( self::is_unconfigured() || $is_done_redirect ) {
             add_action( 'admin_menu', array( $this, 'register_page' ), 20 );
             add_action( 'admin_init', array( $this, 'maybe_handle_submit' ), 20 );
 
@@ -43,7 +43,7 @@ class Permalink_Manager_Setup_Wizard {
             add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
             add_action( 'wp_ajax_pm_dismiss_setup_wizard', array( $this, 'ajax_dismiss_setup_wizard' ) );
-        //}
+        }
     }
 
     /**
@@ -222,6 +222,9 @@ class Permalink_Manager_Setup_Wizard {
      * @param bool $show_docs Whether to render the "Documentation" button.
      */
     protected function render_container_open( $title, $intro_html = '', $show_docs = false ) {
+        $docs_url    = Permalink_Manager_Admin_Functions::get_plugin_website_url( 'docs', array( 'utm_campaign' => 'plugin_setup' ) );
+        $support_url = Permalink_Manager_Admin_Functions::get_plugin_website_url( 'contact', array( 'utm_campaign' => 'plugin_setup' ) );
+
         ?>
         <div class="pm-setup-container">
         <div class="wrap pm-setup-wrap">
@@ -235,7 +238,10 @@ class Permalink_Manager_Setup_Wizard {
                 ?>
             </div>
             <?php if ( $show_docs ) : ?>
-                <div><a href="<?php echo esc_url( PERMALINK_MANAGER_DOCS ); ?>" target="_blank" rel="noopener" class="button button-secondary"><span class="dashicons dashicons-external"></span> <?php esc_html_e( 'Documentation', 'permalink-manager' ); ?></a></div>
+                <div>
+                    <a href="<?php echo esc_url( $docs_url ); ?>" target="_blank" rel="noopener" class="button button-secondary"><?php esc_html_e( 'Documentation', 'permalink-manager' ); ?></a>
+                    <a href="<?php echo esc_url( $support_url ); ?>" target="_blank" rel="noopener" class="button button-secondary"><?php esc_html_e( 'Support', 'permalink-manager' ); ?></a>
+                </div>
             <?php endif; ?>
         </div>
 
@@ -285,7 +291,9 @@ class Permalink_Manager_Setup_Wizard {
      * @return string
      */
     protected function upgrade_button( $label ) {
-        return sprintf( '<a href="%1$s" target="_blank" rel="noopener" class="button button-primary pm-button"><span class="dashicons dashicons-external"></span> %2$s</a>', esc_url( PERMALINK_MANAGER_PROMO ), esc_html( $label ) );
+        $upgrade_url = Permalink_Manager_Admin_Functions::get_plugin_website_url( 'pricing', array( 'utm_campaign' => 'plugin_setup' ) );
+
+        return sprintf( '<a href="%1$s" target="_blank" rel="noopener" class="button button-primary pm-button">%2$s</a>', esc_url( $upgrade_url ), esc_html( $label ) );
     }
 
     /**
@@ -351,8 +359,9 @@ class Permalink_Manager_Setup_Wizard {
 
         global $permalink_manager_options;
 
-        $is_pro = self::is_pro();
-        $total  = self::get_total_steps();
+        $is_pro      = self::is_pro();
+        $total       = self::get_total_steps();
+        $website_url = Permalink_Manager_Admin_Functions::get_plugin_website_url( 'features', array( 'utm_campaign' => 'plugin_setup' ) );
 
         // Universe of supported content types (technical ones already removed).
         $content_types  = self::get_supported_content_types();
@@ -375,7 +384,6 @@ class Permalink_Manager_Setup_Wizard {
         );
 
         $intro = '<p class="description">' . __( 'Select the content types that should use custom permalinks and choose which additional features to enable.', 'permalink-manager' ) . '</p>';
-        $intro .= '<p class="description">' . __( 'All plugin settings are available under <em>Tools → Permalink Manager → Settings</em>.', 'permalink-manager' ) . '</p>';
 
         $this->render_container_open( __( 'Permalink Manager: Quick Configuration', 'permalink-manager' ), $intro, true );
         $this->render_progress( $total );
@@ -403,7 +411,7 @@ class Permalink_Manager_Setup_Wizard {
                     ?>
                 <?php else : ?>
                     <p class="field-description description alert pro-alert info">
-                        <?php echo wp_kses_post( sprintf( __( 'Custom taxonomy permalinks are supported only in <a href="%s" target="_blank">Permalink Manager Pro</a>.', 'permalink-manager' ), esc_url( PERMALINK_MANAGER_PROMO ) ) ); ?>
+                        <?php echo wp_kses_post( sprintf( __( 'Custom taxonomy permalinks are supported only in <a href="%s" target="_blank">Permalink Manager Pro</a>.', 'permalink-manager' ), esc_url( $website_url ) ) ); ?>
                     </p>
                     <?php
                     // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in generate_option_field().
@@ -444,8 +452,8 @@ class Permalink_Manager_Setup_Wizard {
                 </div>
 
                 <div>
-                    <button type="button" class="button button-secondary pm-setup-back" hidden><span class="dashicons dashicons-arrow-left-alt"></span> <?php esc_html_e( 'Back', 'permalink-manager' ); ?></button>
-                    <button type="button" class="button button-primary pm-setup-next"><?php esc_html_e( 'Next', 'permalink-manager' ); ?> <span class="dashicons dashicons-arrow-right-alt"></span></button>
+                    <button type="button" class="button button-secondary pm-setup-back" hidden><?php esc_html_e( 'Back', 'permalink-manager' ); ?></button>
+                    <button type="button" class="button button-primary pm-setup-next"><?php esc_html_e( 'Next', 'permalink-manager' ); ?></button>
                     <button type="submit" class="button button-primary pm-setup-finish" hidden><?php esc_html_e( 'Finish setup', 'permalink-manager' ); ?></button>
                 </div>
             </div>
@@ -500,14 +508,14 @@ class Permalink_Manager_Setup_Wizard {
         $editor_url   = self::admin_url_for( 'permastructs' );
         $settings_url = self::admin_url_for( 'settings' );
 
-        $this->render_container_open( __( 'Setup Complete', 'permalink-manager' ) );
+        $this->render_container_open( __( 'Setup Complete', 'permalink-manager' ), '', true );
         ?>
         <div class="pm-setup-success">
-            <p class="description pm-lead"><?php echo wp_kses_post( __( 'Congratulations! You have successfully set up Permalink Manager. You can change any of these settings later under <em>Tools → Permalink Manager</em>.', 'permalink-manager' ) ); ?></p>
+            <p class="description pm-lead"><?php echo wp_kses_post( __( 'Congratulations! The plugin has been successfully configured and is ready to use.', 'permalink-manager' ) ); ?></p>
 
             <p class="pm-setup-actions">
                 <a href="<?php echo esc_url( $editor_url ); ?>" class="button button-primary"><?php esc_html_e( 'Edit permalink structures', 'permalink-manager' ); ?></a>
-                <a href="<?php echo esc_url( $settings_url ); ?>" class="button button-secondary"><?php esc_html_e( 'View all settings', 'permalink-manager' ); ?></a>
+                <a href="<?php echo esc_url( $settings_url ); ?>" class="button button-secondary"><?php esc_html_e( 'All settings', 'permalink-manager' ); ?></a>
             </p>
 
             <?php if ( ! $is_pro ) : ?>
@@ -522,30 +530,129 @@ class Permalink_Manager_Setup_Wizard {
      * Render the "Unlock all features" upsell shown to free users on the done screen.
      */
     protected function render_pro_box() {
+        $allowed_tags = array(
+                'code'   => array(),
+                'strong' => array(),
+        );
+
+        $features = array(
+                array(
+                        'label' => esc_html__( 'Posts, pages & custom post type permalinks', 'permalink-manager' ),
+                        'lite'  => true,
+                ),
+                array(
+                        'label' => esc_html__( 'Permalink formats & bulk URL updates', 'permalink-manager' ),
+                        'lite'  => true,
+                ),
+                array(
+                        'label' => esc_html__( 'Automatic redirect for original URL', 'permalink-manager' ),
+                        'lite'  => true,
+                ),
+                array(
+                        'label' => esc_html__( 'Translated permalinks (WPML, Polylang)', 'permalink-manager' ),
+                        'lite'  => true,
+                ),
+                array(
+                        'label' => esc_html__( 'Automatic redirects after custom permalink changes', 'permalink-manager' ),
+                        'lite'  => false,
+                ),
+                array(
+                        'label' => esc_html__( 'Change category & custom taxonomy permalinks', 'permalink-manager' ),
+                        'lite'  => false,
+                ),
+                array(
+                        'label' => sprintf( /* translators: 1: /product-category/ URL slug. 2: /product-tag/ URL slug. */ esc_html__( 'Remove %1$s and %2$s from WooCommerce URLs', 'permalink-manager' ), '<code>/product-category/</code>', '<code>/product-tag/</code>' ),
+                        'lite'  => false,
+                ),
+                array(
+                        'label' => esc_html__( 'Add custom fields to permalinks (ACF, Pods, JetEngine, Toolset)', 'permalink-manager' ),
+                        'lite'  => false,
+                ),
+                array(
+                        'label' => esc_html__( 'Add SKUs to product URLs & edit WooCommerce coupon links', 'permalink-manager' ),
+                        'lite'  => false,
+                ),
+                array(
+                        'label' => esc_html__( 'Additional & external redirects', 'permalink-manager' ),
+                        'lite'  => false,
+                ),
+                array(
+                        'label' => esc_html__( 'Priority support from the developer', 'permalink-manager' ),
+                        'lite'  => false,
+                ),
+        );
+
+        // Keeps the footer headline in sync with the table above it.
+        $pro_only = 0;
+        foreach ( $features as $feature ) {
+            if ( empty( $feature['lite'] ) ) {
+                $pro_only ++;
+            }
+        }
         ?>
         <div class="pm-setup-pro">
-            <h2><span class="dashicons dashicons-unlock"></span> Unlock All Features</h2>
+            <h2 class="pm-pro-title"><?php esc_html_e( 'Permalink Manager Lite vs Pro', 'permalink-manager' ); ?></h2>
 
-            <p class="description pm-pro-lead"><?php echo wp_kses_post( __( 'Permalink Manager Pro gives you access to <strong>all extra features</strong> available, priority customer support and also includes all the functionalities and options you already get with the free version.', 'permalink-manager' ) ); ?></p>
+            <p class="description pm-lead"><?php esc_html_e( 'You are currently using the Lite version. The Pro version adds advanced controls for custom taxonomies, extra redirects, and WooCommerce URLs.', 'permalink-manager' ); ?></p>
 
-            <ul>
-                <li class="dashicons-before"><?php esc_html_e( 'Custom Taxonomies Support', 'permalink-manager' ); ?></li>
-                <li class="dashicons-before"><?php esc_html_e( 'Add Custom Fields to URLs ', 'permalink-manager' ); ?></li>
-                <li class="dashicons-before"><?php esc_html_e( 'Full WooCommerce Support', 'permalink-manager' ); ?></li>
-                <li class="dashicons-before"><?php esc_html_e( 'Custom Coupon Permalinks', 'permalink-manager' ); ?></li>
-                <li class="dashicons-before"><?php esc_html_e( 'Extra Redirects', 'permalink-manager' ); ?></li>
-                <li class="dashicons-before"><?php esc_html_e( 'Priority Support', 'permalink-manager' ); ?></li>
-            </ul>
+            <div class="pm-pro-compare">
+                <table class="pm-pro-table">
+                    <thead>
+                    <tr>
+                        <th scope="col" class="pm-col-feature"><?php esc_html_e( 'Feature', 'permalink-manager' ); ?></th>
+                        <th scope="col" class="pm-col-mark"><?php esc_html_e( 'Lite', 'permalink-manager' ); ?></th>
+                        <th scope="col" class="pm-col-mark pm-col-pro"><?php esc_html_e( 'Pro', 'permalink-manager' ); ?></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ( $features as $feature ) : ?>
+                        <tr<?php echo empty( $feature['lite'] ) ? ' class="pm-row-locked"' : ''; ?>>
+                            <th scope="row" class="pm-col-feature"><?php echo wp_kses( $feature['label'], $allowed_tags ); ?></th>
+                            <td class="pm-col-mark">
+                                <?php if ( ! empty( $feature['lite'] ) ) : ?>
+                                    <span class="pm-mark pm-mark-yes" aria-hidden="true">&#10003;</span>
+                                    <span class="screen-reader-text"><?php esc_html_e( 'Included in Lite', 'permalink-manager' ); ?></span>
+                                <?php else : ?>
+                                    <span class="pm-mark pm-mark-no" aria-hidden="true">&#8212;</span>
+                                    <span class="screen-reader-text"><?php esc_html_e( 'Not included in Lite', 'permalink-manager' ); ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="pm-col-mark pm-col-pro">
+                                <span class="pm-mark pm-mark-yes" aria-hidden="true">&#10003;</span>
+                                <span class="screen-reader-text"><?php esc_html_e( 'Included in Pro', 'permalink-manager' ); ?></span>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
 
-            <div>
-                <?php
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup with escaped values.
-                echo $this->upgrade_button( __( 'Upgrade to Permalink Manager Pro', 'permalink-manager' ) );
-                ?>
+                <div class="pm-pro-footer">
+                    <div class="pm-pro-footer-copy">
+                        <strong><?php esc_html_e( 'Unlock All Features With Permalink Manager Pro', 'permalink-manager' ); ?></strong>
+                        <span><?php esc_html_e( 'All existing settings and custom permalinks are preserved when upgrading to the Pro version.', 'permalink-manager' ); ?></span>
+                    </div>
+
+                    <div class="pm-pro-cta">
+                        <?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup with escaped values.
+                        echo $this->upgrade_button( __( 'Upgrade to Pro', 'permalink-manager' ) );
+                        ?>
+                    </div>
+                </div>
             </div>
+
+            <p class="pm-pro-proof">
+                <span class="pm-stars" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                <?php esc_html_e( '4.8/5 on WordPress.org', 'permalink-manager' ); ?>
+                <span class="pm-sep" aria-hidden="true">&middot;</span>
+                <?php esc_html_e( '100,000+ active installs', 'permalink-manager' ); ?>
+                <span class="pm-sep" aria-hidden="true">&middot;</span>
+                <?php esc_html_e( '14-day money-back guarantee', 'permalink-manager' ); ?>
+            </p>
         </div>
         <?php
     }
+
 
     /**
      * Handle the wizard form submission and redirect to the completion screen.

@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager Lite
  * Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
  * Description:       Advanced plugin that allows to set up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
- * Version:           2.5.4
+ * Version:           2.5.5
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -12,7 +12,7 @@
  * Text Domain:       permalink-manager
  * Domain Path:       /languages
  * WC requires at least: 3.0.0
- * WC tested up to:      10.9.1
+ * WC tested up to:      11.0.0
  */
 
 // If this file is called directly or plugin is already defined, abort
@@ -25,14 +25,12 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 	// Define the directories used to load plugin files.
 	define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 	define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-	define( 'PERMALINK_MANAGER_VERSION', '2.5.4' );
+	define( 'PERMALINK_MANAGER_VERSION', '2.5.5' );
 	define( 'PERMALINK_MANAGER_FILE', __FILE__ );
 	define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 	define( 'PERMALINK_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
 	define( 'PERMALINK_MANAGER_URL', untrailingslashit( plugins_url( '', __FILE__ ) ) );
-	define( 'PERMALINK_MANAGER_WEBSITE', 'https://permalinkmanager.pro?utm_source=plugin' );
-	define( 'PERMALINK_MANAGER_PROMO', 'https://permalinkmanager.pro/features/?utm_source=plugin' );
-	define( 'PERMALINK_MANAGER_DOCS', 'https://permalinkmanager.pro/get-started/?utm_source=plugin' );
+	define( 'PERMALINK_MANAGER_WEBSITE', 'https://permalinkmanager.pro' );
 
 	/**
 	 * The base class responsible for loading the plugin data as well as any plugin subclasses and additional functions
@@ -242,13 +240,15 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 		 * @return array
 		 */
 		public function default_alerts( $alerts ) {
+			$website_url = Permalink_Manager_Admin_Functions::get_plugin_website_url( 'pricing' );
+
 			$default_alerts = apply_filters( 'permalink_manager_default_alerts', array(
-				'summer-promo' => array(
-					'txt'         => sprintf( __( "<strong>Extra Discount</strong>: Upgrade to Permalink Manager Pro for custom taxonomy and WooCommerce support, custom fields in permalinks, and priority email support.<br /><a href=\"%s\" target=\"_blank\">Upgrade today and save 40%% with code \"MAY26\"</a>.", "permalink-manager" ), PERMALINK_MANAGER_WEBSITE ),
+				'aug26-promo' => array(
+					'txt'         => sprintf( "<strong>Save 30%% on Permalink Manager Pro</strong><br />Get custom taxonomy and WooCommerce support, custom fields in permalinks, and priority email support. <a href=\"%s\" target=\"_blank\">Upgrade today</a> and save 30%% with code <code>SUMMER26</code>.", $website_url ),
 					'type'        => 'notice-info',
 					'show'        => 'pro_hide',
 					'plugin_only' => false,
-					'until'       => '2026-05-15'
+					'until'       => '2026-08-15'
 				)
 			) );
 

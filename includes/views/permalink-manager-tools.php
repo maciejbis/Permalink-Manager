@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Display the page where the slugs could be regenerated or replaced
@@ -329,7 +331,8 @@ class Permalink_Manager_Tools {
 				'label'       => __( 'Preview mode', 'permalink-manager' ),
 				'type'        => 'single_checkbox',
 				'container'   => 'row',
-				'description' => __( 'Enable this option if you want to review the changes in "read mode" before saving them in the database.', 'permalink-manager' )
+				// 'value'       => true,
+				'description' => __( '<strong>Preview permalink changes</strong> before saving them to the database.', 'permalink-manager' )
 			);
 		}
 

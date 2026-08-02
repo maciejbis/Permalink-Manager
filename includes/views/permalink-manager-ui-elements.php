@@ -38,7 +38,7 @@ class Permalink_Manager_UI_Elements {
 		$description    = ( isset( $args['before_description'] ) ) ? $args['before_description'] : "";
 		$description    .= ( isset( $args['description'] ) ) ? "<p class=\"field-description description\">{$args['description']}</p>" : "";
 		$description    .= ( isset( $args['after_description'] ) ) ? $args['after_description'] : "";
-		$description    .= ( !empty( $args['pro'] ) ) ? sprintf( "<p class=\"field-description description alert info\">%s</p>", ( self::pro_text( true ) ) ) : "";
+		$description    .= ( ! empty( $args['pro'] ) ) ? sprintf( "<p class=\"field-description description alert info\">%s</p>", ( self::pro_text( true ) ) ) : "";
 		$append_content = ( isset( $args['append_content'] ) ) ? "{$args['append_content']}" : "";
 
 		// Input attributes
@@ -385,8 +385,10 @@ class Permalink_Manager_UI_Elements {
 	static public function get_plugin_sections_html( $sections, $active_section = '', $active_subsection = '' ) {
 		global $permalink_manager_after_sections_html;
 
+		$website_url = Permalink_Manager_Admin_Functions::get_plugin_website_url( 'features', array( 'utm_campaign' => 'plugin_admin' ) );
+
 		$html = "<div id=\"permalink-manager\" class=\"wrap\">";
-		$html .= sprintf( '<h2 id="plugin-name-heading">%1$s <a href="%2$s" class="author-link" target="_blank">%3$s</a></h2>', PERMALINK_MANAGER_PLUGIN_NAME, esc_attr( PERMALINK_MANAGER_PROMO ), PERMALINK_MANAGER_VERSION );
+		$html .= sprintf( '<h2 id="plugin-name-heading">%1$s <a href="%2$s" class="author-link" target="_blank">%3$s</a></h2>', PERMALINK_MANAGER_PLUGIN_NAME, esc_attr( $website_url ), PERMALINK_MANAGER_VERSION );
 
 		// Display the tab navigation
 		$html .= "<div id=\"permalink-manager-tab-nav\" class=\"nav-tab-wrapper\">";
@@ -398,7 +400,7 @@ class Permalink_Manager_UI_Elements {
 		}
 
 		// Upgrade to Pro version
-		$html .= ( ! Permalink_Manager_Admin_Functions::is_pro_active() ) ? sprintf( "<a href=\"%s\" target=\"_blank\" class=\"nav-tab section_upgrade\"><i class=\"dashicons dashicons-external\"></i> %s</a>", PERMALINK_MANAGER_PROMO, __( 'Upgrade to PRO', 'permalink-manager' ) ) : '';
+		$html .= ( ! Permalink_Manager_Admin_Functions::is_pro_active() ) ? sprintf( "<a href=\"%s\" target=\"_blank\" class=\"nav-tab section_upgrade\"><i class=\"dashicons dashicons-external\"></i> %s</a>", $website_url, __( 'Upgrade to PRO', 'permalink-manager' ) ) : '';
 		$html .= "</div>";
 
 		// Now display the active section
@@ -501,14 +503,14 @@ class Permalink_Manager_UI_Elements {
 				$permalink = rawurldecode( rawurldecode( $permalink ) );
 
 				$main_content .= sprintf( '<tr data-id="%s" %s>', $row['ID'], $alternate_class );
-				$main_content .= sprintf( '<td class="row-title column-primary" data-colname="%s">%s<a target="_blank" href="%s"><span class="small">%s</span></a> %s</td>', __( 'Title', 'permalink-manager' ), sanitize_text_field( $row['item_title'] ), $permalink, $permalink, $screen_reader_button );
+				$main_content .= sprintf( '<td class="row-title column-primary" data-colname="%s">%s<a target="_blank" href="%s"><span class="small">%s</span></a> %s</td>', esc_attr__( 'Title', 'permalink-manager' ), esc_html( $row['item_title'] ), esc_url( $permalink ), esc_html( $permalink ), $screen_reader_button );
 
 				if ( $show_slugs ) {
-					$main_content .= ( isset( $row['old_slug'] ) ) ? sprintf( '<td data-colname="%s">%s</td>', __( 'Old Slug', 'permalink-manager' ), rawurldecode( $row['old_slug'] ) ) : "";
-					$main_content .= ( isset( $row['new_slug'] ) ) ? sprintf( '<td data-colname="%s">%s</td>', __( 'New Slug', 'permalink-manager' ), rawurldecode( $row['new_slug'] ) ) : "";
+					$main_content .= ( isset( $row['old_slug'] ) ) ? sprintf( '<td data-colname="%s">%s</td>', esc_attr__( 'Old Slug', 'permalink-manager' ), esc_html( rawurldecode( $row['old_slug'] ) ) ) : "";
+					$main_content .= ( isset( $row['new_slug'] ) ) ? sprintf( '<td data-colname="%s">%s</td>', esc_attr__( 'New Slug', 'permalink-manager' ), esc_html( rawurldecode( $row['new_slug'] ) ) ) : "";
 				} else {
-					$main_content .= sprintf( '<td data-colname="%s">%s</td>', __( 'Old URI', 'permalink-manager' ), rawurldecode( $row['old_uri'] ) );
-					$main_content .= sprintf( '<td data-colname="%s">%s</td>', __( 'New URI', 'permalink-manager' ), rawurldecode( $row['new_uri'] ) );
+					$main_content .= sprintf( '<td data-colname="%s">%s</td>', esc_attr__( 'Old URI', 'permalink-manager' ), esc_html( rawurldecode( $row['old_uri'] ) ) );
+					$main_content .= sprintf( '<td data-colname="%s">%s</td>', esc_attr__( 'New URI', 'permalink-manager' ), esc_html( rawurldecode( $row['new_uri'] ) ) );
 				}
 				$main_content .= '</tr>';
 			}
@@ -841,7 +843,9 @@ class Permalink_Manager_UI_Elements {
 			$text = Permalink_Manager_Pro_License::get_expiration_date( false, true );
 		} else {
 			/* translators: Permalink Manager Pro website */
-			$text = sprintf( __( 'This functionality is available only in <a href="%s" target="_blank">Permalink Manager Pro</a>.', 'permalink-manager' ), PERMALINK_MANAGER_PROMO );
+			$website_url = Permalink_Manager_Admin_Functions::get_plugin_website_url( 'features', array( 'utm_campaign' => 'paywall' ) );
+
+			$text = sprintf( __( 'This functionality is available only in <a href="%s" target="_blank">Permalink Manager Pro</a>.', 'permalink-manager' ), $website_url );
 		}
 
 		return ( $text_only ) ? $text : sprintf( "<div class=\"alert info\"> %s</div>", wpautop( $text, 'alert' ) );

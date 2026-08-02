@@ -199,7 +199,8 @@ class Permalink_Manager_Admin_Functions {
 			);
 
 			if ( ! defined( 'PERMALINK_MANAGER_PRO' ) ) {
-				$new_links['upgrade'] = sprintf( '<a href="%s" target="_blank"><strong>%s</strong></a>', PERMALINK_MANAGER_PROMO, __( 'Buy Permalink Manager Pro', 'permalink-manager' ) );
+				$website_url          = self::get_plugin_website_url( 'features' );
+				$new_links['upgrade'] = sprintf( '<a href="%s" target="_blank"><strong>%s</strong></a>', $website_url, __( 'Buy Permalink Manager Pro', 'permalink-manager' ) );
 			}
 
 			$links = array_merge( $links, $new_links );
@@ -265,6 +266,43 @@ class Permalink_Manager_Admin_Functions {
 		global $permalink_manager_before_sections_html;
 
 		echo wp_kses_post( $permalink_manager_before_sections_html );
+	}
+
+	/**
+	 * Helper function to generate plugin website URLs.
+	 *
+	 * @param string $path Optional. The path to append to the base URL (e.g., 'features/').
+	 * @param array $query_args Optional. Additional query arguments to append.
+	 *
+	 * @return string The fully constructed URL.
+	 */
+	public static function get_plugin_website_url( $path = '', $query_args = array() ) {
+		// Ensure the base URL doesn't have a trailing slash
+		$url = rtrim( PERMALINK_MANAGER_WEBSITE, '/' );
+
+		// Append the path if provided, ensuring exactly one slash separates them
+		if ( ! empty( $path ) ) {
+			$url .= '/' . trim( $path, '/' ) . '/';
+		}
+
+		// Set default query arguments that should appear on all links
+		$defaults = array(
+			'utm_source' => 'plugin',
+		);
+
+		// Merge defaults with any custom arguments passed to the function
+		$final_args = array_merge( $defaults, $query_args );
+
+		// Build the query string securely
+		$query_string = http_build_query( $final_args );
+
+		// Append the query string to the URL
+		if ( ! empty( $query_string ) ) {
+			// Check if the base URL or path already contains a '?' to prevent malformed URLs
+			$url .= ( strpos( $url, '?' ) !== false ? '&' : '?' ) . $query_string;
+		}
+
+		return $url;
 	}
 
 	/**
