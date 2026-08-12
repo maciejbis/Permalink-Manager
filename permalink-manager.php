@@ -4,7 +4,7 @@
  * Plugin Name:       Permalink Manager Lite
  * Plugin URI:        https://permalinkmanager.pro?utm_source=plugin
  * Description:       Advanced plugin that allows to set up custom permalinks (bulk editors included), slugs and permastructures (WooCommerce compatible).
- * Version:           2.5.5
+ * Version:           2.6.0
  * Author:            Maciej Bis
  * Author URI:        http://maciejbis.net/
  * License:           GPL-2.0+
@@ -25,7 +25,7 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 	// Define the directories used to load plugin files.
 	define( 'PERMALINK_MANAGER_PLUGIN_NAME', 'Permalink Manager' );
 	define( 'PERMALINK_MANAGER_PLUGIN_SLUG', 'permalink-manager' );
-	define( 'PERMALINK_MANAGER_VERSION', '2.5.5' );
+	define( 'PERMALINK_MANAGER_VERSION', '2.6.0' );
 	define( 'PERMALINK_MANAGER_FILE', __FILE__ );
 	define( 'PERMALINK_MANAGER_DIR', untrailingslashit( dirname( __FILE__ ) ) );
 	define( 'PERMALINK_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
@@ -75,7 +75,8 @@ if ( ! class_exists( 'Permalink_Manager_Class' ) ) {
 					'third-parties'    => 'Permalink_Manager_Third_Parties',
 					'woocommerce'      => 'Permalink_Manager_WooCommerce',
 					'seo-plugins'      => 'Permalink_Manager_SEO_Plugins',
-					'language-plugins' => 'Permalink_Manager_Language_Plugins'
+					'language-plugins' => 'Permalink_Manager_Language_Plugins',
+					'rest-api'         => 'Permalink_Manager_REST_API'
 				),
 				'views'        => array(
 					'ui-elements'     => 'Permalink_Manager_UI_Elements',

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-02 18:45+0000\n"
+"POT-Creation-Date: 2026-08-09 19:57+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -43,7 +43,7 @@ msgid "%1$d Custom URIs and %2$d Custom Redirects were removed!"
 msgstr ""
 
 #. %s is the name of the data field that was removed
-#: includes/core/permalink-manager-actions.php:560
+#: includes/core/permalink-manager-actions.php:555
 #, php-format
 msgid "%s were removed!"
 msgstr ""
@@ -60,11 +60,11 @@ msgstr ""
 msgid "-- Use predefined words list --"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:648
+#: includes/views/permalink-manager-setup-wizard.php:652
 msgid "100,000+ active installs"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:650
+#: includes/views/permalink-manager-setup-wizard.php:654
 msgid "14-day money-back guarantee"
 msgstr ""
 
@@ -76,7 +76,7 @@ msgstr ""
 msgid "302 redirect"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:646
+#: includes/views/permalink-manager-setup-wizard.php:650
 msgid "4.8/5 on WordPress.org"
 msgstr ""
 
@@ -102,19 +102,19 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: includes/views/permalink-manager-ui-elements.php:541
-#: includes/core/permalink-manager-actions.php:572
+#: includes/core/permalink-manager-actions.php:567
 msgid "<strong>No items</strong> were processed!"
 msgstr ""
 
-#: includes/core/permalink-manager-actions.php:612
+#: includes/core/permalink-manager-actions.php:613
 msgid "<strong>No post status</strong> selected!"
 msgstr ""
 
-#: includes/core/permalink-manager-actions.php:606
+#: includes/core/permalink-manager-actions.php:607
 msgid "<strong>No post type</strong> selected!"
 msgstr ""
 
-#: includes/core/permalink-manager-actions.php:598
+#: includes/core/permalink-manager-actions.php:599
 msgid "<strong>No taxonomy</strong> selected!"
 msgstr ""
 
@@ -202,13 +202,13 @@ msgstr ""
 msgid "All dates"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:632
+#: includes/views/permalink-manager-setup-wizard.php:636
 msgid ""
 "All existing settings and custom permalinks are preserved when upgrading to "
 "the Pro version."
 msgstr ""
 
-#: includes/integrations/permalink-manager-language-plugins.php:749
+#: includes/integrations/permalink-manager-language-plugins.php:751
 msgid "All languages"
 msgstr ""
 
@@ -271,6 +271,10 @@ msgstr ""
 msgid "Auto-update custom permalinks"
 msgstr ""
 
+#: includes/integrations/permalink-manager-rest-api.php:243
+msgid "Auto-update URI setting (-2, -1, 0, 1, 2) assigned to this element."
+msgstr ""
+
 #: includes/views/permalink-manager-setup-wizard.php:548
 msgid "Automatic redirect for original URL"
 msgstr ""
@@ -289,7 +293,7 @@ msgid ""
 "whenever the URL changes to prevent 404 errors for previously used URLs."
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:143
+#: includes/views/permalink-manager-permastructures.php:140
 msgid "Available tags"
 msgstr ""
 
@@ -331,7 +335,7 @@ msgstr ""
 msgid "Chinese"
 msgstr ""
 
-#: includes/core/permalink-manager-uri-functions-tax.php:486
+#: includes/core/permalink-manager-uri-functions-tax.php:488
 msgid "Clear/leave the field empty to use the default permalink."
 msgstr ""
 
@@ -384,12 +388,12 @@ msgstr ""
 msgid "Coupon URI"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:221
+#: includes/views/permalink-manager-permastructures.php:218
 msgid "Custom fields"
 msgstr ""
 
-#: includes/integrations/permalink-manager-language-plugins.php:1012
-#: includes/core/permalink-manager-uri-functions-tax.php:485
+#: includes/integrations/permalink-manager-language-plugins.php:1014
+#: includes/core/permalink-manager-uri-functions-tax.php:487
 msgid "Custom Permalink"
 msgstr ""
 
@@ -401,8 +405,12 @@ msgstr ""
 #: includes/views/permalink-manager-ui-elements.php:788
 #: includes/views/permalink-manager-uri-editor-post.php:67
 #: includes/core/permalink-manager-uri-functions-post.php:720
-#: includes/core/permalink-manager-uri-functions-tax.php:520
+#: includes/core/permalink-manager-uri-functions-tax.php:522
 msgid "Custom permalink"
+msgstr ""
+
+#: includes/integrations/permalink-manager-rest-api.php:224
+msgid "Custom permalink assigned to this element."
 msgstr ""
 
 #: includes/views/permalink-manager-tools.php:52
@@ -411,11 +419,11 @@ msgid "Custom Permalinks"
 msgstr ""
 
 #: includes/views/permalink-manager-tools.php:178
-#: includes/core/permalink-manager-actions.php:530
+#: includes/core/permalink-manager-actions.php:525
 msgid "Custom permalinks"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:218
+#: includes/views/permalink-manager-permastructures.php:215
 msgid ""
 "Custom permalinks can include taxonomy-based slugs such as categories, tags, "
 "and custom taxonomy terms. If a post belongs to multiple terms, the lowest-"
@@ -438,7 +446,7 @@ msgid ""
 "settings default format."
 msgstr ""
 
-#: includes/core/permalink-manager-actions.php:534
+#: includes/core/permalink-manager-actions.php:529
 msgid "Custom redirects"
 msgstr ""
 
@@ -491,7 +499,7 @@ msgstr ""
 msgid "Default custom permalink"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:163
+#: includes/views/permalink-manager-permastructures.php:160
 msgid "Default permastructure"
 msgstr ""
 
@@ -511,7 +519,7 @@ msgstr ""
 msgid "Disable custom permalinks for new posts/terms"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:165
+#: includes/views/permalink-manager-permastructures.php:162
 msgid "Do not automatically append the slug"
 msgstr ""
 
@@ -650,8 +658,18 @@ msgid ""
 "a few minutes."
 msgstr ""
 
-#: includes/core/permalink-manager-actions.php:538
+#: includes/core/permalink-manager-actions.php:533
 msgid "External redirects"
+msgstr ""
+
+#: includes/integrations/permalink-manager-rest-api.php:325
+msgid ""
+"External REST access to Permalink Manager fields is available only in the "
+"Pro version."
+msgstr ""
+
+#: includes/integrations/permalink-manager-rest-api.php:233
+msgid "External URL this element should redirect to."
 msgstr ""
 
 #: includes/views/permalink-manager-tools.php:102
@@ -663,11 +681,11 @@ msgstr ""
 msgid "Extra redirects (aliases)"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:143
+#: includes/views/permalink-manager-permastructures.php:140
 msgid "Extra settings"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:602
+#: includes/views/permalink-manager-setup-wizard.php:606
 msgid "Feature"
 msgstr ""
 
@@ -899,7 +917,7 @@ msgid ""
 "are open to all new ideas and would be grateful for all your comments!"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:148
+#: includes/views/permalink-manager-permastructures.php:145
 msgid ""
 "If you would like to translate the permastructures and set-up different "
 "permalink structure per language, please fill in the fields below. Otherwise "
@@ -921,11 +939,11 @@ msgstr ""
 msgid "Important notices"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:614
+#: includes/views/permalink-manager-setup-wizard.php:618
 msgid "Included in Lite"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:622
+#: includes/views/permalink-manager-setup-wizard.php:626
 msgid "Included in Pro"
 msgstr ""
 
@@ -940,6 +958,11 @@ msgstr ""
 #: includes/views/permalink-manager-pro-addons.php:165
 #: includes/views/permalink-manager-pro-addons.php:206
 msgid "Instructions"
+msgstr ""
+
+#: includes/integrations/permalink-manager-rest-api.php:315
+#: includes/integrations/permalink-manager-rest-api.php:320
+msgid "Invalid object supplied."
 msgstr ""
 
 #: includes/core/permalink-manager-pro-functions.php:41
@@ -958,7 +981,7 @@ msgstr ""
 msgid "Korean"
 msgstr ""
 
-#: includes/integrations/permalink-manager-language-plugins.php:718
+#: includes/integrations/permalink-manager-language-plugins.php:720
 msgid "Language"
 msgstr ""
 
@@ -984,6 +1007,10 @@ msgstr ""
 msgid "List of external redirects set-up by this plugin."
 msgstr ""
 
+#: includes/integrations/permalink-manager-rest-api.php:228
+msgid "List of extra/standard redirects pointing to this element."
+msgstr ""
+
 #: includes/views/permalink-manager-debug.php:94
 msgid "List of permastructures set-up by this plugin."
 msgstr ""
@@ -1000,7 +1027,7 @@ msgstr ""
 msgid "List of updated items"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:603
+#: includes/views/permalink-manager-setup-wizard.php:607
 msgid "Lite"
 msgstr ""
 
@@ -1016,7 +1043,7 @@ msgstr ""
 msgid "Manage redirects"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:213
+#: includes/views/permalink-manager-permastructures.php:210
 msgid "Meta data"
 msgstr ""
 
@@ -1029,7 +1056,7 @@ msgstr ""
 msgid "Native slug"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:209
+#: includes/views/permalink-manager-permastructures.php:206
 msgid "Native slug & title"
 msgstr ""
 
@@ -1071,7 +1098,7 @@ msgstr ""
 msgid "No, keep special characters (.,|_+) in the slugs"
 msgstr ""
 
-#: includes/core/permalink-manager-actions.php:586
+#: includes/core/permalink-manager-actions.php:581
 msgid "Nonce is invalid!"
 msgstr ""
 
@@ -1079,7 +1106,7 @@ msgstr ""
 msgid "Norwegian"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:617
+#: includes/views/permalink-manager-setup-wizard.php:621
 msgid "Not included in Lite"
 msgstr ""
 
@@ -1132,13 +1159,14 @@ msgstr ""
 msgid "Permalink formats & bulk URL updates"
 msgstr ""
 
-#: includes/core/permalink-manager-actions.php:737
+#: includes/core/permalink-manager-actions.php:742
 msgid "Permalink is already in use, please select another one!"
 msgstr ""
 
 #: includes/integrations/permalink-manager-third-parties.php:403
 #: includes/integrations/permalink-manager-third-parties.php:446
 #: includes/integrations/permalink-manager-third-parties.php:694
+#: includes/integrations/permalink-manager-gutenberg.php:46
 #: includes/views/permalink-manager-ui-elements.php:650
 #: includes/views/permalink-manager-ui-elements.php:655
 #: includes/views/permalink-manager-ui-elements.php:656
@@ -1161,6 +1189,10 @@ msgid ""
 "slugs or actual titles."
 msgstr ""
 
+#: includes/integrations/permalink-manager-rest-api.php:219
+msgid "Permalink Manager custom permalink, redirects and permastructure data."
+msgstr ""
+
 #: includes/views/permalink-manager-settings.php:135
 msgid ""
 "Permalink Manager includes a set of hooks that allow to extend the redirect "
@@ -1171,7 +1203,7 @@ msgstr ""
 msgid "Permalink Manager is not configured."
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:594
+#: includes/views/permalink-manager-setup-wizard.php:598
 msgid "Permalink Manager Lite vs Pro"
 msgstr ""
 
@@ -1201,20 +1233,24 @@ msgstr ""
 msgid "Permalink update"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:222
+#: includes/views/permalink-manager-permastructures.php:219
 msgid ""
 "Permalinks can be modified with custom fields to dynamically include extra "
 "data. For example, you can append product SKUs to WooCommerce URLs or "
 "include geolocation details in your custom post types' permalinks."
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:165
-#: includes/core/permalink-manager-actions.php:542
-#: includes/core/permalink-manager-actions.php:546
+#: includes/integrations/permalink-manager-rest-api.php:238
+msgid "Permastructure format applied to this element's post type / taxonomy."
+msgstr ""
+
+#: includes/views/permalink-manager-permastructures.php:162
+#: includes/core/permalink-manager-actions.php:537
+#: includes/core/permalink-manager-actions.php:541
 msgid "Permastructure settings"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:148
+#: includes/views/permalink-manager-permastructures.php:145
 msgid "Permastructure translations"
 msgstr ""
 
@@ -1314,11 +1350,11 @@ msgstr ""
 msgid "Preview mode"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:580
+#: includes/views/permalink-manager-setup-wizard.php:584
 msgid "Priority support from the developer"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:604
+#: includes/views/permalink-manager-setup-wizard.php:608
 msgid "Pro"
 msgstr ""
 
@@ -1413,7 +1449,11 @@ msgstr ""
 msgid "Replace with ..."
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:163
+#: includes/views/permalink-manager-setup-wizard.php:580
+msgid "REST API support"
+msgstr ""
+
+#: includes/views/permalink-manager-permastructures.php:160
 msgid "Restore default permastructure"
 msgstr ""
 
@@ -1447,7 +1487,7 @@ msgstr ""
 msgid "Save permalink"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:189
+#: includes/views/permalink-manager-permastructures.php:186
 msgid "Save permastructures"
 msgstr ""
 
@@ -1478,7 +1518,7 @@ msgstr ""
 msgid "Select all"
 msgstr ""
 
-#: includes/integrations/permalink-manager-language-plugins.php:309
+#: includes/integrations/permalink-manager-language-plugins.php:311
 msgid "Select by language"
 msgstr ""
 
@@ -1492,7 +1532,7 @@ msgstr ""
 msgid "Select IDs"
 msgstr ""
 
-#: includes/integrations/permalink-manager-language-plugins.php:312
+#: includes/integrations/permalink-manager-language-plugins.php:314
 msgid "Select languages to filter by, or leave blank for all."
 msgstr ""
 
@@ -1604,7 +1644,7 @@ msgstr ""
 #: includes/views/permalink-manager-tools.php:271
 #: includes/views/permalink-manager-ui-elements.php:102
 #: includes/views/permalink-manager-permastructures.php:58
-#: includes/views/permalink-manager-permastructures.php:217
+#: includes/views/permalink-manager-permastructures.php:214
 msgid "Taxonomies"
 msgstr ""
 
@@ -1622,7 +1662,7 @@ msgid ""
 "The above permalink will be automatically updated and is locked for editing."
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:183
+#: includes/views/permalink-manager-permastructures.php:180
 msgid ""
 "The current permastructures settings will be automatically applied <strong>"
 "only to the new posts & terms</strong>."
@@ -1655,7 +1695,7 @@ msgid ""
 "Permalink Manager is disabled)."
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:210
+#: includes/views/permalink-manager-permastructures.php:207
 msgid ""
 "The native slug is generated from the initial title and will not update "
 "automatically if the title is changed later. You can use the %native_title% "
@@ -1674,6 +1714,10 @@ msgid ""
 "The plugin may load the relevant translation or trigger the canonical "
 "redirect when a custom permalink is detected, but the URL language code does "
 "not match the detected item's language code. "
+msgstr ""
+
+#: includes/integrations/permalink-manager-rest-api.php:352
+msgid "The provided external redirect URL is invalid."
 msgstr ""
 
 #: includes/core/permalink-manager-actions.php:399
@@ -1733,7 +1777,7 @@ msgid "Title"
 msgstr ""
 
 #. %s: Regenerate/reset admin URL
-#: includes/views/permalink-manager-permastructures.php:186
+#: includes/views/permalink-manager-permastructures.php:183
 #, php-format
 msgid ""
 "To apply the <strong>new format to existing posts and terms</strong>, please "
@@ -1812,7 +1856,7 @@ msgstr ""
 msgid "Ultimate Member support"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:631
+#: includes/views/permalink-manager-setup-wizard.php:635
 msgid "Unlock All Features With Permalink Manager Pro"
 msgstr ""
 
@@ -1825,7 +1869,7 @@ msgid "Upgrade to PRO"
 msgstr ""
 
 #: includes/views/permalink-manager-setup-wizard.php:449
-#: includes/views/permalink-manager-setup-wizard.php:638
+#: includes/views/permalink-manager-setup-wizard.php:642
 msgid "Upgrade to Pro"
 msgstr ""
 
@@ -1891,7 +1935,7 @@ msgstr ""
 msgid "Use WordPress slugs (default mode)"
 msgstr ""
 
-#: includes/views/permalink-manager-permastructures.php:214
+#: includes/views/permalink-manager-permastructures.php:211
 msgid ""
 "Using meta tags, you may add post-specific information like item IDs or "
 "author names to permalinks. This might be beneficial to news, events, and "
@@ -1934,7 +1978,7 @@ msgstr ""
 msgid "Yes, use native settings"
 msgstr ""
 
-#: includes/views/permalink-manager-setup-wizard.php:596
+#: includes/views/permalink-manager-setup-wizard.php:600
 msgid ""
 "You are currently using the Lite version. The Pro version adds advanced "
 "controls for custom taxonomies, extra redirects, and WooCommerce URLs."
@@ -1944,8 +1988,17 @@ msgstr ""
 msgid "You are not allowed to access this page."
 msgstr ""
 
+#: includes/integrations/permalink-manager-rest-api.php:329
+msgid "You are not allowed to edit Permalink Manager data for this element."
+msgstr ""
+
+#: includes/core/permalink-manager-actions.php:587
+#: includes/core/permalink-manager-actions.php:739
+msgid "You are not allowed to perform this action."
+msgstr ""
+
 #: includes/core/permalink-manager-actions.php:109
-#: includes/core/permalink-manager-actions.php:524
+#: includes/core/permalink-manager-actions.php:519
 msgid "You are not allowed to remove Permalink Manager data!"
 msgstr ""
 

@@ -459,8 +459,6 @@ class Permalink_Manager_Actions {
 	 * Save the permastructures
 	 */
 	public static function save_permastructures() {
-		global $permalink_manager_permastructs;
-
 		$permastructure_options = $permastructures = array();
 		$permastructure_types   = array( 'post_types', 'taxonomies' );
 
@@ -486,11 +484,8 @@ class Permalink_Manager_Actions {
 
 		// A. Permastructures
 		if ( ! empty( $permastructures['post_types'] ) || ! empty( $permastructures['taxonomies'] ) ) {
-			// Override the global with settings
-			$permalink_manager_permastructs = $permastructures;
-
-			// Save the settings in database
-			update_option( 'permalink-manager-permastructs', $permastructures );
+			// Save the settings in a database
+			Permalink_Manager_Permastructure_Functions::save_all_permastructures( $permastructures );
 		}
 
 		// B. Permastructure settings
@@ -584,6 +579,12 @@ class Permalink_Manager_Actions {
 		if ( empty( $nonce_name ) || ! wp_verify_nonce( $nonce_name, 'permalink-manager' ) ) {
 			$error  = true;
 			$return = array( 'alert' => Permalink_Manager_UI_Elements::get_alert_message( __( 'Nonce is invalid!', 'permalink-manager' ), 'error updated_slugs' ) );
+		}
+
+		// Check if the user can edit the custom permalinks
+		if ( ! current_user_can( 'manage_options' ) ) {
+			$error  = true;
+			$return = array( 'alert' => Permalink_Manager_UI_Elements::get_alert_message( __( 'You are not allowed to perform this action.', 'permalink-manager' ), 'error updated_slugs' ) );
 		}
 
 		// Get the session ID
@@ -734,14 +735,17 @@ class Permalink_Manager_Actions {
 	 * Check if URI was used before
 	 */
 	function ajax_detect_duplicates() {
-		$duplicate_alert = __( "Permalink is already in use, please select another one!", "permalink-manager" );
+		if ( ! Permalink_Manager_Admin_Functions::current_user_can_edit_uris() ) {
+			wp_send_json_error( array( 'message' => __( 'You are not allowed to perform this action.', 'permalink-manager' ) ), 403 );
+		}
+
+		$duplicate_alert = __( 'Permalink is already in use, please select another one!', 'permalink-manager' );
 		$duplicates_data = array();
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- No data is saved here; the array is recursively sanitized via sanitize_array().
 		$custom_uris = ( ! empty( $_REQUEST['custom_uris'] ) ) ? Permalink_Manager_Helper_Functions::sanitize_array( wp_unslash( $_REQUEST['custom_uris'] ) ) : array();
 
 		if ( ! empty( $custom_uris ) ) {
-			// Check each URI
 			foreach ( $custom_uris as $raw_element_id => $element_uri ) {
 				$element_id                     = sanitize_key( $raw_element_id );
 				$duplicates_data[ $element_id ] = Permalink_Manager_URI_Functions::is_uri_duplicated( $element_uri, $element_id ) ? $duplicate_alert : 0;

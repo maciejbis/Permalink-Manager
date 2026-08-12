@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * WPML & Polylang integration functions
@@ -856,7 +858,7 @@ class Permalink_Manager_Language_Plugins {
 	 * @return string
 	 */
 	function translate_permastructure( $permastructure, $element ) {
-		global $permalink_manager_permastructs, $pagenow;
+		global $pagenow;
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Data is used for filtering only, no state change.
 		// Get element language code
@@ -873,10 +875,10 @@ class Permalink_Manager_Language_Plugins {
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 
-		if ( ! empty( $element->ID ) ) {
-			$translated_permastructure = ( ! empty( $permalink_manager_permastructs["post_types"]["{$element->post_type}_{$language_code}"] ) ) ? $permalink_manager_permastructs["post_types"]["{$element->post_type}_{$language_code}"] : '';
-		} else if ( ! empty( $element->term_id ) ) {
-			$translated_permastructure = ( ! empty( $permalink_manager_permastructs["taxonomies"]["{$element->taxonomy}_{$language_code}"] ) ) ? $permalink_manager_permastructs["taxonomies"]["{$element->taxonomy}_{$language_code}"] : '';
+		if ( ! empty( $element->post_type ) ) {
+			$translated_permastructure = Permalink_Manager_Permastructure_Functions::get_permastructure( $element->post_type, false, $language_code );
+		} else if ( ! empty( $element->taxonomy ) ) {
+			$translated_permastructure = Permalink_Manager_Permastructure_Functions::get_permastructure( $element->taxonomy, true, $language_code );
 		}
 
 		return ( ! empty( $translated_permastructure ) ) ? $translated_permastructure : $permastructure;

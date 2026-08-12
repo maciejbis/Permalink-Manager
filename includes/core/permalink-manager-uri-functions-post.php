@@ -196,7 +196,7 @@ class Permalink_Manager_URI_Functions_Post {
 	 * @return string
 	 */
 	public static function get_default_post_uri( $post, $native_uri = false, $check_if_disabled = false ) {
-		global $permalink_manager_uris, $permalink_manager_permastructs, $wp_post_types;
+		global $permalink_manager_uris, $wp_post_types;
 
 		// Disable WPML adjust ID filter
 		if ( class_exists( 'SitePress' ) ) {
@@ -244,7 +244,7 @@ class Permalink_Manager_URI_Functions_Post {
 		if ( $native_uri ) {
 			$permastructure = $native_permastructure;
 		} else {
-			$permastructure = ( ! empty( $permalink_manager_permastructs['post_types'][ $post_type ] ) ) ? $permalink_manager_permastructs['post_types'][ $post_type ] : $native_permastructure;
+			$permastructure = Permalink_Manager_Permastructure_Functions::get_permastructure( $post_type, false );
 			$permastructure = apply_filters( 'permalink_manager_filter_permastructure', $permastructure, $post );
 		}
 

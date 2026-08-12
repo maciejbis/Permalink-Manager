@@ -7,7 +7,7 @@ Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, custom p
 Requires at least: 5.3.0
 Requires PHP: 5.4
 Tested up to: 7.1
-Stable tag: 2.5.5
+Stable tag: 2.6.0
 
 Permalink Manager enhances WordPress’s built-in URL system, allowing you to change the URLs of native and custom post types and taxonomies.
 
@@ -42,6 +42,7 @@ Click here for additional information and to purchase <a href="https://permalink
 * **Full WooCommerce Support**<br/>Permalink Manager Pro may be used to change the URL addresses of WooCommerce products, tags, categories, and attributes. For example, you may use the plugin to <a href="https://permalinkmanager.pro/docs/tutorials/remove-product-category-woocommerce-urls/">remove /product/ and /product-category/ from WooCommerce URL</a>.
 * **Custom Fields Support**<br/>Permalink Manager is the only actively supported WordPress plugin that allows to <a href="https://permalinkmanager.pro/docs/tutorials/how-to-use-custom-fields-inside-wordpress-permalinks/">add custom fields to permalinks</a> and requires no technical experience.
 * **Extra Redirects**<br/>Define extra redirects (aliases) for any post, page, or term. Additionally, you may assign a redirect URL to each post/term, which will take users to any external URL address.
+* **REST API Support**<br/>Access and manage custom permalinks via the <a href="https://permalinkmanager.pro/docs/filters-hooks/rest-api-support/">REST API</a>.
 
 == Installation ==
 
@@ -92,8 +93,13 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 
 == Changelog ==
 
+= 2.6.0 (August 9, 2026) =
+* Security - Added an extra auth check for bulk tools, as suggested by Mo Akbari
+* Dev - Refactored the Permalink_Manager_Permastructure_Functions() class
+* Dev - Added REST API support (available in Permalink Manager Pro only)
+
 = 2.5.5 (August 2, 2026) =
-* Fix - Fixed a reflected XSS vulnerability in the "Regenerate/reset" tool reported by Tijmen Kivit
+* Security - Fixed a reflected XSS vulnerability in the "Regenerate/reset" tool reported by Tijmen Kivit
 * Fix - Taxonomy tags missing from "Additional Tags" in Permastructures editor when a taxonomy was registered for multiple post types
 * Fix - Custom permalinks for MyListing taxonomies correctly map to the dedicated listing templates
 

@@ -577,6 +577,10 @@ class Permalink_Manager_Setup_Wizard {
                         'lite'  => false,
                 ),
                 array(
+                        'label' => esc_html__( 'REST API support', 'permalink-manager' ),
+                        'lite'  => false,
+                ),
+                array(
                         'label' => esc_html__( 'Priority support from the developer', 'permalink-manager' ),
                         'lite'  => false,
                 ),

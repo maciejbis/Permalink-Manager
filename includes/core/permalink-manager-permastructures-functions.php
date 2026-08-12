@@ -1,6 +1,8 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Helper functions used for Permastructures (permalink formats)
@@ -18,6 +20,71 @@ class Permalink_Manager_Permastructure_Functions {
 		// Replace empty placeholder tags & remove BOM
 		add_filter( 'permalink_manager_filter_default_post_uri', array( $this, 'replace_empty_placeholder_tags' ), 10, 5 );
 		add_filter( 'permalink_manager_filter_default_term_uri', array( $this, 'replace_empty_placeholder_tags' ), 10, 5 );
+	}
+
+	/**
+	 * Get all custom permastructures currently defined for post types and taxonomies.
+	 *
+	 * @return array
+	 */
+	public static function get_all_permastructures() {
+		return (array) apply_filters( 'permalink_manager_permastructs', get_option( 'permalink-manager-permastructs', array() ) );
+	}
+
+	/**
+	 * Save all permastructures.
+	 *
+	 * Updates the global permastructure configuration and persists it.
+	 *
+	 * @param array $permastructures
+	 *
+	 * @return bool
+	 */
+	public static function save_all_permastructures( $permastructures = array() ) {
+		global $permalink_manager_permastructs;
+
+		// Override the global with new settings array
+		if ( ! empty( $permastructures ) && is_array( $permastructures ) ) {
+			$permalink_manager_permastructs = $permastructures;
+
+			return update_option( 'permalink-manager-permastructs', $permastructures );
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Get the permastructure format (string) currently applied to a post type or taxonomy.
+	 *
+	 * Returns the custom permastructure if one is defined for the content type,
+	 * otherwise falls back to the native/default permastructure. Used e.g. by the
+	 * REST API to expose a single "permastructure" string per element.
+	 *
+	 * @param string $content_type Post type or taxonomy name (e.g. "post", "product", "category").
+	 * @param bool $is_tax Whether $content_type is a taxonomy.
+	 * @param null $suffix
+	 *
+	 * @return string
+	 */
+	public static function get_permastructure( $content_type = '', $is_tax = false, $suffix = null ) {
+		global $permalink_manager_permastructs;
+
+		if ( empty( $content_type ) ) {
+			return '';
+		}
+
+		$content_group   = ( $is_tax ) ? 'taxonomies' : 'post_types';
+		$permastructures = ( ! empty( $permalink_manager_permastructs[ $content_group ] ) ) ? $permalink_manager_permastructs[ $content_group ] : array();
+
+		if ( ! empty( $suffix ) ) {
+			$default_permastruct = '';
+			$permastructure_id   = $content_type . '_' . $suffix;
+		} else {
+			$default_permastruct = trim( Permalink_Manager_Permastructure_Functions::get_default_permastruct( $content_type ), '/' );
+			$permastructure_id   = $content_type;
+		}
+
+		return isset( $permastructures[ $permastructure_id ] ) ? $permastructures[ $permastructure_id ] : $default_permastruct;
 	}
 
 	/**

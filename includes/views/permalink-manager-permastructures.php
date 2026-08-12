@@ -106,8 +106,6 @@ class Permalink_Manager_Permastructs {
 	 * @return string
 	 */
 	function get_single_permastructure_field( $content_type, $is_tax = false, $pro_alert = false ) {
-		global $permalink_manager_permastructs;
-
 		if ( empty( $content_type['name'] ) ) {
 			return '';
 		}
@@ -121,9 +119,8 @@ class Permalink_Manager_Permastructs {
 		$available_tags    = self::get_all_structure_tags( $content_type_name, $is_tax );
 
 		// Get permastructures
-		$permastructures     = ( ! empty( $permalink_manager_permastructs[ $content_group ] ) ) ? $permalink_manager_permastructs[ $content_group ] : array();
 		$default_permastruct = trim( Permalink_Manager_Permastructure_Functions::get_default_permastruct( $content_type_name ), "/" );
-		$current_permastruct = isset( $permastructures[ $content_type_name ] ) ? $permastructures[ $content_type_name ] : $default_permastruct;
+		$current_permastruct = Permalink_Manager_Permastructure_Functions::get_permastructure( $content_type_name, $is_tax );
 
 		// Append extra attributes
 		$field_atts = array(
@@ -148,7 +145,7 @@ class Permalink_Manager_Permastructs {
 			$language_fields = sprintf( "<h4>%s</h4><p class=\"permastruct-instruction\">%s</p>", __( "Permastructure translations", "permalink-manager" ), __( "If you would like to translate the permastructures and set-up different permalink structure per language, please fill in the fields below. Otherwise the permastructure set for default language (see field above) will be applied.", "permalink-manager" ) );
 
 			foreach ( $languages as $lang => $name ) {
-				$current_lang_permastruct = isset( $permastructures["{$content_type_name}_{$lang}"] ) ? $permastructures["{$content_type_name}_{$lang}"] : '';
+				$current_lang_permastruct = Permalink_Manager_Permastructure_Functions::get_permastructure( $content_type_name, $is_tax, $lang );
 
 				$lang_field_atts = array_merge( $field_atts, array( 'value' => $current_lang_permastruct, 'extra_atts' => 'data-default=""', 'placeholder' => $current_permastruct ) );
 				$lang_field_name = str_replace( "]", "_{$lang}]", $field_name );
@@ -225,7 +222,7 @@ class Permalink_Manager_Permastructs {
 		);
 
 		if ( ! $is_taxonomy ) {
-			$post_type_tag = Permalink_Manager_Permastructure_Functions::get_post_tag( $content_type );
+			$post_type_tag        = Permalink_Manager_Permastructure_Functions::get_post_tag( $content_type );
 			$post_type_taxonomies = get_object_taxonomies( $content_type, 'objects' );
 
 			$tags_groups['slug']['tags'] = array(
