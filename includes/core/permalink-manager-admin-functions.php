@@ -200,7 +200,7 @@ class Permalink_Manager_Admin_Functions {
 
 			if ( ! defined( 'PERMALINK_MANAGER_PRO' ) ) {
 				$website_url          = self::get_plugin_website_url( 'features' );
-				$new_links['upgrade'] = sprintf( '<a href="%s" target="_blank"><strong>%s</strong></a>', $website_url, __( 'Buy Permalink Manager Pro', 'permalink-manager' ) );
+				$new_links['upgrade'] = sprintf( '<a href="%s" target="_blank" style="font-weight:bold;color:#e74c3c;">&nearr; %s</a>', $website_url, __( 'Upgrade to Pro', 'permalink-manager' ) );
 			}
 
 			$links = array_merge( $links, $new_links );
@@ -226,13 +226,17 @@ class Permalink_Manager_Admin_Functions {
 	 * Display global notices (throughout wp-admin dashboard)
 	 */
 	function display_global_notices() {
-		global $permalink_manager_alerts, $permalink_manager_active_section;
+		global $permalink_manager_alerts, $permalink_manager_active_section, $permalink_manager_options;
 
 		$html = "";
 		if ( ! empty( $permalink_manager_alerts ) && is_array( $permalink_manager_alerts ) ) {
+			$current_time = time();
+
 			foreach ( $permalink_manager_alerts as $alert_id => $alert ) {
-				$dismissed_transient_name = sprintf( 'permalink-manager-notice_%s', sanitize_title( $alert_id ) );
-				$dismissed                = get_transient( $dismissed_transient_name );
+				$alert_key = sanitize_title( $alert_id );
+
+				// Check if alert was dismissed in the options and hasn't expired yet
+				$dismissed = ( isset( $permalink_manager_options['notices'][ $alert_key ] ) && $permalink_manager_options['notices'][ $alert_key ] > $current_time );
 
 				// Check if alert was dismissed
 				if ( empty( $dismissed ) ) {

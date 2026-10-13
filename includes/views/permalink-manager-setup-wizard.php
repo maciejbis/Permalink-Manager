@@ -28,7 +28,7 @@ class Permalink_Manager_Setup_Wizard {
     protected $nag_visible = null;
 
     public function __construct() {
-        add_action( 'init', array( $this, 'init_hooks' ), 99 );
+        add_action( 'init', array( $this, 'init_hooks' ), 8 );
     }
 
     function init_hooks() {
@@ -39,7 +39,7 @@ class Permalink_Manager_Setup_Wizard {
             add_action( 'admin_menu', array( $this, 'register_page' ), 20 );
             add_action( 'admin_init', array( $this, 'maybe_handle_submit' ), 20 );
 
-            add_action( 'admin_notices', array( $this, 'display_setup_nag' ) );
+            add_filter( 'permalink_manager_alerts', array( $this, 'add_setup_alert' ) );
             add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
             add_action( 'wp_ajax_pm_dismiss_setup_wizard', array( $this, 'ajax_dismiss_setup_wizard' ) );
@@ -139,16 +139,12 @@ class Permalink_Manager_Setup_Wizard {
      */
     public function enqueue_assets( $hook ) {
         $on_wizard = ( ! empty( $this->page_hook ) && $hook === $this->page_hook );
-        $show_nag  = $this->should_display_nag();
 
-        if ( ! $on_wizard && ! $show_nag ) {
+        if ( ! $on_wizard ) {
             return;
         }
 
-        if ( $on_wizard ) {
-            wp_enqueue_style( 'permalink-manager-setup-wizard', PERMALINK_MANAGER_URL . '/out/permalink-manager-setup-wizard.css', array(), PERMALINK_MANAGER_VERSION );
-        }
-
+        wp_enqueue_style( 'permalink-manager-setup-wizard', PERMALINK_MANAGER_URL . '/out/permalink-manager-setup-wizard.css', array(), PERMALINK_MANAGER_VERSION );
         wp_enqueue_script( 'permalink-manager-setup-wizard', PERMALINK_MANAGER_URL . '/out/permalink-manager-setup-wizard.js', array(), PERMALINK_MANAGER_VERSION, true );
 
         wp_localize_script( 'permalink-manager-setup-wizard', 'pmSetupWizard', array(
@@ -202,16 +198,28 @@ class Permalink_Manager_Setup_Wizard {
     }
 
     /**
-     * Display the dismissible admin notice that links to the wizard page.
+     * Inject the setup wizard notice into the global alerts array.
+     *
+     * @param array $alerts Current active alerts.
+     *
+     * @return array Modified alerts.
      */
-    public function display_setup_nag() {
+    public function add_setup_alert( $alerts ) {
         if ( ! $this->should_display_nag() ) {
-            return;
+            return $alerts;
         }
 
-        $message = sprintf( /* translators: %s: URL to the setup wizard */ __( '<a href="%s">Run the setup wizard</a> to choose which content types should use custom permalinks and to enable additional features.', 'permalink-manager' ), esc_url( self::get_page_url() ) );
+        $message    = sprintf( /* translators: %s: URL to the setup wizard */ __( '<a href="%s">Run the setup wizard</a> to choose which content types should use custom permalinks and to enable additional features.', 'permalink-manager' ), esc_url( self::get_page_url() ) );
+        $alert_text = sprintf( '<strong>%1$s</strong> %2$s', esc_html__( 'Permalink Manager is not configured.', 'permalink-manager' ), wp_kses( $message, array( 'a' => array( 'href' => array() ) ) ) );
 
-        printf( '<div class="notice notice-alt notice-warning is-dismissible permalink-manager-notice" data-alert_id="%1$s"><p><strong>%2$s</strong> %3$s</p></div>', esc_attr( self::NAG_ID ), esc_html__( 'Permalink Manager is not configured.', 'permalink-manager' ), wp_kses( $message, array( 'a' => array( 'href' => array() ) ) ) );
+        $alerts[ self::NAG_ID ] = array(
+                'txt'            => $alert_text,
+                'type'           => 'notice-warning',
+                'plugin_only'    => false,
+                'dismissed_time' => 2 * DAY_IN_SECONDS
+        );
+
+        return $alerts;
     }
 
     /**

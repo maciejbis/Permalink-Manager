@@ -439,7 +439,7 @@ class Permalink_Manager_Actions {
 
 		// Allow only white-listed option groups
 		foreach ( $new_options as $group => $group_options ) {
-			if ( ! in_array( $group, array( 'licence', 'screen-options', 'general', 'permastructure-settings', 'stop-words' ) ) ) {
+			if ( ! in_array( $group, array( 'licence', 'screen-options', 'general', 'permastructure-settings', 'stop-words', 'notices' ) ) ) {
 				unset( $new_options[ $group ] );
 			}
 		}
@@ -768,16 +768,33 @@ class Permalink_Manager_Actions {
 	 * Hide global notices (AJAX)
 	 */
 	function ajax_hide_global_notice() {
-		global $permalink_manager_alerts;
+		global $permalink_manager_alerts, $permalink_manager_options;
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Low-risk cosmetic notice dismissal; authenticated admin-only AJAX action and no nonce is transmitted by the notice markup.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$alert_id = ( ! empty( $_REQUEST['alert_id'] ) ) ? sanitize_title( wp_unslash( $_REQUEST['alert_id'] ) ) : "";
-		if ( ! empty( $permalink_manager_alerts[ $alert_id ] ) ) {
-			$dismissed_transient_name = sprintf( 'permalink-manager-notice_%s', $alert_id );
-			$dismissed_time           = ( ! empty( $permalink_manager_alerts[ $alert_id ]['dismissed_time'] ) ) ? (int) $permalink_manager_alerts[ $alert_id ]['dismissed_time'] : DAY_IN_SECONDS;
 
-			set_transient( $dismissed_transient_name, 1, $dismissed_time );
+		if ( ! empty( $permalink_manager_alerts[ $alert_id ] ) ) {
+			$dismissed_time = ( ! empty( $permalink_manager_alerts[ $alert_id ]['dismissed_time'] ) ) ? (int) $permalink_manager_alerts[ $alert_id ]['dismissed_time'] : DAY_IN_SECONDS;
+
+			// Fetch existing notices from options, or initialize an empty array
+			$notices      = ( ! empty( $permalink_manager_options['notices'] ) && is_array( $permalink_manager_options['notices'] ) ) ? $permalink_manager_options['notices'] : array();
+			$current_time = time();
+
+			// Automatically clean up expired notices
+			foreach ( $notices as $key => $expiration ) {
+				if ( $current_time > $expiration ) {
+					unset( $notices[ $key ] );
+				}
+			}
+
+			// Add the newly dismissed notice with its future expiration timestamp
+			$notices[ $alert_id ] = $current_time + $dismissed_time;
+
+			// Save using the built-in method (set $display_alert to false so it doesn't trigger UI messages in the background)
+			self::save_settings( 'notices', $notices, false );
 		}
+
+		wp_die();
 	}
 
 	/**

@@ -743,7 +743,7 @@ class Permalink_Manager_Helper_Functions {
 	 * @return string
 	 */
 	static function encode_uri( $uri ) {
-		return str_replace( array( '%2F', '%2C', '%7C', '%2B' ), array( '/', ',', '|', '+' ), urlencode( $uri ) );
+		return str_replace( array( '%2F', '%2C', '%7C', '%2B' ), array( '/', ',', '|', '+' ), utf8_uri_encode( $uri ) );
 	}
 
 	/**

@@ -278,9 +278,11 @@ class Permalink_Manager_REST_API {
 
 		$index = $element['array_index'];
 
-		$uri       = ( ! empty( $permalink_manager_uris[ $index ] ) ) ? $permalink_manager_uris[ $index ] : '';
+		$uri = ( ! empty( $permalink_manager_uris[ $index ] ) ) ? $permalink_manager_uris[ $index ] : '';
+
 		$redirects = ( ! empty( $permalink_manager_redirects[ $index ] ) && is_array( $permalink_manager_redirects[ $index ] ) ) ? array_values( array_filter( $permalink_manager_redirects[ $index ] ) ) : array();
-		$external  = ( ! empty( $permalink_manager_external_redirects[ $index ] ) ) ? $permalink_manager_external_redirects[ $index ] : '';
+
+		$external = ( ! empty( $permalink_manager_external_redirects[ $index ] ) ) ? $permalink_manager_external_redirects[ $index ] : '';
 
 		// Fetch the WP_Post or WP_Term object
 		$wp_object = $element['is_term'] ? get_term( $element['object_id'] ) : get_post( $element['object_id'] );

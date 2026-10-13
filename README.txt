@@ -7,42 +7,40 @@ Tags: permalinks, custom permalinks, permalink, woocommerce permalinks, custom p
 Requires at least: 5.3.0
 Requires PHP: 5.4
 Tested up to: 7.1
-Stable tag: 2.6.0
+Stable tag: 2.6.1
 
-Permalink Manager enhances WordPress’s built-in URL system, allowing you to change the URLs of native and custom post types and taxonomies.
+Permalink Manager extends WordPress’s native permalink functionality, giving you more control over URL structures for custom post types, and taxonomies.
 
 == Description ==
 
-The native WordPress permalink system is designed to be simple and easy to configure. Permalink Manager extends it and allows you to define custom URL structures and edit individual permalinks exactly the way you want.
+Permalink Manager gives you more control over WordPress URLs, allowing you to customize URLs directly from the admin dashboard without requiring custom code. You can define a custom permalink structure for any content type or edit individual permalinks separately.
 
-The free version lets you manage URLs for **posts, pages, and custom post types**, while the Pro version also includes support for **categories, tags, and custom taxonomies**.
+The plugin supports all custom post types and taxonomies and works with popular plugins such as WooCommerce, ACF, WPML, and Polylang.
 
-<a href="https://permalinkmanager.pro/docs/?utm_source=wordpressorg">Documentation</a> | <a href="https://permalinkmanager.pro/features/?utm_source=wordpressorg">Buy Permalink Manager Pro</a>
+The free version lets you customize permalinks for **posts, pages, and custom post types**. With the Pro version, you can also manage permalinks for **categories, tags, and custom taxonomies**.
 
-The plugin **supports all custom post types and taxonomies**, and it is compatible with popular plugins like WooCommerce, Yoast SEO, WPML, and Polylang.
+Permalink Manager <a href="https://permalinkmanager.pro/docs/plugin-settings/canonical-redirects/">automatically redirects old and duplicate URLs</a> to the correct page, helping prevent broken links and 404 errors.
 
-Permalink Manager **automatically redirects original and duplicate URLs** to the correct page. Using the <a href="https://permalinkmanager.pro/docs/plugin-settings/canonical-redirects/">canonical redirect</a>, it prevents the broken links that can hurt the UX and SEO, potentially causing a drop in organic traffic.
+[Buy Permalink Manager Pro](https://permalinkmanager.pro/pricing/?utm_source=wordpressorg&utm_medium=readme) | [Quickstart guide](https://permalinkmanager.pro/docs/basics/custom-permalinks/?utm_source=wordpressorg&utm_medium=readme) | [Documentation](https://permalinkmanager.pro/docs/?utm_source=wordpressorg&utm_medium=readme)
 
-= Features =
+= What You Can Do With Permalink Manager =
 
-* **Change Single Permalinks**<br/>For a consistent and SEO-friendly URL structure, you may customize and <a href="https://permalinkmanager.pro/docs/basics/change-permalink/">change the permalink</a> of each post, page, and custom post type item.  *Categories, tags & custom taxonomies terms permalinks can be edited in Permalink Manager Pro.*
-* **Customize URL Formats**<br/>Using the “Permastructures” settings, you can choose the default format for custom URLs using "Permastructures" settings. The new format will be applied automatically when a new post/term is added or once the old permalinks are regenerated.
-* **Custom Post Types Support**<br/>Choose the post types and taxonomies you want to customize and exclude the rest of them. The plugin supports post types and taxonomies managed with ACF, Pods, JetEngine, Toolset Types, and other plugins.
-* **Translate Permalinks**<br/>With WPML or Polylang active, Permalink Manager allows you to translate the slug and customize the URL structure for every language separately.
-* **Remove Parent Slugs**<br/>Remove parent slugs from your WordPress URLs organize them hierarchically by <a href="https://permalinkmanager.pro/docs/tutorials/add-category-slug-wordpress-permalinks/">adding categories to custom permalinks</a>, all without writing a single line of code.
-* **Canonical Redirect**<br/>Automatically redirect old URLs whenever they change, preventing broken links, and protecting your site’s search visibility.
+* **Change Single Permalinks**<br/>For a consistent and SEO-friendly URL structure, you may customize and <a href="https://permalinkmanager.pro/docs/basics/custom-permalinks/?utm_source=wordpressorg&utm_medium=readme">change the permalink</a> of each post, page, and custom post type item. *Categories, tags & custom taxonomies terms permalinks can be edited in Permalink Manager Pro.*
+* **Customize URL Formats**<br/>The [Permastructures](https://permalinkmanager.pro/docs/basics/permastructures/?utm_source=wordpressorg&utm_medium=readme) settings let you override the default permalink structure and define a custom URL format using available tags, including `%custom_post_type%` and `%custom_taxonomy%`.
+* **Remove the Post Type or Taxonomy Slug**<br />The plugin lets you [remove the base slug](https://permalinkmanager.pro/docs/tutorials/rewrite-base-pretty-permalinks/?utm_source=wordpressorg&utm_medium=readme), such as `/portfolio/` or `/event/`, from custom post type and taxonomy URLs.
+* **Add Taxonomies to CPT URLs**<br />Add [category-based permalinks](https://permalinkmanager.pro/docs/tutorials/add-category-slug-wordpress-permalinks/?utm_source=wordpressorg&utm_medium=readme) to posts and custom post types, with support for primary categories set in your SEO plugin.
+* **Translate Permalinks**<br/>With WPML or Polylang active, Permalink Manager allows you to [translate slugs and use a different URL structure for each language](https://permalinkmanager.pro/docs/tutorials/how-to-translate-permalinks/?utm_source=wordpressorg&utm_medium=readme).
+* **Control Parent Slugs**<br/>[Remove or keep parent slugs](https://permalinkmanager.pro/docs/tutorials/wordpress-permalinks-structure/?utm_source=wordpressorg&utm_medium=readme) in permalinks for pages and other hierarchical post types.
 
-= Additional features available in Permalink Manager Pro =
+= Additional Features Available in Permalink Manager Pro =
 
-The free version covers all the necessary functions, while the premium version adds a few handy functionalities that can improve the process of adjusting WordPress permalinks.
-
-Click here for additional information and to purchase <a href="https://permalinkmanager.pro?utm_source=wordpress">Permalink Manager Pro</a>.
+The free version includes all the essential features. Permalink Manager Pro adds **full support for custom taxonomies and WooCommerce**, along with a few additional functionalities. [See all Pro features](https://permalinkmanager.pro/features/?utm_source=wordpressorg&utm_medium=readme).
 
 * **Custom Taxonomies Support**<br/>Taxonomies are fully supported in the premium version (categories, tags & custom taxonomies). You may adjust individual term permalinks or change them all at once using "Permastructures".
-* **Full WooCommerce Support**<br/>Permalink Manager Pro may be used to change the URL addresses of WooCommerce products, tags, categories, and attributes. For example, you may use the plugin to <a href="https://permalinkmanager.pro/docs/tutorials/remove-product-category-woocommerce-urls/">remove /product/ and /product-category/ from WooCommerce URL</a>.
-* **Custom Fields Support**<br/>Permalink Manager is the only actively supported WordPress plugin that allows to <a href="https://permalinkmanager.pro/docs/tutorials/how-to-use-custom-fields-inside-wordpress-permalinks/">add custom fields to permalinks</a> and requires no technical experience.
+* **Full WooCommerce Support**<br/>Permalink Manager Pro may be used to change the URL addresses of WooCommerce products, tags, categories, and attributes. For example, you can [remove /product/ and /product-category/ from WooCommerce URLs](https://permalinkmanager.pro/docs/tutorials/remove-product-category-woocommerce-urls/?utm_source=wordpressorg&utm_medium=readme) or [add SKUs to product permalinks](https://permalinkmanager.pro/docs/woocommerce/sku-product-permalinks/?utm_source=wordpressorg&utm_medium=readme).
+* **Custom Fields Support**<br/>[Add custom field values to your URLs](https://permalinkmanager.pro/docs/tutorials/how-to-use-custom-fields-inside-wordpress-permalinks/?utm_source=wordpressorg&utm_medium=readme) from ACF and other custom field plugins, with no coding required.
 * **Extra Redirects**<br/>Define extra redirects (aliases) for any post, page, or term. Additionally, you may assign a redirect URL to each post/term, which will take users to any external URL address.
-* **REST API Support**<br/>Access and manage custom permalinks via the <a href="https://permalinkmanager.pro/docs/filters-hooks/rest-api-support/">REST API</a>.
+* **REST API**<br/>[Read and update custom permalinks and redirects](https://permalinkmanager.pro/docs/developer/rest-api-support/?utm_source=wordpressorg&utm_medium=readme) through the WordPress REST API.
 
 == Installation ==
 
@@ -56,21 +54,23 @@ You can also install this plugin manually:
 
 == Frequently Asked Questions ==
 
-= Can I use the plugin to edit the category permalinks?
-This feature is available only in Permalink Manager Pro.
+= Will the old URLs redirect to the new permalinks? =
+ Yes. Permalink Manager automatically redirects the native permalinks (the URLs WordPress uses before the plugin is activated or after it is disabled) to the custom permalinks. Read more about the [plugin's redirect functions](https://permalinkmanager.pro/docs/basics/redirect-functions/?utm_source=wordpressorg&utm_medium=readme&utm_content=faq).
 
-= Is it possible to use Permalink Manager on large websites?
-When the Permalink Manager was first designed, it was supposed to be used for a typical WordPress website, which usually has <strong>less than a few thousand subpages</strong>. As a result, all custom permalinks are <a href="https://permalinkmanager.pro/docs/filters-hooks/how-the-custom-uris-and-redirects-are-stored/">saved in a single row in the database</a> in order to avoid slowing down the pageload with multiple SQL queries to the database. This is the most effective approach for small and medium-sized websites, without affecting site speed.
+= How do I remove the post type slug from custom post type URLs? =
+Set a new format without the base slug for that post type in Permastructures, then regenerate the existing permalinks. The [step-by-step tutorial](https://permalinkmanager.pro/docs/tutorials/rewrite-base-pretty-permalinks/?utm_source=wordpressorg&utm_medium=readme&utm_content=faq) walks through the process.
 
-While this data structure works for the vast majority of WordPress sites, it may not be optimal if you want to use the plugin to rewrite <strong>tens of thousands of permalinks</strong>. What works well for a smaller website may not scale well for a megasite. When the number of addresses on your site exceeds tens of thousands, the custom permalinks array may become quite huge, and any operations on it can have an effect on pageload time.
+= How do I remove /product/ and /product-category/ from WooCommerce URLs? =
+ This requires Permalink Manager Pro, which supports WooCommerce products, categories, tags and attributes. See [how to remove /product/ and /product-category/ from WooCommerce URLs](https://permalinkmanager.pro/docs/tutorials/remove-product-category-woocommerce-urls/?utm_source=wordpressorg&utm_medium=readme&utm_content=faq).
 
-To summarize, the plugin is suitable for small and medium-sized websites. It will not slow down your pageload time or affect its usability in any way. However, if you want to use it on a much bigger website with thousands of permalinks (more than 60.000), please consider excluding content types that do not require customized permalink format in order to lower the custom permalinks array. For further details on the plugin's performance, please <a href="https://permalinkmanager.pro/docs/basics/performance/">visit this post</a>.
+= Can I use a different permalink format for each language? =
+ Yes, if you use WPML or Polylang. You can translate the slugs and set a separate Permastructure for each language. [Full instructions for multilingual permalinks](https://permalinkmanager.pro/docs/tutorials/how-to-translate-permalinks/?utm_source=wordpressorg&utm_medium=readme&utm_content=faq).
+
+= Is Permalink Manager suitable for large websites? =
+ Permalink Manager is optimized for standard WordPress websites that typically have fewer than a few thousand URLs. It stores all custom permalinks in a single database row, so the plugin can process URLs with just one database query and keep the impact on page load times to a minimum.
 
 = Can I define different permalink formats per each language.
 Yes, it is possible if you are using either WPML or Polylang. You can find <a href="https://permalinkmanager.pro/docs/tutorials/how-to-translate-permalinks/">the full instructions here</a>.
-
-= Will the old permalink automatically redirect the new ones?
-Yes, Permalink Manager will automatically redirect the native permalinks (used when the plugin is disabled, or before it was activated) to the actual, custom permalinks.
 
 = Does this plugin support Buddypress?
 Currently, there is no 100% guarantee that Permalink Manager will work correctly with Buddypress.
@@ -92,6 +92,10 @@ It is because Permalink Manager overwrites one of the core WordPress functionali
 8.	Permalink Manager settings.
 
 == Changelog ==
+
+= 2.6.1 =
+* Dev - Updated Permalink_Manager_Helper_Functions::encode_uri() so that percent-encoded characters are lowercased in the same way as native permalinks
+* Dev - Minor code improvements
 
 = 2.6.0 (August 9, 2026) =
 * Security - Added an extra auth check for bulk tools, as suggested by Mo Akbari
